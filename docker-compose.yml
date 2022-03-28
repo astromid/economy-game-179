@@ -1,0 +1,82 @@
+version: '3.9'
+
+services:
+  api:
+    build:
+      context: ./backend
+      dockerfile: ./backend/Dockerfile
+    image: egame179_backend:${EGAME179_BACKEND_VERSION:-latest}
+    restart: always
+    env_file:
+    - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      EGAME179_BACKEND_HOST: 0.0.0.0
+      EGAME179_BACKEND_DB_HOST: egame179_backend-db
+      EGAME179_BACKEND_DB_PORT: 3306
+      EGAME179_BACKEND_DB_USER: egame179_backend
+      EGAME179_BACKEND_DB_PASS: egame179_backend
+      EGAME179_BACKEND_DB_BASE: egame179_backend
+
+  db:
+    image: mariadb:latest
+    hostname: egame179_backend-db
+    restart: always
+    environment:
+      ALLOW_EMPTY_PASSWORD: "yes"
+      MYSQL_ROOT_PASSWORD: "egame179_backend"
+      MYSQL_ROOT_USER: "egame179_backend"
+      MYSQL_DATABASE: "egame179_backend"
+    healthcheck:
+      test:
+      - CMD
+      - mysql
+      - -u
+      - egame179_backend
+      - -pegame179_backend
+      - -e
+      - SELECT 1
+      interval: 3s
+      timeout: 3s
+      retries: 40
+    volumes:
+    - egame179_backend-db-data:/var/lib/mysql
+
+  migrator:
+    image: egame179_backend:${EGAME179_BACKEND_VERSION:-latest}
+    restart: "no"
+    command: alembic upgrade head
+    environment:
+      EGAME179_BACKEND_DB_HOST: egame179_backend-db
+      EGAME179_BACKEND_DB_PORT: 3306
+      EGAME179_BACKEND_DB_USER: egame179_backend
+      EGAME179_BACKEND_DB_PASS: egame179_backend
+      EGAME179_BACKEND_DB_BASE: egame179_backend
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ./frontend/Dockerfile
+    image: egame179_frontend:${EGAME179_FRONTEND_VERSION:-latest}
+    restart: always
+    env_file:
+    - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      EGAME179_BACKEND_HOST: 0.0.0.0
+      EGAME179_BACKEND_DB_HOST: egame179_backend-db
+      EGAME179_BACKEND_DB_PORT: 3306
+      EGAME179_BACKEND_DB_USER: egame179_backend
+      EGAME179_BACKEND_DB_PASS: egame179_backend
+      EGAME179_BACKEND_DB_BASE: egame179_backend
+
+volumes:
+  egame179_backend-db-data:
+    name: egame179_backend-db-data

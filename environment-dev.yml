@@ -1,0 +1,33 @@
+name: egame179
+channels:
+- conda-forge
+- defaults
+dependencies:
+- python>=3.10
+- aiomysql
+- alembic
+- blas=*=mkl
+- bs4
+- fastapi
+- httptools
+- icecream
+- jupyterlab
+- libblas=*=*mkl
+- mypy
+- mypy_extensions
+- mysqlclient
+- numpy
+- pandas
+- pyarrow
+- python-dotenv
+- pytest
+- pytest-asyncio
+- pytest-cov
+- pytest-env
+- pytest-mypy
+- sqlalchemy
+- streamlit
+- tqdm
+- ujson
+- uvicorn
+- yarl

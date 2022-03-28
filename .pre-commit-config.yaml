@@ -1,0 +1,91 @@
+repos:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v4.1.0
+  hooks:
+  - id: trailing-whitespace
+  - id: check-ast
+  - id: check-json
+  - id: check-merge-conflict
+  - id: check-xml
+  - id: check-yaml
+  - id: check-toml
+  - id: debug-statements
+  - id: end-of-file-fixer
+  - id: mixed-line-ending
+    args: [--fix=no]
+
+- repo: https://github.com/asottile/add-trailing-comma
+  rev: v2.2.1
+  hooks:
+  - id: add-trailing-comma
+
+- repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
+  rev: v2.3.0
+  hooks:
+  - id: pretty-format-yaml
+    args:
+    - --autofix
+    - --preserve-quotes
+    - --indent=2
+
+- repo: http://github.com/timothycrosley/isort
+  rev: 5.10.1
+  hooks:
+  - id: isort
+
+- repo: local
+  hooks:
+  - id: black
+    name: black
+    description: black style enforcement
+    entry: black
+    language: system
+    types: [python]
+
+- repo: https://github.com/asottile/blacken-docs
+  rev: v1.12.1
+  hooks:
+  - id: blacken-docs
+
+- repo: https://github.com/asottile/pyupgrade # A tool to automatically upgrade syntax for newer versions of the language.
+  rev: v2.31.1
+  hooks:
+  - id: pyupgrade
+    args: [--py310-plus]
+
+- repo: https://github.com/nbQA-dev/nbQA
+  rev: 1.3.1
+  hooks:
+  - id: nbqa-black
+    args: [--nbqa-mutate]
+  - id: nbqa-isort
+    additional_dependencies: [isort==5.10.1]
+    args: [--nbqa-mutate, --profile=black, --project=pandas_profiling]
+  - id: nbqa-pyupgrade
+    additional_dependencies: [pyupgrade==2.31.0]
+    args: [--nbqa-mutate, --py310-plus]
+
+- repo: local
+  hooks:
+  - id: mypy
+    name: mypy
+    entry: mypy
+    language: system
+    types: [python]
+    pass_filenames: false
+    args:
+    - "backend/egame179_backend"
+    - "frontend/egame179_frontend"
+
+  - id: flake8
+    name: flake8
+    description: wemake-python-styleguide enforcement
+    entry: flake8
+    language: system
+    types: [python]
+
+  # - id: yesqa
+  #   name: yesqa
+  #   entry: yesqa
+  #   language: system
+  #   type: [python]

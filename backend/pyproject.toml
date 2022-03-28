@@ -1,0 +1,107 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "egame179_backend"
+description = "FastAPI backend for economic strategy game"
+readme = "README.md"
+license = {text = "MIT License"}
+dependencies = [
+    "aiomysql",
+    "alembic",
+    "fastapi",
+    "pydantic[dotenv]",
+    "sqlalchemy[asyncio, mypy]",
+    "mysqlclient",
+    "httptools",
+    "ujson",
+    "uvicorn",
+    "yarl",
+]
+dynamic = ["version"]
+
+[tool.black]
+line-length = 120
+target-version = ['py310']
+include = '\.pyi?$'
+exclude = '''
+(
+    /(
+        \.eggs
+        | \.git
+        | \.hg
+        | \.mypy_cache
+        | \.tox
+        | \.venv
+        | _build
+        | buck-out
+        | build
+        | dist
+        | docs
+    )/
+)
+'''
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+src_paths = ["egame179_backend",]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+ignore_missing_imports = true
+allow_subclassing_any = true
+allow_untyped_calls = true
+pretty = true
+show_error_codes = true
+implicit_reexport = true
+allow_untyped_decorators = true
+warn_return_any = false
+warn_unused_configs = true
+plugins = ["sqlalchemy.ext.mypy.plugin", "numpy.typing.mypy_plugin"]
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "error",
+    "ignore::DeprecationWarning",
+]
+env = [
+    "EGAME179_BACKEND_DB_BASE=egame179_backend_test",
+]
+addopts = "--mypy --cov egame179_backend --cov-report xml:cov.xml --cov-report term-missing --verbose"
+testpaths = [
+    "tests",
+]
+
+# .coveragerc to control coverage.py
+[tool.coverage.run]
+branch = true
+source = "egame179_backend"
+# omit = bad_file.py
+
+[tool.coverage.paths]
+source = [
+    "egame179_backend",
+    "*/site-packages/",
+]
+
+[tool.coverage.report]
+# Regexes for lines to exclude from consideration
+exclude_lines = [
+    # Have to re-enable the standard pragma
+    "pragma: no cover",
+
+    # Don't complain about missing debug-only code:
+    "def __repr__",
+    "if self\\.debug",
+
+    # Don't complain if tests don't hit defensive assertion code:
+    "raise AssertionError",
+    "raise NotImplementedError",
+
+    # Don't complain if non-runnable code isn't run:
+    "if 0:",
+    "if __name__ == .__main__.:",
+]
