@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from egame179_backend.web.api.echo.schema import Message
+from egame179_backend.app.api.echo.schema import Message
 
 router = APIRouter()
 

@@ -1,0 +1,60 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "egame179_frontend"
+description = "Streamlit frontend for economic strategy game"
+version = "0.0.1"
+readme = "README.md"
+license = {text = "MIT License"}
+dependencies = [
+    "httptools",
+    "httpx",
+    "omegaconf",
+    "pandas",
+    "pydantic[dotenv]",
+    "streamlit",
+    "ujson",
+]
+
+[tool.black]
+line-length = 120
+target-version = ['py310']
+include = '\.pyi?$'
+exclude = '''
+(
+    /(
+        \.eggs
+        | \.git
+        | \.hg
+        | \.mypy_cache
+        | \.tox
+        | \.venv
+        | _build
+        | buck-out
+        | build
+        | dist
+        | docs
+    )/
+)
+'''
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+src_paths = ["egame179_frontend",]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+ignore_missing_imports = true
+allow_subclassing_any = true
+allow_untyped_calls = true
+pretty = true
+show_error_codes = true
+implicit_reexport = true
+allow_untyped_decorators = true
+warn_return_any = false
+warn_unused_configs = true
+plugins = ["numpy.typing.mypy_plugin"]

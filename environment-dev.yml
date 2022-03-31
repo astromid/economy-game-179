@@ -10,6 +10,7 @@ dependencies:
 - bs4
 - fastapi
 - httptools
+- httpx
 - icecream
 - jupyterlab
 - libblas=*=*mkl
@@ -17,6 +18,7 @@ dependencies:
 - mypy_extensions
 - mysqlclient
 - numpy
+- omegaconf
 - pandas
 - pyarrow
 - python-dotenv
@@ -26,6 +28,7 @@ dependencies:
 - pytest-env
 - pytest-mypy
 - sqlalchemy
+- sqlmodel
 - streamlit
 - tqdm
 - ujson

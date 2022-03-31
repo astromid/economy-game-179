@@ -5,21 +5,24 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "egame179_backend"
 description = "FastAPI backend for economic strategy game"
+version = "0.0.1"
 readme = "README.md"
 license = {text = "MIT License"}
 dependencies = [
     "aiomysql",
     "alembic",
     "fastapi",
-    "pydantic[dotenv]",
-    "sqlalchemy[asyncio, mypy]",
-    "mysqlclient",
     "httptools",
+    "httpx",
+    "mysqlclient",
+    "omegaconf",
+    "pydantic[dotenv]",
+    "sqlalchemy[asyncio]",
+    "sqlmodel",
     "ujson",
     "uvicorn",
     "yarl",
 ]
-dynamic = ["version"]
 
 [tool.black]
 line-length = 120

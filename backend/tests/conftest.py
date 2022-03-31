@@ -14,10 +14,10 @@ from sqlalchemy.ext.asyncio import (
 )
 from sqlalchemy.orm import sessionmaker
 
+from egame179_backend.app.app import get_app
 from egame179_backend.db.dependencies import get_db_session
 from egame179_backend.db.utils import create_database, drop_database
 from egame179_backend.settings import settings
-from egame179_backend.web.application import get_app
 
 nest_asyncio.apply()
 
