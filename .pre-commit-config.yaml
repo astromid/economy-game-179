@@ -1,6 +1,6 @@
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.1.0
+  rev: v4.2.0
   hooks:
   - id: trailing-whitespace
   - id: check-ast
@@ -15,7 +15,7 @@ repos:
     args: [--fix=no]
 
 - repo: https://github.com/asottile/add-trailing-comma
-  rev: v2.2.1
+  rev: v2.2.3
   hooks:
   - id: add-trailing-comma
 
@@ -48,7 +48,7 @@ repos:
   - id: blacken-docs
 
 - repo: https://github.com/asottile/pyupgrade # A tool to automatically upgrade syntax for newer versions of the language.
-  rev: v2.31.1
+  rev: v2.32.0
   hooks:
   - id: pyupgrade
     args: [--py310-plus]

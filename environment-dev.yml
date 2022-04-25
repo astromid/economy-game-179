@@ -1,11 +1,11 @@
-name: egame179
+name: egame-179
 channels:
 - conda-forge
-- defaults
 dependencies:
 - python>=3.10
 - aiomysql
 - alembic
+- antlr4-python3-runtime
 - blas=*=mkl
 - bs4
 - fastapi
@@ -13,7 +13,6 @@ dependencies:
 - httpx
 - icecream
 - jupyterlab
-- libblas=*=*mkl
 - mypy
 - mypy_extensions
 - mysqlclient
@@ -30,7 +29,6 @@ dependencies:
 - sqlalchemy
 - sqlmodel
 - streamlit
-- tqdm
 - ujson
 - uvicorn
 - yarl

@@ -1,4 +1,4 @@
-# egame179_backend
+# egame179-backend
 
 Start a project with:
 

@@ -5,7 +5,7 @@ services:
     build:
       context: ./backend
       dockerfile: ./backend/Dockerfile
-    image: egame179_backend:${EGAME179_BACKEND_VERSION:-latest}
+    image: egame179-backend:${EGAME179_BACKEND_VERSION:-latest}
     restart: always
     env_file:
     - .env
@@ -14,15 +14,15 @@ services:
         condition: service_healthy
     environment:
       EGAME179_BACKEND_HOST: 0.0.0.0
-      EGAME179_BACKEND_DB_HOST: egame179_backend-db
+      EGAME179_BACKEND_DB_HOST: egame179-backend-db
       EGAME179_BACKEND_DB_PORT: 3306
-      EGAME179_BACKEND_DB_USER: egame179_backend
+      EGAME179_BACKEND_DB_USER: egame179-backend
       EGAME179_BACKEND_DB_PASS: egame179_backend
       EGAME179_BACKEND_DB_BASE: egame179_backend
 
   db:
     image: mariadb:latest
-    hostname: egame179_backend-db
+    hostname: egame179-backend-db
     restart: always
     environment:
       ALLOW_EMPTY_PASSWORD: "yes"
@@ -42,10 +42,10 @@ services:
       timeout: 3s
       retries: 40
     volumes:
-    - egame179_backend-db-data:/var/lib/mysql
+    - egame179-backend-db-data:/var/lib/mysql
 
   migrator:
-    image: egame179_backend:${EGAME179_BACKEND_VERSION:-latest}
+    image: egame179-backend:${EGAME179_BACKEND_VERSION:-latest}
     restart: "no"
     command: alembic upgrade head
     environment:
@@ -62,7 +62,7 @@ services:
     build:
       context: ./frontend
       dockerfile: ./frontend/Dockerfile
-    image: egame179_frontend:${EGAME179_FRONTEND_VERSION:-latest}
+    image: egame179-frontend:${EGAME179_FRONTEND_VERSION:-latest}
     restart: always
     env_file:
     - .env
@@ -71,12 +71,12 @@ services:
         condition: service_healthy
     environment:
       EGAME179_BACKEND_HOST: 0.0.0.0
-      EGAME179_BACKEND_DB_HOST: egame179_backend-db
+      EGAME179_BACKEND_DB_HOST: egame179-backend-db
       EGAME179_BACKEND_DB_PORT: 3306
       EGAME179_BACKEND_DB_USER: egame179_backend
       EGAME179_BACKEND_DB_PASS: egame179_backend
       EGAME179_BACKEND_DB_BASE: egame179_backend
 
 volumes:
-  egame179_backend-db-data:
-    name: egame179_backend-db-data
+  egame179-backend-db-data:
+    name: egame179-backend-db-data

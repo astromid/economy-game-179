@@ -48,5 +48,5 @@ per-file-ignores =
 
 exclude =
   ./.git,
-  migrations,
   ./var,
+  migrations,
