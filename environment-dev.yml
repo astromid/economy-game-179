@@ -6,12 +6,12 @@ dependencies:
 - aiomysql
 - alembic
 - antlr4-python3-runtime
-- blas=*=mkl
 - bs4
 - fastapi
 - httptools
 - httpx
 - icecream
+- ipywidgets
 - jupyterlab
 - mypy
 - mypy_extensions

@@ -57,4 +57,3 @@ implicit_reexport = true
 allow_untyped_decorators = true
 warn_return_any = false
 warn_unused_configs = true
-plugins = ["numpy.typing.mypy_plugin"]
