@@ -48,7 +48,7 @@ repos:
   - id: blacken-docs
 
 - repo: https://github.com/asottile/pyupgrade # A tool to automatically upgrade syntax for newer versions of the language.
-  rev: v2.32.0
+  rev: v2.32.1
   hooks:
   - id: pyupgrade
     args: [--py310-plus]
@@ -57,13 +57,12 @@ repos:
   rev: 1.3.1
   hooks:
   - id: nbqa-black
-    args: [--nbqa-mutate]
   - id: nbqa-isort
     additional_dependencies: [isort==5.10.1]
-    args: [--nbqa-mutate, --profile=black, --project=pandas_profiling]
+    args: [--profile=black, --project=pandas_profiling]
   - id: nbqa-pyupgrade
     additional_dependencies: [pyupgrade==2.31.0]
-    args: [--nbqa-mutate, --py310-plus]
+    args: [--py310-plus]
 
 - repo: local
   hooks:
