@@ -28,6 +28,7 @@ dependencies:
 - pytest-env
 - pytest-mypy
 - simplejson
+- seaborn
 - sqlalchemy
 - sqlmodel
 - streamlit

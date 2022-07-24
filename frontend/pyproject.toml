@@ -15,6 +15,7 @@ dependencies = [
     "pandas",
     "pydantic[dotenv]",
     "streamlit",
+    "streamlit-option-menu",
     "ujson",
 ]
 
