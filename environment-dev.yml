@@ -10,11 +10,6 @@ dependencies:
 - fastapi
 - httptools
 - httpx
-- icecream
-- ipywidgets
-- jupyterlab
-- mypy
-- mypy_extensions
 - mysqlclient
 - numpy
 - omegaconf
@@ -22,11 +17,6 @@ dependencies:
 - prettytable
 - pyarrow
 - python-dotenv
-- pytest
-- pytest-asyncio
-- pytest-cov
-- pytest-env
-- pytest-mypy
 - simplejson
 - seaborn
 - sqlalchemy
@@ -36,3 +26,14 @@ dependencies:
 - ujson
 - uvicorn
 - yarl
+# dev packages
+- icecream
+- ipywidgets
+- jupyterlab
+- mypy
+- mypy_extensions
+- pytest
+- pytest-asyncio
+- pytest-cov
+- pytest-env
+- pytest-mypy
