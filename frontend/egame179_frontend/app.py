@@ -1,44 +1,44 @@
 import streamlit as st
 from streamlit_option_menu import option_menu
 
-from egame179_frontend.login import login_form, logout
-from egame179_frontend.views.dashboard import dashboard
-from egame179_frontend.views.main_page import main_page
+from egame179_frontend.views import ROOT_VIEWS, USER_VIEWS
+from egame179_frontend.views.login import login_form
 
 
 def init_state():
     if "user" not in st.session_state:
-        st.session_state["user"] = None
+        st.session_state.user = None
 
-    st.session_state.views = {
-        "Main page": {"view": main_page, "icon": "gear"},
-        "Dashboard": {"view": dashboard, "icon": "house"},
-    }
+    match st.session_state.user:
+        case None:
+            st.session_state.views = []
+        case "root":
+            st.session_state.views = ROOT_VIEWS
+        case _:
+            st.session_state.views = USER_VIEWS
+    st.session_state.option2view = {view.menu_option: view.page_func for view in st.session_state.views}
 
 
 def app():
-    if st.session_state.user is not None:
-        st.session_state.views["Exit"] = {"view": logout, "icon": "box-arrow-right"}
-
-    with st.sidebar:
-        view = option_menu(
-            "Main Menu",
-            options=list(st.session_state.views.keys()),
-            icons=[view["icon"] for view in st.session_state.views.values()],
-            menu_icon="cast",
-            default_index=0,
-        )
-
     if st.session_state.user is None:
-        st.markdown("## Пожалуйста, авторизуйтесь для доступа к операционной информации.")
-        with st.sidebar:
-            login_form()
+        login_form()
 
-    st.session_state.views[view]["view"]()
+    if st.session_state.views:
+        with st.sidebar:
+            selected_option = option_menu(
+                "Меню",
+                options=[view.menu_option for view in st.session_state.views],
+                icons=[view.icon for view in st.session_state.views],
+                menu_icon="cast",
+                default_index=0,
+            )
+
+        view_func = st.session_state.option2view[selected_option]
+        view_func()
 
 
 if __name__ == "__main__":
     init_state()
-    title = f"CP 2.0.20: {st.session_state.user}" if st.session_state.user else "CP 2.0.20: Авторизация"
-    st.set_page_config(page_title=title, layout="wide")
+    title_user = st.session_state.user or "Авторизация"
+    st.set_page_config(page_title=f"CP 20.22 // {title_user}", layout="wide")
     app()
