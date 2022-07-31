@@ -1,11 +1,12 @@
 import streamlit as st
 from streamlit_option_menu import option_menu
 
-from egame179_frontend.views import ROOT_VIEWS, USER_VIEWS
+from egame179_frontend.views.base import get_root_views, get_user_views
 from egame179_frontend.views.login import login_form
 
 
-def init_state():
+def init_state() -> None:
+    """Initialize the state of the streamlit app."""
     if "user" not in st.session_state:
         st.session_state.user = None
 
@@ -13,13 +14,14 @@ def init_state():
         case None:
             st.session_state.views = []
         case "root":
-            st.session_state.views = ROOT_VIEWS
+            st.session_state.views = get_root_views()
         case _:
-            st.session_state.views = USER_VIEWS
+            st.session_state.views = get_user_views()
     st.session_state.option2view = {view.menu_option: view.page_func for view in st.session_state.views}
 
 
-def app():
+def app() -> None:
+    """Entry point for the game frontend."""
     if st.session_state.user is None:
         login_form()
 
@@ -40,5 +42,5 @@ def app():
 if __name__ == "__main__":
     init_state()
     title_user = st.session_state.user or "Авторизация"
-    st.set_page_config(page_title=f"CP 20.22 // {title_user}", layout="wide")
+    st.set_page_config(page_title=f"CP/20.22 // {title_user}", layout="wide")
     app()

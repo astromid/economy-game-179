@@ -1,11 +1,11 @@
 import streamlit as st
 
 
-def login_callback():
+def login_callback() -> None:
     st.session_state.user = st.session_state.login
 
 
-def login_form():
+def login_form() -> None:
     st.markdown(
         "<center> <h2>Необходим авторизованный доступ.</h2> </center>",
         unsafe_allow_html=True,
@@ -22,7 +22,7 @@ def login_form():
                     st.error("Неверный логин или пароль")
 
 
-def logout():
+def logout() -> None:
     st.session_state.user = None
     st.experimental_memo.clear()
     st.experimental_rerun()

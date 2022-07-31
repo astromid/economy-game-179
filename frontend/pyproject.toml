@@ -11,6 +11,7 @@ license = {text = "MIT License"}
 dependencies = [
     "httptools",
     "httpx",
+    "millify",
     "omegaconf",
     "pandas",
     "pydantic[dotenv]",
