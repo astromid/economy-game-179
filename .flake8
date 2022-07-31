@@ -1,7 +1,8 @@
 [flake8]
-max-complexity = 6
 inline-quotes = double
+max-complexity = 6
 max-line-length = 120
+max-line-complexity = 16
 extend-ignore = E203
 docstring_style=sphinx
 

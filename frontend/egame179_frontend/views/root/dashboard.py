@@ -1,7 +1,8 @@
 import streamlit as st
 
 
-def dashboard():
-    st.markdown("# Page 2 ❄️")
+def dashboard() -> None:
+    st.markdown("# Root dashboard ❄️")
+
     with st.sidebar:
-        st.markdown("DASH!")
+        st.markdown("Additional root sidebar content")

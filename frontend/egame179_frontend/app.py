@@ -1,8 +1,10 @@
 import streamlit as st
 from streamlit_option_menu import option_menu
 
-from egame179_frontend.views.base import get_root_views, get_user_views
+from egame179_frontend.api import _mock_player_state
 from egame179_frontend.views.login import login_form
+from egame179_frontend.views.root import ROOT_VIEWS
+from egame179_frontend.views.user import USER_VIEWS
 
 
 def init_state() -> None:
@@ -14,10 +16,11 @@ def init_state() -> None:
         case None:
             st.session_state.views = []
         case "root":
-            st.session_state.views = get_root_views()
+            st.session_state.views = ROOT_VIEWS
         case _:
-            st.session_state.views = get_user_views()
+            st.session_state.views = USER_VIEWS
     st.session_state.option2view = {view.menu_option: view.page_func for view in st.session_state.views}
+    st.session_state.player_state = _mock_player_state()
 
 
 def app() -> None:
