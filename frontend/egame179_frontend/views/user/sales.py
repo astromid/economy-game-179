@@ -5,8 +5,9 @@ def sales() -> None:
     st.markdown("## Система корпоративного управления CP/20.22")
     st.title("NoName Corporation")
     st.markdown("## Поставки")
+    # В форме поставки должны отображаться только те товары, которые есть в наличии
     with st.expander("Активные поставки"):
-        col1, col2, col3 = st.columns([1, 1, 5])
+        col1, col2, col3 = st.columns([1, 1, 3])
         with col1:
             st.text("Рынок 1")
             st.text("Рынок 2")

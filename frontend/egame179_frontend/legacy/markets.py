@@ -1,6 +1,4 @@
-import math
 from datetime import datetime
-from typing import Optional
 
 import altair as alt
 import numpy as np
@@ -12,23 +10,6 @@ from pyecharts.commons.utils import JsCode
 from qd_cyberpank_game.db import make_investment
 from qd_cyberpank_game.structures import InvestmentBid, ThemeColors
 from streamlit_echarts import st_pyecharts
-
-TOOLTIP_JS_CODE = "".join(
-    [
-        "function(params){",
-        "var bulletItem = (field, value) => ",
-        "'<p>' + params.marker + ' ' + field + ' ' + '<b>' + value + '</b></p>';",
-        "let tip = bulletItem('Инвестиции', params.data.amount_str);",
-        "tip += bulletItem('Прибыль', params.data.income_str);",
-        "tip += bulletItem('Множитель x', params.data.multiplier);",
-        "return tip;",
-        "}",
-    ],
-)
-
-
-def get_node_size_px(capacity, min_capacity) -> float:
-    return 30 * (math.log(capacity / min_capacity, 10) + 1)
 
 
 def get_node_color(investment: float, income: float) -> str:

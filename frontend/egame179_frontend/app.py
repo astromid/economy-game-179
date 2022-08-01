@@ -1,7 +1,8 @@
+import extra_streamlit_components as stx
 import streamlit as st
 from streamlit_option_menu import option_menu
 
-from egame179_frontend.api import _mock_player_state
+from egame179_frontend.api.mock import _mock_player_state
 from egame179_frontend.views.login import login_form
 from egame179_frontend.views.root import ROOT_VIEWS
 from egame179_frontend.views.user import USER_VIEWS
@@ -43,7 +44,6 @@ def app() -> None:
 
 
 if __name__ == "__main__":
+    st.set_page_config(page_title="CP / 20.22", layout="wide")
     init_state()
-    title_user = st.session_state.user or "Авторизация"
-    st.set_page_config(page_title=f"CP/20.22 // {title_user}", layout="wide")
     app()

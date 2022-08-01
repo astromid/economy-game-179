@@ -12,6 +12,7 @@ dependencies = [
     "httptools",
     "httpx",
     "millify",
+    "networkx",
     "omegaconf",
     "pandas",
     "pydantic[dotenv]",

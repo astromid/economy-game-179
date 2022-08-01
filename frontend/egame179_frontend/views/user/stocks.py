@@ -2,7 +2,7 @@ import altair as alt
 import pandas as pd
 import streamlit as st
 
-from egame179_frontend.api import PlayerState
+from egame179_frontend.api.states import PlayerState
 
 
 def stocks() -> None:

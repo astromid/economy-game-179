@@ -1,4 +1,5 @@
 import streamlit as st
+from millify import millify
 
 
 def overview() -> None:
@@ -9,7 +10,7 @@ def overview() -> None:
     with hcol1:
         st.metric(label="Цикл", value=state.cycle)
     with hcol2:
-        st.metric(label="Баланс", value=None)
+        st.metric(label="Баланс", value=millify(70000), delta=millify(-6500))
     with hcol3:
         st.markdown("Page 1 🎉")
 
