@@ -29,3 +29,13 @@ def _mock_player_state() -> PlayerState:
             },
         ),
     )
+
+
+def _mock_auth(login: str, password: str) -> str | None:
+    if login in {"root", "corp"} and password == "123":
+        return "AQIDBAUGBwgJCgsMDQ4PEA=="
+
+
+def _mock_check_token(token: str) -> bool:
+    if token == "AQIDBAUGBwgJCgsMDQ4PEA==":
+        return True
