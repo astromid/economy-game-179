@@ -3,7 +3,6 @@ from millify import millify
 
 
 def overview() -> None:
-    st.markdown("## Система корпоративного управления CP/20.22")
     st.title("NoName Corporation")
     state = st.session_state.player_state
     hcol1, hcol2, hcol3 = st.columns(3)

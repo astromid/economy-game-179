@@ -2,29 +2,27 @@ import altair as alt
 import pandas as pd
 import streamlit as st
 
-from egame179_frontend.api.states import PlayerState
-
 
 def stocks() -> None:
     """Stocks game view."""
-    st.markdown("## Система корпоративного управления CP/20.22")
     st.title("NoName Corporation")
     st.markdown("### Биржевые котировки")
-    state: PlayerState = st.session_state.player_state
-
+    stocks_df: pd.DataFrame = pd.DataFrame(st.session_state.player_state.stocks)
+    st.dataframe(stocks_df)
+    st.text(stocks_df.dtypes)
     col1, col2 = st.columns([2, 3])
     with col1:
         st.markdown(
             "<p style='text-align: center;'> Выгрузка с биржи </p>",
             unsafe_allow_html=True,
         )
-        st.dataframe(state.stocks.pivot(index="cycle", columns="ticket", values="price"))
+        st.dataframe(stocks_df.pivot(index="cycle", columns="ticket", values="price"))
     with col2:
         st.markdown(
             "<p style='text-align: center;'> График котировок акций </p>",
             unsafe_allow_html=True,
         )
-        st.altair_chart(_stocks_chart(state.stocks, cycle=3, width=500, height=450))
+        st.altair_chart(_stocks_chart(stocks_df, cycle=st.session_state.player_state.cycle, width=500, height=450))
 
 
 def _stocks_chart(df: pd.DataFrame, cycle: int, width: int, height: int) -> alt.Chart:  # noqa: WPS210

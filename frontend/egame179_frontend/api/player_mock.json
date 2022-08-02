@@ -1,0 +1,26 @@
+{
+    "cycle": 3,
+    "stocks": [
+        {"ticket": "SFT", "cycle": 0, "price": 0},
+        {"ticket": "SFT", "cycle": 1, "price": 0.1},
+        {"ticket": "SFT", "cycle": 2, "price": 0.2},
+        {"ticket": "SFT", "cycle": 3, "price": 0.3},
+
+        {"ticket": "AGX", "cycle": 0, "price": 0},
+        {"ticket": "AGX", "cycle": 1, "price": 0.25},
+        {"ticket": "AGX", "cycle": 2, "price": 0.33},
+        {"ticket": "AGX", "cycle": 3, "price": 0.12},
+
+        {"ticket": "GGC", "cycle": 0, "price": 0},
+        {"ticket": "GGC", "cycle": 1, "price": 0.55},
+        {"ticket": "GGC", "cycle": 2, "price": 0.27},
+        {"ticket": "GGC", "cycle": 3, "price": 0.42}
+    ],
+    "resources": {
+        "Пшеница": {"price": 12.6, "delta": 0.31},
+        "Солод": {"price": 11.2, "delta": -0.012},
+        "Железо": {"price": 6.1, "delta": 0.161},
+        "Золото": {"price": 0.5, "delta": -0.5},
+        "Камень": {"price": 0.9, "delta": 0.99}
+    }
+}

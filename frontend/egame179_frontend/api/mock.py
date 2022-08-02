@@ -1,41 +1,22 @@
-import pandas as pd
-import streamlit as st
+from pathlib import Path
 
-from egame179_frontend.api.states import PlayerState
+import streamlit as st
+import ujson
+
+from egame179_frontend.api.models import PlayerState
 
 
 @st.experimental_memo
-def _mock_player_state() -> PlayerState:
-    return PlayerState(
-        cycle=1,
-        stocks=pd.DataFrame(
-            {
-                "ticket": [
-                    "SFT",
-                    "AGX",
-                    "COR",
-                    "SFT",
-                    "AGX",
-                    "COR",
-                    "SFT",
-                    "AGX",
-                    "COR",
-                    "SFT",
-                    "AGX",
-                    "COR",
-                ],
-                "price": [0, 0, 1, 0.33, 0.66, 0.9, 0.35, 1.2, 0.9, 0.66, 0.33, 0],
-                "cycle": [0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3],
-            },
-        ),
-    )
+def mock_player_state() -> PlayerState:
+    json_string = Path("frontend/egame179_frontend/api/player_mock.json").read_text()
+    return PlayerState.parse_obj(ujson.loads(json_string))
 
 
-def _mock_auth(login: str, password: str) -> str | None:
-    if login in {"root", "corp"} and password == "123":
+def mock_auth(login: str, password: str) -> str | None:
+    if login == "corp" and password == "123":
         return "AQIDBAUGBwgJCgsMDQ4PEA=="
 
 
-def _mock_check_token(token: str) -> bool:
+def mock_check_token(token: str | None) -> str | None:
     if token == "AQIDBAUGBwgJCgsMDQ4PEA==":
-        return True
+        return "corp"

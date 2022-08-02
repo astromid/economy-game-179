@@ -1,13 +1,12 @@
 import streamlit as st
 
-from egame179_frontend.api.mock import _mock_auth
+from egame179_frontend.api.mock import mock_auth
 from egame179_frontend.views import View
 
 
 def login_callback() -> None:
-    user_token = _mock_auth(login=st.session_state.login, password=st.session_state.password)
-    if user_token is not None:
-        st.session_state.manager.set("user_token", user_token)
+    user_token = mock_auth(login=st.session_state.login, password=st.session_state.password)
+    st.session_state.cookie.set("user_token", user_token)
 
 
 def login_form() -> None:
@@ -17,7 +16,7 @@ def login_form() -> None:
         unsafe_allow_html=True,
     )
     st.markdown("<br>", unsafe_allow_html=True)
-    _, col, _ = st.columns([1, 1, 1])
+    _, col, _ = st.columns([1.5, 1, 1.5])
     with col:
         with st.form(key="login_form"):
             st.text("Corporate Portal [CP] v20.22")
@@ -30,15 +29,12 @@ def login_form() -> None:
         "<center>В случае проблем с авторизацией, обратитесь к корпоративному администратору</center>",
         unsafe_allow_html=True,
     )
-    st.write(st.session_state.manager.get_all())
 
 
 def logout() -> None:
     """Clear user session."""
-    st.session_state.user = None
-    st.session_state.manager.set("user_token", "invalid")
+    st.session_state.cookie.delete("user_token")
     st.experimental_memo.clear()
-    st.experimental_singleton.clear()
     st.experimental_rerun()
 
 
