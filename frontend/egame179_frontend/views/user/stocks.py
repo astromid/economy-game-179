@@ -5,11 +5,8 @@ import streamlit as st
 
 def stocks() -> None:
     """Stocks game view."""
-    st.title("NoName Corporation")
     st.markdown("### Биржевые котировки")
-    stocks_df: pd.DataFrame = pd.DataFrame(st.session_state.player_state.stocks)
-    st.dataframe(stocks_df)
-    st.text(stocks_df.dtypes)
+    stocks_df = pd.DataFrame([record.dict() for record in st.session_state.game_state.stocks])
     col1, col2 = st.columns([2, 3])
     with col1:
         st.markdown(
@@ -22,15 +19,15 @@ def stocks() -> None:
             "<p style='text-align: center;'> График котировок акций </p>",
             unsafe_allow_html=True,
         )
-        st.altair_chart(_stocks_chart(stocks_df, cycle=st.session_state.player_state.cycle, width=500, height=450))
+        st.altair_chart(_stocks_chart(stocks_df, cycle=st.session_state.game_state.cycle, width=500, height=450))
 
 
 def _stocks_chart(df: pd.DataFrame, cycle: int, width: int, height: int) -> alt.Chart:  # noqa: WPS210
     chart = alt.Chart(df)
-    alt_x = alt.X("cycle:Q", scale=alt.Scale(domain=(0, cycle + 0.1)))
+    alt_x = alt.X("cycle:Q", scale=alt.Scale(domain=(0, cycle + 0.05)))
     alt_y = alt.Y(
         "price:Q",
-        scale=alt.Scale(domain=(0, df["price"].max() + 0.1)),
+        scale=alt.Scale(domain=(0, df["price"].max() + 0.05)),
     )
 
     alt_line = chart.mark_line(point=True)  # type: ignore

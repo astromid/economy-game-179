@@ -18,7 +18,6 @@ TOOLTIP_JS_CODE = "".join(
 
 
 def markets() -> None:
-    st.title("NoName Corporation")
     st.markdown("## Граф рынков")
 
     with st.expander("Статус отдельных рынков"):

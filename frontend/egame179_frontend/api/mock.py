@@ -13,10 +13,10 @@ def mock_player_state() -> PlayerState:
 
 
 def mock_auth(login: str, password: str) -> str | None:
-    if login == "corp" and password == "123":
-        return "AQIDBAUGBwgJCgsMDQ4PEA=="
-
-
-def mock_check_token(token: str | None) -> str | None:
-    if token == "AQIDBAUGBwgJCgsMDQ4PEA==":
-        return "corp"
+    auth_user: str | None = None
+    match (login, password):
+        case ("root", "root"):
+            auth_user = "root"
+        case ("corp", "123"):
+            auth_user = "corp"
+    return auth_user

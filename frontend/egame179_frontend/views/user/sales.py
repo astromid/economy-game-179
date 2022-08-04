@@ -2,7 +2,6 @@ import streamlit as st
 
 
 def sales() -> None:
-    st.title("NoName Corporation")
     st.markdown("## Поставки")
     # В форме поставки должны отображаться только те товары, которые есть в наличии
     with st.expander("Активные поставки"):

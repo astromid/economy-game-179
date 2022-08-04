@@ -5,8 +5,8 @@ from egame179_frontend.views import View
 
 
 def login_callback() -> None:
-    user_token = mock_auth(login=st.session_state.login, password=st.session_state.password)
-    st.session_state.cookie.set("user_token", user_token)
+    """Login callback, using backend for auth."""
+    st.session_state.user = mock_auth(login=st.session_state.login, password=st.session_state.password)
 
 
 def login_form() -> None:
@@ -23,7 +23,7 @@ def login_form() -> None:
             st.text_input("Логин:", key="login")
             st.text_input("Пароль:", type="password", key="password")
             if st.form_submit_button("Войти", on_click=login_callback):
-                if not st.session_state.user:
+                if st.session_state.user is None:
                     st.error("Неверный логин или пароль")
     st.markdown(
         "<center>В случае проблем с авторизацией, обратитесь к корпоративному администратору</center>",
@@ -33,7 +33,7 @@ def login_form() -> None:
 
 def logout() -> None:
     """Clear user session."""
-    st.session_state.cookie.delete("user_token")
+    st.session_state.user = None
     st.experimental_memo.clear()
     st.experimental_rerun()
 
