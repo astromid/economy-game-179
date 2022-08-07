@@ -2,30 +2,32 @@
 from pydantic import BaseModel
 
 
-class StockRecord(BaseModel):
-    """Stock record."""
+class MarketStatus(BaseModel):
+    """Market status (shared state)."""
 
-    ticket: str
-    cycle: int
-    price: float
+    buy: list[float]
+    sell: list[float]
+    top: dict[str, float | None]
 
 
-class SharedState(BaseModel):
+class GameState(BaseModel):
     """Shared state of the game."""
 
     cycle: int
-    stocks: list[StockRecord]
-    resources: dict[str, dict[str, float]]
+    player_stocks: dict[str, list[float]]
+    npc_stocks: dict[str, list[float]]
+    markets: dict[str, MarketStatus]
 
 
-class PlayerState(SharedState):
+class PlayerState(GameState):
     """Game state from current player POV."""
 
-    balance: float
-    balance_delta: float
+    balance: list[float]
+    theta: dict[str, float]
+    storage: dict[str, float]
 
 
-class GameState(SharedState):
+class MasterState(GameState):
     """Game state from the game master POV."""
 
     pass

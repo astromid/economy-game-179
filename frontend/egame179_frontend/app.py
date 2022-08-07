@@ -37,6 +37,8 @@ def app() -> None:
                 menu_icon="cast",
                 default_index=0,
             )
+        # TODO: Увеличить производительность за счет кэширования создания кастомных структур
+        # и расчетов под каждую страницу, разбить view_func на кешируемую и визуальную часть
         view_func = st.session_state.option2view[selected_option]
         view_func()
     else:
