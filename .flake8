@@ -23,6 +23,7 @@ ignore =
   WPS326,
   ; Found `__init__.py` module with logic
   WPS412,
+  WPS226,
 
 per-file-ignores =
   ; all tests

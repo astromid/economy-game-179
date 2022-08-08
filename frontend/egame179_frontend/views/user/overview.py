@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from types import MappingProxyType
 
 import pandas as pd
 import streamlit as st
@@ -7,6 +8,8 @@ from millify import millify
 from egame179_frontend.api.models import PlayerState
 from egame179_frontend.visualization import cycles_history_chart
 
+CHART_SIZE = MappingProxyType({"width": 1000, "height": 600})
+
 
 @dataclass
 class _ViewState:
@@ -14,7 +17,6 @@ class _ViewState:
     balance: str
     balance_delta: str | None
     balance_df: pd.DataFrame
-    max_balance: float
 
 
 def overview() -> None:
@@ -43,7 +45,6 @@ def _cache_view_data(
         balance=millify(balance),
         balance_delta=balance_delta,
         balance_df=balance_df,
-        max_balance=max(balance_history),
     )
 
 
@@ -63,10 +64,7 @@ def _render_view(state: _ViewState) -> None:
             x_shorthand="cycle:Q",
             y_shorthand="balance:Q",
             color_shorthand=None,
-            max_x=state.cycle,
-            max_y=state.max_balance,
-            width=1000,
-            height=600,
+            chart_size=CHART_SIZE,  # type: ignore
         ),
     )
 

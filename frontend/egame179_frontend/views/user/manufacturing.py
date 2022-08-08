@@ -1,6 +1,7 @@
+from dataclasses import dataclass
 from itertools import chain
-from os import stat
 
+import pandas as pd
 import streamlit as st
 
 from egame179_frontend.api.models import PlayerState
@@ -8,8 +9,32 @@ from egame179_frontend.api.models import PlayerState
 MAX_MARKETS_IN_ROW = 5
 
 
+@dataclass
+class _BuyMarketStatus:
+    buy_price: str
+    buy_price_delta: str | None
+    buy_history: list[float]
+
+
+@dataclass
+class _ViewState:
+    cycle: int
+    markets: dict[str, _BuyMarketStatus]
+    markets_df: pd.DataFrame
+
+
 def manufacturing() -> None:
     state: PlayerState = st.session_state.game_state
+    view_state = _cache_view_data()
+    _render_view(view_state)
+
+
+@st.experimental_memo
+def _cache_view_data() -> _ViewState:
+    return _ViewState()
+
+
+def _render_view(state: _ViewState) -> None:
     markets = state.markets
 
     n_rows = len(markets) // MAX_MARKETS_IN_ROW + 1
@@ -35,7 +60,3 @@ def manufacturing() -> None:
 
         st.text(f"Цена производства: {total_price}, остаток баланса: {rest_balance}")
         st.form_submit_button("Отправить на производство", on_click=manufacturing_callback)
-
-
-def manufacturing_callback():
-    pass

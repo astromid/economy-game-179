@@ -1,4 +1,4 @@
-"""Connector with the backend API."""
+"""Input JSON models with game state from backend."""
 from pydantic import BaseModel
 
 
@@ -30,4 +30,4 @@ class PlayerState(GameState):
 class MasterState(GameState):
     """Game state from the game master POV."""
 
-    pass
+    god_mode: bool = True

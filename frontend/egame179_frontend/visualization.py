@@ -1,24 +1,41 @@
 import altair as alt
 import pandas as pd
 
+Y_MAX_SCALE = 1.05
 
-def cycles_history_chart(
+
+def cycles_history_chart(  # noqa: WPS210
     df: pd.DataFrame,
     x_shorthand: str,
     y_shorthand: str,
     color_shorthand: str | None,
-    max_x: int,
-    max_y: float,
-    width: int,
-    height: int,
+    chart_size: dict[str, int],
 ) -> alt.Chart:
+    """Line chart with relation between value and cycles.
+
+    Args:
+        df (pd.DataFrame): Dataframe with data in record format (after .melt()).
+        x_shorthand (str): altair X shorthand.
+        y_shorthand (str): altair Y shorthand.
+        color_shorthand (str | None): shorthand for color differentiating column.
+        chart_size (dict[str, int]): chart size in pixels (width, height).
+
+    Returns:
+        alt.Chart: rendered altair chart with interactivity.
+    """
+    x_field = x_shorthand.split(":")[0]
+    y_field = y_shorthand.split(":")[0]
+
     chart = alt.Chart(df)  # type: ignore
     alt_x = alt.X(
         x_shorthand,  # type: ignore
-        scale=alt.Scale(domain=(0, max_x)),  # type: ignore
+        scale=alt.Scale(domain=(0, df[x_field].max())),  # type: ignore
         axis=alt.Axis(tickMinStep=1),  # type: ignore
     )
-    alt_y = alt.Y(y_shorthand, scale=alt.Scale(domain=(0, 1.05 * max_y)))  # type: ignore
+    alt_y = alt.Y(
+        y_shorthand,  # type: ignore
+        scale=alt.Scale(domain=(0, Y_MAX_SCALE * df[y_field].max())),  # type: ignore
+    )
 
     alt_line = chart.mark_line(point=True)  # type: ignore
     if color_shorthand is None:
@@ -30,7 +47,7 @@ def cycles_history_chart(
         type="single",  # type: ignore
         nearest=True,
         on="mouseover",
-        fields=[x_shorthand.split(":")[0]],
+        fields=[x_field],
         empty="none",
     )
     selectors = chart.mark_point().encode(x=x_shorthand, opacity=alt.value(0))
@@ -49,4 +66,4 @@ def cycles_history_chart(
 
     rules = chart.mark_rule(color="gray").encode(x=x_shorthand).transform_filter(nearest)  # type: ignore
     layer = alt.layer(alt_line, selectors, points, rules, text)
-    return layer.properties(width=width, height=height).interactive()
+    return layer.properties(**chart_size).interactive()

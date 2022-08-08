@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from types import MappingProxyType
 
 import pandas as pd
 import streamlit as st
@@ -6,14 +7,17 @@ import streamlit as st
 from egame179_frontend.api.models import PlayerState
 from egame179_frontend.visualization import cycles_history_chart
 
+X_AXIS = "cycle"
+Y_AXIS = "price"
+C_AXIS = "ticket"
+CHART_SIZE = MappingProxyType({"width": 1000, "height": 600})
+
 
 @dataclass
 class _ViewState:
     cycle: int
     player_stocks_df: pd.DataFrame
     npc_stocks_df: pd.DataFrame
-    max_player_stock: float
-    max_npc_stock: float
 
 
 def stocks() -> None:
@@ -33,16 +37,17 @@ def _cache_view_data(
     npc_stocks: dict[str, list[float]],
 ) -> _ViewState:
     player_stocks_df = pd.DataFrame(player_stocks)
-    player_stocks_df["cycle"] = player_stocks_df.index
+    player_stocks_df[X_AXIS] = player_stocks_df.index
+    player_stocks_df = player_stocks_df.melt(id_vars=X_AXIS, var_name=C_AXIS, value_name=Y_AXIS)
 
     npc_stocks_df = pd.DataFrame(npc_stocks)
-    npc_stocks_df["cycle"] = npc_stocks_df.index
+    npc_stocks_df[X_AXIS] = npc_stocks_df.index
+    npc_stocks_df = npc_stocks_df.melt(id_vars=X_AXIS, var_name=C_AXIS, value_name=Y_AXIS)
+
     return _ViewState(
         cycle=cycle,
-        player_stocks_df=player_stocks_df.melt(id_vars="cycle", var_name="ticket", value_name="price"),
-        npc_stocks_df=npc_stocks_df.melt(id_vars="cycle", var_name="ticket", value_name="price"),
-        max_player_stock=player_stocks_df.drop("cycle", axis=1).max(),
-        max_npc_stock=npc_stocks_df.drop("cycle", axis=1).max(),
+        player_stocks_df=player_stocks_df,
+        npc_stocks_df=npc_stocks_df,
     )
 
 
@@ -55,13 +60,10 @@ def _render_view(state: _ViewState) -> None:
     st.altair_chart(
         cycles_history_chart(
             state.player_stocks_df,
-            x_shorthand="cycle:Q",
-            y_shorthand="price:Q",
-            color_shorthand=None,
-            max_x=state.cycle,
-            max_y=state.max_player_stock,
-            width=1000,
-            height=600,
+            x_shorthand=f"{X_AXIS}:Q",
+            y_shorthand=f"{Y_AXIS}:Q",
+            color_shorthand=f"{C_AXIS}:N",
+            chart_size=CHART_SIZE,  # type: ignore
         ),
     )
 
@@ -72,12 +74,9 @@ def _render_view(state: _ViewState) -> None:
     st.altair_chart(
         cycles_history_chart(
             state.npc_stocks_df,
-            x_shorthand="cycle:Q",
-            y_shorthand="price:Q",
-            color_shorthand=None,
-            max_x=state.cycle,
-            max_y=state.max_player_stock,
-            width=1000,
-            height=600,
+            x_shorthand=f"{X_AXIS}:Q",
+            y_shorthand=f"{Y_AXIS}:Q",
+            color_shorthand=f"{C_AXIS}:N",
+            chart_size=CHART_SIZE,  # type: ignore
         ),
     )
