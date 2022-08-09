@@ -1,10 +1,11 @@
 import altair as alt
 import pandas as pd
+import pyecharts
 
 Y_MAX_SCALE = 1.05
 
 
-def cycles_history_chart(  # noqa: WPS210
+def stocks_chart(  # noqa: WPS210
     df: pd.DataFrame,
     x_shorthand: str,
     y_shorthand: str,
@@ -29,7 +30,7 @@ def cycles_history_chart(  # noqa: WPS210
     chart = alt.Chart(df)  # type: ignore
     alt_x = alt.X(
         x_shorthand,  # type: ignore
-        scale=alt.Scale(domain=(0, df[x_field].max())),  # type: ignore
+        scale=alt.Scale(domain=(0, df[x_field].max() + 1)),  # type: ignore
         axis=alt.Axis(tickMinStep=1),  # type: ignore
     )
     alt_y = alt.Y(
@@ -67,3 +68,19 @@ def cycles_history_chart(  # noqa: WPS210
     rules = chart.mark_rule(color="gray").encode(x=x_shorthand).transform_filter(nearest)  # type: ignore
     layer = alt.layer(alt_line, selectors, points, rules, text)
     return layer.properties(**chart_size).interactive()
+
+
+def barchart(x_values: list[int], y_values: list[float], name: str) -> pyecharts.charts.Bar:
+    """Bar chart with relation between value and cycles.
+
+    Args:
+        x_values (list[int]): X values.
+        y_values (list[float]): Y values.
+
+    Returns:
+        pyecharts.Bar: pyecharts bar chart.
+    """
+    bar_chart = pyecharts.charts.Bar()
+    bar_chart.add_xaxis(x_values)
+    bar_chart.add_yaxis(name, y_values)
+    return bar_chart

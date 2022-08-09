@@ -14,6 +14,7 @@ class _BuyMarketStatus:
     buy_price: str
     buy_price_delta: str | None
     buy_history: list[float]
+    theta: float
 
 
 @dataclass
@@ -25,13 +26,26 @@ class _ViewState:
 
 def manufacturing() -> None:
     state: PlayerState = st.session_state.game_state
-    view_state = _cache_view_data()
+    view_state = _cache_view_data(
+        cycle=state.cycle,
+        markets_buy=state.markets_buy,
+        markets_sell=state.markets_sell,
+        markets_top=state.markets_top,
+    )
     _render_view(view_state)
 
 
 @st.experimental_memo
-def _cache_view_data() -> _ViewState:
-    return _ViewState()
+def _cache_view_data(
+    cycle: int,
+    markets_buy: dict[str, list[float]],
+    markets_sell: dict[str, list[float]],
+    markets_top: dict[str, dict[str, float | None]],
+) -> _ViewState:
+
+    return _ViewState(
+        cycle=cycle,
+    )
 
 
 def _render_view(state: _ViewState) -> None:

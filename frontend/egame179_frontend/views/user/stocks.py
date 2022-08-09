@@ -5,7 +5,7 @@ import pandas as pd
 import streamlit as st
 
 from egame179_frontend.api.models import PlayerState
-from egame179_frontend.visualization import cycles_history_chart
+from egame179_frontend.visualization import stocks_chart
 
 X_AXIS = "cycle"
 Y_AXIS = "price"
@@ -58,7 +58,7 @@ def _render_view(state: _ViewState) -> None:
         unsafe_allow_html=True,
     )
     st.altair_chart(
-        cycles_history_chart(
+        stocks_chart(
             state.player_stocks_df,
             x_shorthand=f"{X_AXIS}:Q",
             y_shorthand=f"{Y_AXIS}:Q",
@@ -72,7 +72,7 @@ def _render_view(state: _ViewState) -> None:
         unsafe_allow_html=True,
     )
     st.altair_chart(
-        cycles_history_chart(
+        stocks_chart(
             state.npc_stocks_df,
             x_shorthand=f"{X_AXIS}:Q",
             y_shorthand=f"{Y_AXIS}:Q",

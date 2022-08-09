@@ -2,21 +2,15 @@
 from pydantic import BaseModel
 
 
-class MarketStatus(BaseModel):
-    """Market status (shared state)."""
-
-    buy: list[float]
-    sell: list[float]
-    top: dict[str, float | None]
-
-
 class GameState(BaseModel):
     """Shared state of the game."""
 
     cycle: int
     player_stocks: dict[str, list[float]]
     npc_stocks: dict[str, list[float]]
-    markets: dict[str, MarketStatus]
+    markets_buy: dict[str, list[float]]
+    markets_sell: dict[str, list[float]]
+    markets_top: dict[str, dict[str, float | None]]
 
 
 class PlayerState(GameState):
@@ -31,3 +25,4 @@ class MasterState(GameState):
     """Game state from the game master POV."""
 
     god_mode: bool = True
+    players: dict[str, PlayerState]

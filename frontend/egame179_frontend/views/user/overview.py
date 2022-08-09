@@ -1,14 +1,14 @@
 from dataclasses import dataclass
 from types import MappingProxyType
 
-import pandas as pd
 import streamlit as st
 from millify import millify
+from streamlit_echarts import st_pyecharts
 
 from egame179_frontend.api.models import PlayerState
-from egame179_frontend.visualization import cycles_history_chart
+from egame179_frontend.visualization import barchart
 
-CHART_SIZE = MappingProxyType({"width": 1000, "height": 600})
+CHART_SIZE = MappingProxyType({"width": 768, "height": 480})
 
 
 @dataclass
@@ -16,10 +16,11 @@ class _ViewState:
     cycle: int
     balance: str
     balance_delta: str | None
-    balance_df: pd.DataFrame
+    balance_history: list[float]
 
 
 def overview() -> None:
+    """Entry point for the overview page."""
     state: PlayerState = st.session_state.game_state
     view_state = _cache_view_data(
         cycle=state.cycle,
@@ -38,13 +39,11 @@ def _cache_view_data(
     balance_history: list[float],
 ) -> _ViewState:
     balance_delta = millify(balance - balance_prev) if balance_prev is not None else None
-    balance_df = pd.DataFrame({"balance": balance_history})
-    balance_df["cycle"] = balance_df.index
     return _ViewState(
         cycle=cycle,
         balance=millify(balance),
         balance_delta=balance_delta,
-        balance_df=balance_df,
+        balance_history=balance_history,
     )
 
 
@@ -55,18 +54,13 @@ def _render_view(state: _ViewState) -> None:
     with hcol2:
         st.metric(label="Баланс", value=state.balance, delta=state.balance_delta)
     with hcol3:
-        st.markdown("Page 1 🎉")
+        if st.button("Обновить данные"):
+            st.experimental_rerun()
 
-    st.markdown("### История баланса")
-    st.altair_chart(
-        cycles_history_chart(
-            state.balance_df,
-            x_shorthand="cycle:Q",
-            y_shorthand="balance:Q",
-            color_shorthand=None,
-            chart_size=CHART_SIZE,  # type: ignore
+    st_pyecharts(
+        barchart(
+            x_values=list(range(state.cycle)),
+            y_values=state.balance_history,
+            name="Баланс",
         ),
     )
-
-    with st.sidebar:
-        st.markdown("Additional sidebar content")
