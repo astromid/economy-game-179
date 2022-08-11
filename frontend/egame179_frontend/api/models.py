@@ -17,7 +17,7 @@ class PlayerState(GameState):
     """Game state from current player POV."""
 
     balance: list[float]
-    theta: dict[str, float]
+    thetas: dict[str, float]
     storage: dict[str, float]
 
 

@@ -13,13 +13,6 @@ C_AXIS = "ticket"
 CHART_SIZE = MappingProxyType({"width": 1000, "height": 600})
 
 
-@dataclass
-class _ViewState:
-    cycle: int
-    player_stocks_df: pd.DataFrame
-    npc_stocks_df: pd.DataFrame
-
-
 def stocks() -> None:
     state: PlayerState = st.session_state.game_state
     view_state = _cache_view_data(
@@ -28,6 +21,13 @@ def stocks() -> None:
         npc_stocks=state.npc_stocks,
     )
     _render_view(view_state)
+
+
+@dataclass
+class _ViewState:
+    cycle: int
+    player_stocks_df: pd.DataFrame
+    npc_stocks_df: pd.DataFrame
 
 
 @st.experimental_memo

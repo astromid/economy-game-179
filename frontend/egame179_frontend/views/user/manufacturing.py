@@ -1,76 +1,90 @@
 from dataclasses import dataclass
 from itertools import chain
+from math import ceil
 
-import pandas as pd
 import streamlit as st
+from millify import millify
 
 from egame179_frontend.api.models import PlayerState
 
 MAX_MARKETS_IN_ROW = 5
 
 
+def manufacturing() -> None:
+    """Entry point for manufacturing view."""
+    state: PlayerState = st.session_state.game_state
+    view_state = _cache_view_data(
+        cycle=state.cycle,
+        balance=state.balance[-1],
+        markets_buy=state.markets_buy,
+        thetas=state.thetas,
+    )
+    _render_view(view_state)
+
+
 @dataclass
 class _BuyMarketStatus:
-    buy_price: str
-    buy_price_delta: str | None
-    buy_history: list[float]
+    price: str
+    price_delta_pct: str | None
+    price_history: list[float]
     theta: float
 
 
 @dataclass
 class _ViewState:
     cycle: int
+    balance: float
     markets: dict[str, _BuyMarketStatus]
-    markets_df: pd.DataFrame
-
-
-def manufacturing() -> None:
-    state: PlayerState = st.session_state.game_state
-    view_state = _cache_view_data(
-        cycle=state.cycle,
-        markets_buy=state.markets_buy,
-        markets_sell=state.markets_sell,
-        markets_top=state.markets_top,
-    )
-    _render_view(view_state)
 
 
 @st.experimental_memo
 def _cache_view_data(
     cycle: int,
+    balance: float,
     markets_buy: dict[str, list[float]],
-    markets_sell: dict[str, list[float]],
-    markets_top: dict[str, dict[str, float | None]],
+    thetas: dict[str, float],
 ) -> _ViewState:
-
-    return _ViewState(
-        cycle=cycle,
-    )
+    markets: dict[str, _BuyMarketStatus] = {}
+    for market, prices in markets_buy.items():
+        price_delta_pct = None
+        if cycle > 1:
+            *_, price_prev, price = prices
+            price_delta_pct = (price - price_prev) / price_prev
+        markets[market] = _BuyMarketStatus(
+            price=millify(prices[-1]),
+            price_delta_pct=f"{price_delta_pct:.2%}" if price_delta_pct is not None else None,
+            price_history=prices,
+            theta=thetas[market],
+        )
+    return _ViewState(cycle=cycle, balance=balance, markets=markets)
 
 
 def _render_view(state: _ViewState) -> None:
     markets = state.markets
-
-    n_rows = len(markets) // MAX_MARKETS_IN_ROW + 1
-    if len(resources) % MAX_MARKETS_IN_ROW:
-        n_rows -= 1
+    n_rows = ceil(len(markets) / MAX_MARKETS_IN_ROW)
 
     st.markdown("## Производство")
     columns = chain(*[st.columns(MAX_MARKETS_IN_ROW) for _ in range(n_rows)])
-    for col, res in zip(columns, resources):
+    for col, (market, market_status) in zip(columns, markets.items()):
         with col:
             st.metric(
-                label=res,
-                value=resources[res]["price"],
-                delta=f"{resources[res]['delta']:.2%}",
+                label=market,
+                value=market_status.price,
+                delta=market_status.price_delta_pct,
             )
 
     with st.form("manufacturing_form"):
-        market = st.selectbox("Целевой рынок", list(st.session_state.game_state.resources.keys()))
-        volume = st.slider("Количество товаров", min_value=0, max_value=100)
+        chosen_market: str = st.selectbox("Целевой рынок", list(markets.keys()))
+        real_price = (1 - markets[chosen_market].theta) * markets[chosen_market].price_history[-1]
+        max_volume = int(state.balance // real_price)
+        volume: int = st.slider("Количество товаров", min_value=0, max_value=max_volume)  # type: ignore
 
-        total_price = st.session_state.game_state.resources[market]["price"] * volume
-        rest_balance = st.session_state.game_state.balance - total_price
+        expense = volume * real_price
+        rest_balance = state.balance - expense
 
-        st.text(f"Цена производства: {total_price}, остаток баланса: {rest_balance}")
-        st.form_submit_button("Отправить на производство", on_click=manufacturing_callback)
+        st.text(f"Расходы: {expense}, остаток баланса: {rest_balance}")
+        st.form_submit_button("Отправить на производство", on_click=_manufacturing_callback)
+
+
+def _manufacturing_callback() -> None:
+    st.write("Отправляем на производство...")

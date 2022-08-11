@@ -11,6 +11,13 @@ from egame179_frontend.visualization import barchart
 CHART_SIZE = MappingProxyType({"width": 768, "height": 480})
 
 
+def overview() -> None:
+    """Entry point for the overview page."""
+    state: PlayerState = st.session_state.game_state
+    view_state = _cache_view_data(cycle=state.cycle, balance_history=state.balance)
+    _render_view(view_state)
+
+
 @dataclass
 class _ViewState:
     cycle: int
@@ -19,30 +26,16 @@ class _ViewState:
     balance_history: list[float]
 
 
-def overview() -> None:
-    """Entry point for the overview page."""
-    state: PlayerState = st.session_state.game_state
-    view_state = _cache_view_data(
-        cycle=state.cycle,
-        balance=state.balance[-1],
-        balance_prev=state.balance[-2] if len(state.balance) > 2 else None,
-        balance_history=state.balance,
-    )
-    _render_view(view_state)
-
-
 @st.experimental_memo
-def _cache_view_data(
-    cycle: int,
-    balance: float,
-    balance_prev: float | None,
-    balance_history: list[float],
-) -> _ViewState:
-    balance_delta = millify(balance - balance_prev) if balance_prev is not None else None
+def _cache_view_data(cycle: int, balance_history: list[float]) -> _ViewState:
+    balance_delta = None
+    if cycle > 1:
+        *_, balance_prev, balance = balance_history
+        balance_delta = balance - balance_prev
     return _ViewState(
         cycle=cycle,
-        balance=millify(balance),
-        balance_delta=balance_delta,
+        balance=millify(balance_history[-1]),
+        balance_delta=millify(balance_delta) if balance_delta is not None else None,
         balance_history=balance_history,
     )
 
