@@ -24,7 +24,7 @@ def login_form() -> None:
             st.text_input("Пароль:", type="password", key="password")
             if st.form_submit_button("Войти", on_click=login_callback):
                 if st.session_state.user is None:
-                    st.error("Неверный логин или пароль")
+                    st.error("Неверный логин или пароль", icon="🚨")
     st.markdown(
         "<center>В случае проблем с авторизацией, обратитесь к корпоративному администратору</center>",
         unsafe_allow_html=True,
@@ -34,7 +34,7 @@ def login_form() -> None:
 def logout() -> None:
     """Clear user session."""
     st.session_state.user = None
-    st.experimental_memo.clear()
+    st.experimental_memo.clear()  # type: ignore
     st.experimental_rerun()
 
 

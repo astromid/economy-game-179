@@ -1,11 +1,13 @@
 import altair as alt
 import pandas as pd
 import pyecharts
+from pyecharts import options as opts
 
 Y_MAX_SCALE = 1.05
+MAX_THETA = 0.33
 
 
-def stocks_chart(  # noqa: WPS210
+def stocks_chart(
     df: pd.DataFrame,
     x_shorthand: str,
     y_shorthand: str,
@@ -30,7 +32,7 @@ def stocks_chart(  # noqa: WPS210
     chart = alt.Chart(df)  # type: ignore
     alt_x = alt.X(
         x_shorthand,  # type: ignore
-        scale=alt.Scale(domain=(0, df[x_field].max() + 1)),  # type: ignore
+        scale=alt.Scale(domain=(1, df[x_field].max() + 1)),  # type: ignore
         axis=alt.Axis(tickMinStep=1),  # type: ignore
     )
     alt_y = alt.Y(
@@ -51,36 +53,35 @@ def stocks_chart(  # noqa: WPS210
         fields=[x_field],
         empty="none",
     )
-    selectors = chart.mark_point().encode(x=x_shorthand, opacity=alt.value(0))
-    selectors = selectors.add_selection(nearest)
-
-    points = alt_line.mark_point().encode(
-        opacity=alt.condition(
-            predicate=nearest,
-            if_true=alt.value(1),
-            if_false=alt.value(0),
+    layer = alt.layer(
+        alt_line,
+        chart.mark_point().encode(x=x_shorthand, opacity=alt.value(0)).add_selection(nearest),  # selectors
+        alt_line.mark_point().encode(  # points
+            opacity=alt.condition(
+                predicate=nearest,
+                if_true=alt.value(1),
+                if_false=alt.value(0),
+            ),
+        ),
+        chart.mark_rule(color="gray").encode(x=x_shorthand).transform_filter(nearest),  # type: ignore # rules
+        alt_line.mark_text(align="left", dx=5, dy=-5).encode(  # text
+            text=alt.condition(nearest, y_shorthand, alt.value(" ")),
         ),
     )
-
-    text = alt_line.mark_text(align="left", dx=5, dy=-5)
-    text = text.encode(text=alt.condition(nearest, y_shorthand, alt.value(" ")))
-
-    rules = chart.mark_rule(color="gray").encode(x=x_shorthand).transform_filter(nearest)  # type: ignore
-    layer = alt.layer(alt_line, selectors, points, rules, text)
     return layer.properties(**chart_size).interactive()
 
 
-def barchart(x_values: list[int], y_values: list[float], name: str) -> pyecharts.charts.Bar:
-    """Bar chart with relation between value and cycles.
+def radar_chart(thetas: dict[str, float]) -> pyecharts.charts.Radar:
+    """Radar chart for theta visualization.
 
     Args:
-        x_values (list[int]): X values.
-        y_values (list[float]): Y values.
+        thetas (dict[str, float]): _description_
 
     Returns:
-        pyecharts.Bar: pyecharts bar chart.
+        pyecharts.charts.Radar: _description_
     """
-    bar_chart = pyecharts.charts.Bar()
-    bar_chart.add_xaxis(x_values)
-    bar_chart.add_yaxis(name, y_values)
-    return bar_chart
+    radar = pyecharts.charts.Radar()
+    indicators = [opts.RadarIndicatorItem(name=market, max_=MAX_THETA) for market in thetas]
+    radar.add_schema(schema=indicators)
+    radar.add("", data=[{"name": "theta", "value": list(thetas.values())}])
+    return radar

@@ -3,10 +3,8 @@ from types import MappingProxyType
 
 import streamlit as st
 from millify import millify
-from streamlit_echarts import st_pyecharts
 
 from egame179_frontend.api.models import PlayerState
-from egame179_frontend.visualization import barchart
 
 CHART_SIZE = MappingProxyType({"width": 768, "height": 480})
 
@@ -26,7 +24,7 @@ class _ViewState:
     balance_history: list[float]
 
 
-@st.experimental_memo
+@st.experimental_memo  # type: ignore
 def _cache_view_data(cycle: int, balance_history: list[float]) -> _ViewState:
     balance_delta = None
     if cycle > 1:
@@ -34,26 +32,28 @@ def _cache_view_data(cycle: int, balance_history: list[float]) -> _ViewState:
         balance_delta = balance - balance_prev
     return _ViewState(
         cycle=cycle,
-        balance=millify(balance_history[-1]),
-        balance_delta=millify(balance_delta) if balance_delta is not None else None,
+        balance=millify(balance_history[-1], precision=3),
+        balance_delta=millify(balance_delta, precision=3) if balance_delta is not None else None,
         balance_history=balance_history,
     )
 
 
 def _render_view(state: _ViewState) -> None:
-    hcol1, hcol2, hcol3 = st.columns(3)
+    hcol1, hcol2, hcol3, *_ = st.columns(5)
     with hcol1:
         st.metric(label="Цикл", value=state.cycle)
     with hcol2:
         st.metric(label="Баланс", value=state.balance, delta=state.balance_delta)
     with hcol3:
         if st.button("Обновить данные"):
+            st.experimental_memo.clear()  # type: ignore
             st.experimental_rerun()
 
-    st_pyecharts(
-        barchart(
-            x_values=list(range(state.cycle)),
-            y_values=state.balance_history,
-            name="Баланс",
-        ),
-    )
+    st.markdown("### История баланса корпорации")
+    bcol1, _ = st.columns(2)
+    with bcol1:
+        st.bar_chart(
+            data={"cycle": list(range(1, state.cycle + 1)), "balance": state.balance_history},
+            x="cycle",
+            y="balance",
+        )

@@ -14,6 +14,7 @@ CHART_SIZE = MappingProxyType({"width": 1000, "height": 600})
 
 
 def stocks() -> None:
+    """Entry point for stocks view."""
     state: PlayerState = st.session_state.game_state
     view_state = _cache_view_data(
         cycle=state.cycle,
@@ -30,33 +31,27 @@ class _ViewState:
     npc_stocks_df: pd.DataFrame
 
 
-@st.experimental_memo
+@st.experimental_memo  # type: ignore
 def _cache_view_data(
     cycle: int,
     player_stocks: dict[str, list[float]],
     npc_stocks: dict[str, list[float]],
 ) -> _ViewState:
     player_stocks_df = pd.DataFrame(player_stocks)
-    player_stocks_df[X_AXIS] = player_stocks_df.index
-    player_stocks_df = player_stocks_df.melt(id_vars=X_AXIS, var_name=C_AXIS, value_name=Y_AXIS)
+    player_stocks_df[X_AXIS] = player_stocks_df.index + 1
 
     npc_stocks_df = pd.DataFrame(npc_stocks)
-    npc_stocks_df[X_AXIS] = npc_stocks_df.index
-    npc_stocks_df = npc_stocks_df.melt(id_vars=X_AXIS, var_name=C_AXIS, value_name=Y_AXIS)
-
+    npc_stocks_df[X_AXIS] = npc_stocks_df.index + 1
     return _ViewState(
         cycle=cycle,
-        player_stocks_df=player_stocks_df,
-        npc_stocks_df=npc_stocks_df,
+        player_stocks_df=player_stocks_df.melt(id_vars=X_AXIS, var_name=C_AXIS, value_name=Y_AXIS),
+        npc_stocks_df=npc_stocks_df.melt(id_vars=X_AXIS, var_name=C_AXIS, value_name=Y_AXIS),
     )
 
 
 def _render_view(state: _ViewState) -> None:
     st.markdown("### Биржевые котировки")
-    st.markdown(
-        "<p style='text-align: center;'> Котировки акций корпораций </p>",
-        unsafe_allow_html=True,
-    )
+    st.markdown("#### Акции корпораций")
     st.altair_chart(
         stocks_chart(
             state.player_stocks_df,
@@ -66,11 +61,7 @@ def _render_view(state: _ViewState) -> None:
             chart_size=CHART_SIZE,  # type: ignore
         ),
     )
-
-    st.markdown(
-        "<p style='text-align: center;'> Котировки акций логистических компаний </p>",
-        unsafe_allow_html=True,
-    )
+    st.markdown("#### Акции логистических компаний")
     st.altair_chart(
         stocks_chart(
             state.npc_stocks_df,

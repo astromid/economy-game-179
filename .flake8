@@ -3,6 +3,8 @@ inline-quotes = double
 max-complexity = 6
 max-line-length = 120
 max-line-complexity = 16
+max-local-variables = 10
+max-module-members = 10
 extend-ignore = E203
 docstring_style=sphinx
 
