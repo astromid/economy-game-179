@@ -2,10 +2,17 @@
 from pydantic import BaseModel
 
 
+class GameParams(BaseModel):
+    """Game parameters."""
+
+    gamma: float
+
+
 class GameState(BaseModel):
     """Shared state of the game."""
 
     cycle: int
+    params: GameParams  # noqa: WPS110
     player_stocks: dict[str, list[float]]
     npc_stocks: dict[str, list[float]]
     markets_buy: dict[str, list[float]]
@@ -18,7 +25,7 @@ class PlayerState(GameState):
 
     balance: list[float]
     thetas: dict[str, float]
-    storage: dict[str, float]
+    storage: dict[str, int]
 
 
 class MasterState(GameState):

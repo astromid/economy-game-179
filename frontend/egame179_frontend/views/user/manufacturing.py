@@ -11,7 +11,7 @@ from streamlit_echarts import st_pyecharts
 from egame179_frontend.api.models import PlayerState
 from egame179_frontend.visualization import radar_chart, stocks_chart
 
-MAX_MARKETS_IN_ROW = 5
+MAX_METRICS_IN_ROW = 5
 X_AXIS = "cycle"
 Y_AXIS = "price"
 C_AXIS = "market"
@@ -43,7 +43,7 @@ class _ViewState:
     cycle: int
     balance: float
     markets: dict[str, _BuyMarketStatus]
-    prices_df: pd.DataFrame
+    n_rows: int
 
 
 @st.experimental_memo  # type: ignore
@@ -65,20 +65,18 @@ def _cache_view_data(
             price_history=prices,
             theta=thetas[market],
         )
-    prices_df = pd.DataFrame(markets_buy)
-    prices_df[X_AXIS] = prices_df.index + 1
     return _ViewState(
         cycle=cycle,
         balance=balance,
         markets=markets,
-        prices_df=prices_df.melt(id_vars=X_AXIS, var_name=C_AXIS, value_name=Y_AXIS),
+        n_rows=ceil(len(markets) / MAX_METRICS_IN_ROW),
     )
 
 
 def _render_view(state: _ViewState) -> None:
     st.markdown("## Производство")
     _prices_block(
-        n_rows=ceil(len(state.markets) / MAX_MARKETS_IN_ROW),
+        n_rows=state.n_rows,
         markets=state.markets,
     )
     col1, col2 = st.columns(2)
@@ -86,19 +84,14 @@ def _render_view(state: _ViewState) -> None:
         _buy_form_block(markets=state.markets, balance=state.balance)
     with col2:
         _theta_radar_block(markets=state.markets)
-    # _prices_history_block(state.prices_df)
 
 
 def _prices_block(n_rows: int, markets: dict[str, _BuyMarketStatus]) -> None:
     st.markdown("### Закупочные цены")
-    columns = chain(*[st.columns(MAX_MARKETS_IN_ROW) for _ in range(n_rows)])
+    columns = chain(*[st.columns(MAX_METRICS_IN_ROW) for _ in range(n_rows)])
     for col, (market, market_status) in zip(columns, markets.items()):
         with col:
-            st.metric(
-                label=market,
-                value=market_status.price,
-                delta=market_status.price_delta_pct,
-            )
+            st.metric(label=market, value=market_status.price, delta=market_status.price_delta_pct)
 
 
 def _buy_form_block(markets: dict[str, _BuyMarketStatus], balance: float) -> None:

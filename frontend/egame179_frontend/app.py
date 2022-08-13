@@ -27,7 +27,7 @@ def init_state() -> None:
 def app() -> None:
     """Entry point for the game frontend."""
     if st.session_state.views:
-        st.markdown("### Система корпоративного управления CP v20.22")
+        st.markdown("### Система корпоративного управления CP v2022/10.77")
         st.title("NoName Corporation")
         with st.sidebar:
             selected_option = option_menu(
@@ -44,6 +44,6 @@ def app() -> None:
 
 
 if __name__ == "__main__":
-    st.set_page_config(page_title="CP v20.22", layout="wide")
+    st.set_page_config(page_title="CP v2022/10.77", layout="wide")
     init_state()
     app()
