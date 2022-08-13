@@ -39,15 +39,11 @@ def _cache_view_data(cycle: int, balance_history: list[float]) -> _ViewState:
 
 
 def _render_view(state: _ViewState) -> None:
-    hcol1, hcol2, hcol3, *_ = st.columns(5)
+    hcol1, hcol2, *_ = st.columns(5)
     with hcol1:
         st.metric(label="Цикл", value=state.cycle)
     with hcol2:
         st.metric(label="Баланс", value=state.balance, delta=state.balance_delta)
-    with hcol3:
-        if st.button("Обновить данные"):
-            st.experimental_memo.clear()  # type: ignore
-            st.experimental_rerun()
 
     st.markdown("### История баланса корпорации")
     bcol1, _ = st.columns(2)

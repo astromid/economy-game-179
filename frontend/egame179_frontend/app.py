@@ -2,7 +2,7 @@ import streamlit as st
 from streamlit_option_menu import option_menu
 
 from egame179_frontend.api import mock
-from egame179_frontend.views.login import login_form
+from egame179_frontend.views.login import login_form, refresh
 from egame179_frontend.views.root import ROOT_VIEWS
 from egame179_frontend.views.user import USER_VIEWS
 
@@ -27,8 +27,6 @@ def init_state() -> None:
 def app() -> None:
     """Entry point for the game frontend."""
     if st.session_state.views:
-        st.markdown("### Система корпоративного управления CP v2022/10.77")
-        st.title("NoName Corporation")
         with st.sidebar:
             selected_option = option_menu(
                 "Меню",
@@ -36,8 +34,14 @@ def app() -> None:
                 icons=[view.icon for view in st.session_state.views],
                 menu_icon="cast",
                 default_index=0,
+                key="option_menu",
             )
+            if st.button("Обновить данные"):
+                refresh()
         view_func = st.session_state.option2view[selected_option]
+
+        st.markdown("### Система корпоративного управления CP v2022/10.77")
+        st.title("NoName Corporation")
         view_func()
     else:
         login_form()

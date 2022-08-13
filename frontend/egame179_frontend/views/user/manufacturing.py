@@ -3,13 +3,12 @@ from itertools import chain
 from math import ceil
 from types import MappingProxyType
 
-import pandas as pd
 import streamlit as st
 from millify import millify
 from streamlit_echarts import st_pyecharts
 
 from egame179_frontend.api.models import PlayerState
-from egame179_frontend.visualization import radar_chart, stocks_chart
+from egame179_frontend.visualization import radar_chart
 
 MAX_METRICS_IN_ROW = 5
 X_AXIS = "cycle"
@@ -98,13 +97,16 @@ def _buy_form_block(markets: dict[str, _BuyMarketStatus], balance: float) -> Non
     st.markdown("### Производство товаров")
     chosen_market: str = st.selectbox("Целевой рынок", list(markets.keys()))
     real_price = (1 - markets[chosen_market].theta) * markets[chosen_market].price_history[-1]
+    real_price = round(real_price, 2)
     max_volume = int(balance // real_price)
     volume: int = st.slider("Количество товаров", min_value=0, max_value=max_volume)  # type: ignore
 
     expense = volume * real_price
-    rest_balance = balance - expense
+    rest_balance = round(balance - expense, 2)
 
-    st.text(f"Расходы: {expense}, остаток баланса: {rest_balance}")
+    st.text(f"Цена закупки с учетом скидки: {real_price}")
+    st.text(f"Расходы: {volume} шт. x {real_price} = {expense}")
+    st.text(f"Остаток баланса: {rest_balance}")
     if st.button("Произвести"):
         st.success(f"{volume} шт. товаров {chosen_market} отправлены на склад.", icon="✅")
 
@@ -115,16 +117,3 @@ def _theta_radar_block(markets: dict[str, _BuyMarketStatus]) -> None:
         radar_chart(thetas={market: market_status.theta for market, market_status in markets.items()}),
         height="500px",
     )
-
-
-def _prices_history_block(prices_df: pd.DataFrame) -> None:
-    with st.expander("История закупочных цен"):
-        st.altair_chart(
-            stocks_chart(
-                prices_df,
-                x_shorthand=f"{X_AXIS}:Q",
-                y_shorthand=f"{Y_AXIS}:Q",
-                color_shorthand=f"{C_AXIS}:N",
-                chart_size=CHART_SIZE,  # type: ignore
-            ),
-        )

@@ -19,15 +19,20 @@ def storage() -> None:
 @dataclass
 class _ViewState:
     storage: dict[str, int]
+    storage_sum: int
+    gamma: float
     expected_expense: float
     n_rows: int
 
 
 @st.experimental_memo  # type: ignore
 def _cache_view_data(storage_status: dict[str, int], gamma: float) -> _ViewState:
+    storage_sum = sum(storage_status.values())
     return _ViewState(
         storage=storage_status,
-        expected_expense=sum(storage_status.values()) * gamma,
+        storage_sum=storage_sum,
+        gamma=gamma,
+        expected_expense=storage_sum * gamma,
         n_rows=ceil(len(storage_status) / MAX_METRICS_IN_ROW),
     )
 
@@ -39,4 +44,6 @@ def _render_view(state: _ViewState) -> None:
         with col:
             st.metric(label=market, value=volume)
 
-    st.markdown(f"### Ожидаемые расходы на хранение: {state.expected_expense:.2f}")
+    st.text(f"Товаров на складе: {state.storage_sum} шт.")
+    st.text("Ожидаемые расходы на хранение в этом цикле:")
+    st.text(f"{state.storage_sum} шт. x {state.gamma} = {state.expected_expense}")

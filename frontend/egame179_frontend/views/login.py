@@ -4,6 +4,21 @@ from egame179_frontend.api.mock import mock_auth
 from egame179_frontend.views import View
 
 
+def logout() -> None:
+    """Clear user session."""
+    st.session_state.user = None
+    refresh()
+
+
+def refresh() -> None:
+    """Refresh user session."""
+    st.experimental_memo.clear()  # type: ignore
+    st.experimental_rerun()
+
+
+LOGOUT_OPTION = View(menu_option="Выход", icon="box-arrow-right", page_func=logout)
+
+
 def login_callback() -> None:
     """Login callback, using backend for auth."""
     st.session_state.user = mock_auth(login=st.session_state.login, password=st.session_state.password)
@@ -29,13 +44,3 @@ def login_form() -> None:
         "<center>В случае проблем с авторизацией, обратитесь к вашему корпоративному администратору.</center>",
         unsafe_allow_html=True,
     )
-
-
-def logout() -> None:
-    """Clear user session."""
-    st.session_state.user = None
-    st.experimental_memo.clear()  # type: ignore
-    st.experimental_rerun()
-
-
-LOGOUT_OPTION = View(menu_option="Выход", icon="box-arrow-right", page_func=logout)
