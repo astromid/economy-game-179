@@ -20,12 +20,23 @@ class GameState(BaseModel):
     markets_top: dict[str, dict[str, float | None]]
 
 
+class Transaction(BaseModel):
+    """Transaction."""
+
+    sender: str
+    recipient: str
+    amount: float
+    type: int
+    description: str | None
+
+
 class PlayerState(GameState):
     """Game state from current player POV."""
 
     balance: list[float]
     thetas: dict[str, float]
     storage: dict[str, int]
+    transactions = list[Transaction]
 
 
 class MasterState(GameState):

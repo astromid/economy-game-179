@@ -7,6 +7,7 @@ import streamlit as st
 from millify import millify
 from streamlit_echarts import st_pyecharts
 
+from egame179_frontend.api.mock import mock_manufacturing
 from egame179_frontend.api.models import PlayerState
 from egame179_frontend.visualization import radar_chart
 
@@ -107,8 +108,7 @@ def _buy_form_block(markets: dict[str, _BuyMarketStatus], balance: float) -> Non
     st.text(f"Цена закупки с учетом скидки: {real_price}")
     st.text(f"Расходы: {volume} шт. x {real_price} = {expense}")
     st.text(f"Остаток баланса: {rest_balance}")
-    if st.button("Произвести"):
-        st.success(f"{volume} шт. товаров {chosen_market} отправлены на склад.", icon="✅")
+    st.button("Произвести", on_click=mock_manufacturing, kwargs={"volume": volume, "market": chosen_market})
 
 
 def _theta_radar_block(markets: dict[str, _BuyMarketStatus]) -> None:

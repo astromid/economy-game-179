@@ -6,7 +6,7 @@ import ujson
 from egame179_frontend.api.models import PlayerState
 
 
-@st.experimental_memo
+@st.experimental_memo  # type: ignore
 def mock_player_state() -> PlayerState:
     json_string = Path("frontend/egame179_frontend/api/player_mock.json").read_text()
     return PlayerState.parse_obj(ujson.loads(json_string))
@@ -20,3 +20,7 @@ def mock_auth(login: str, password: str) -> str | None:
         case ("corp", "123"):
             auth_user = "corp"
     return auth_user
+
+
+def mock_manufacturing(volume: int, market: str) -> None:
+    st.success(f"{volume} шт. товаров {market} отправлены на склад.", icon="✅")
