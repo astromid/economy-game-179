@@ -4,7 +4,7 @@ import pyecharts
 from pyecharts import options as opts
 
 Y_MAX_SCALE = 1.05
-MAX_THETA = 0.33
+MAX_THETA = 0.48
 
 
 def stocks_chart(

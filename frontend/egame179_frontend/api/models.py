@@ -5,42 +5,64 @@ from pydantic import BaseModel
 class GameParams(BaseModel):
     """Game parameters."""
 
+    tau: int
+    alpha: float
+    beta: float
     gamma: float
+
+
+class MarketState(BaseModel):
+    """Market state."""
+
+    adjacency: list[str]
+    buy: list[float]
+    sell: list[float]
 
 
 class GameState(BaseModel):
     """Shared state of the game."""
 
     cycle: int
-    params: GameParams  # noqa: WPS110
-    player_stocks: dict[str, list[float]]
-    npc_stocks: dict[str, list[float]]
-    markets_buy: dict[str, list[float]]
-    markets_sell: dict[str, list[float]]
-    markets_top: dict[str, dict[str, float | None]]
+    game_params: GameParams
+    markets: dict[str, MarketState]
+    stocks: dict[str, dict[str, list[float]]]
 
 
 class Transaction(BaseModel):
-    """Transaction."""
+    """Transaction model."""
 
-    sender: str
-    recipient: str
+    cycle: int
     amount: float
-    type: int
+    type: str
     description: str | None
+
+
+class PlayerMarketInfo(BaseModel):
+    """Player market info."""
+
+    theta: float
+    storage: int
+    top: dict[str, float | None]
+
+
+class PlayerInfo(BaseModel):
+    """Player state."""
+
+    name: str
+    home: str
+    balances: list[float]
+    products: dict[str, PlayerMarketInfo]
+    transactions: list[Transaction]
 
 
 class PlayerState(GameState):
     """Game state from current player POV."""
 
-    balance: list[float]
-    thetas: dict[str, float]
-    storage: dict[str, int]
-    transactions = list[Transaction]
+    player: PlayerInfo
 
 
 class MasterState(GameState):
     """Game state from the game master POV."""
 
     god_mode: bool = True
-    players: dict[str, PlayerState]
+    players: dict[str, PlayerInfo]

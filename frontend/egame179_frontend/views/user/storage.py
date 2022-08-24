@@ -9,12 +9,16 @@ from egame179_frontend.api.models import PlayerState
 MAX_METRICS_IN_ROW = 5
 
 
-def storage() -> None:
-    """Entry point for storage view."""
-    state: PlayerState = st.session_state.game_state
+def storage(state: PlayerState) -> None:
+    """Entry point for storage view.
+
+    Args:
+        state (PlayerState): PlayerState object.
+    """
     view_state = _cache_view_data(
-        storage_status=state.storage,
-        gamma=state.params.gamma,
+        cycle=state.cycle,
+        storage_status={market: pm_info.storage for market, pm_info in state.player.products.items()},
+        gamma=state.game_params.gamma,
     )
     _render_view(view_state)
 
@@ -61,7 +65,7 @@ def _render_view(state: _ViewState) -> None:
     bcol1, _ = st.columns(2)
     with bcol1:
         st.bar_chart(
-            data={"cycle": list(range(1, state.cycle + 1)), "storage_fee": state.balance_history},
+            data={"cycle": list(range(1, state.cycle + 1)), "storage_fee": state.player.balances},
             x="cycle",
             y="balance",
         )

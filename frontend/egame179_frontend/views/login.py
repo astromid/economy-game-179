@@ -4,7 +4,7 @@ from egame179_frontend.api.mock import mock_auth
 from egame179_frontend.views import View
 
 
-def logout() -> None:
+def logout(*args) -> None:
     """Clear user session."""
     st.session_state.user = None
     refresh()

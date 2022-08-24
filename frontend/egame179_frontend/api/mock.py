@@ -1,3 +1,4 @@
+import time
 from pathlib import Path
 
 import streamlit as st
@@ -22,5 +23,6 @@ def mock_auth(login: str, password: str) -> str | None:
     return auth_user
 
 
-def mock_manufacturing(volume: int, market: str) -> None:
-    st.success(f"{volume} шт. товаров {market} отправлены на склад.", icon="✅")
+def mock_manufacturing(volume: int, market: str) -> bool:
+    time.sleep(1)
+    return True

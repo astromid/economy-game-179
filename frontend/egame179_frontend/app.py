@@ -14,7 +14,7 @@ def init_state() -> None:
 
     match st.session_state.user:
         case None:
-            st.session_state.views = []
+            st.session_state.views = ()
         case "root":
             st.session_state.views = ROOT_VIEWS
             st.session_state.game_state = {"mode": "GOD"}
@@ -39,10 +39,11 @@ def app() -> None:
             if st.button("Обновить данные"):
                 refresh()
         view_func = st.session_state.option2view[selected_option]
+        game_state = st.session_state.game_state
 
         st.markdown("### Система корпоративного управления CP v2022/10.77")
-        st.title("NoName Corporation")
-        view_func()
+        st.title(f"{game_state.player.name} Corporation")
+        view_func(game_state)
     else:
         login_form()
 

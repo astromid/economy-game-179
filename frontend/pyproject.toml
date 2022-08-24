@@ -4,10 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "egame179_frontend"
-description = "Streamlit frontend for economic strategy game"
+description = "Streamlit frontend for economic strategy game."
+authors = [
+    {name = "Yan Budakyan", email = "astromid@gmail.com"}
+]
 version = "0.0.1"
 readme = "README.md"
 license = {text = "MIT License"}
+python_requires = ">=3.10"
 dependencies = [
     "httptools",
     "httpx",

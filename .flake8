@@ -1,12 +1,13 @@
 [flake8]
 inline-quotes = double
+max-annotation-complexity = 4
 max-complexity = 6
 max-line-length = 120
 max-line-complexity = 16
 max-local-variables = 10
 max-module-members = 10
 extend-ignore = E203
-docstring_style=sphinx
+docstring_style=google
 
 ignore =
   ; Missing docstring in public module
@@ -26,6 +27,7 @@ ignore =
   ; Found `__init__.py` module with logic
   WPS412,
   WPS226,
+  WPS237,
 
 per-file-ignores =
   ; all tests

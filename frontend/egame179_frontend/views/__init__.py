@@ -2,6 +2,8 @@
 from collections.abc import Callable
 from dataclasses import dataclass
 
+from egame179_frontend.api.models import PlayerState
+
 
 @dataclass
 class View:
@@ -9,4 +11,4 @@ class View:
 
     menu_option: str
     icon: str
-    page_func: Callable[[], None]
+    page_func: Callable[[PlayerState], None]

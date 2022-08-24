@@ -9,10 +9,13 @@ from egame179_frontend.api.models import PlayerState
 CHART_SIZE = MappingProxyType({"width": 768, "height": 480})
 
 
-def overview() -> None:
-    """Entry point for the overview page."""
-    state: PlayerState = st.session_state.game_state
-    view_state = _cache_view_data(cycle=state.cycle, balance_history=state.balance)
+def overview(state: PlayerState) -> None:
+    """Entry point for the overview page.
+
+    Args:
+        state (PlayerState): PlayerState object.
+    """
+    view_state = _cache_view_data(cycle=state.cycle, balance_history=state.player.balances)
     _render_view(view_state)
 
 

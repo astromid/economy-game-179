@@ -3,6 +3,8 @@ import numpy as np
 import pyecharts as pe
 import streamlit as st
 
+from egame179_frontend.api.models import PlayerState
+
 TOOLTIP_JS_CODE = "".join(
     [
         "function(params){",
@@ -19,7 +21,7 @@ TOOLTIP_JS_CODE = "".join(
 )
 
 
-def markets() -> None:
+def markets(state: PlayerState) -> None:
     st.markdown("## Граф рынков")
 
     with st.expander("Статус отдельных рынков"):

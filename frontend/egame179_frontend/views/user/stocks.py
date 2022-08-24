@@ -13,13 +13,16 @@ C_AXIS = "ticket"
 CHART_SIZE = MappingProxyType({"width": 1000, "height": 600})
 
 
-def stocks() -> None:
-    """Entry point for stocks view."""
-    state: PlayerState = st.session_state.game_state
+def stocks(state: PlayerState) -> None:
+    """Entry point for stocks view.
+
+    Args:
+        state (PlayerState): PlayerState object.
+    """
     view_state = _cache_view_data(
         cycle=state.cycle,
-        player_stocks=state.player_stocks,
-        npc_stocks=state.npc_stocks,
+        player_stocks=state.stocks["players"],
+        npc_stocks=state.stocks["npc"],
     )
     _render_view(view_state)
 

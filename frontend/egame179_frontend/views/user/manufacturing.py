@@ -18,14 +18,17 @@ C_AXIS = "market"
 CHART_SIZE = MappingProxyType({"width": 1000, "height": 600})
 
 
-def manufacturing() -> None:
-    """Entry point for manufacturing view."""
-    state: PlayerState = st.session_state.game_state
+def manufacturing(state: PlayerState) -> None:
+    """Entry point for manufacturing view.
+
+    Args:
+        state (PlayerState): PlayerState object.
+    """
     view_state = _cache_view_data(
         cycle=state.cycle,
-        balance=state.balance[-1],
-        markets_buy=state.markets_buy,
-        thetas=state.thetas,
+        balance=state.player.balances[-1],
+        markets_buy={market: m_state.buy for market, m_state in state.markets.items()},
+        thetas={market: pm_info.theta for market, pm_info in state.player.products.items()},
     )
     _render_view(view_state)
 
@@ -79,7 +82,7 @@ def _render_view(state: _ViewState) -> None:
         n_rows=state.n_rows,
         markets=state.markets,
     )
-    col1, col2 = st.columns(2)
+    col1, col2 = st.columns([2, 3])
     with col1:
         _buy_form_block(markets=state.markets, balance=state.balance)
     with col2:
@@ -108,7 +111,19 @@ def _buy_form_block(markets: dict[str, _BuyMarketStatus], balance: float) -> Non
     st.text(f"Цена закупки с учетом скидки: {real_price}")
     st.text(f"Расходы: {volume} шт. x {real_price} = {expense}")
     st.text(f"Остаток баланса: {rest_balance}")
-    st.button("Произвести", on_click=mock_manufacturing, kwargs={"volume": volume, "market": chosen_market})
+    if st.button("Произвести"):
+        _manufacturing(volume=volume, market=chosen_market)
+
+
+def _manufacturing(volume: int, market: str) -> None:
+    status = False
+    if volume > 0:
+        with st.spinner("Отправка на производство..."):
+            status = mock_manufacturing(volume=volume, market=market)
+    if status:
+        st.success(f"{volume} шт. товаров {market} отправлены на склад.", icon="⚙")
+    else:
+        st.error("Ошибка отправки на производство.", icon="⚙")
 
 
 def _theta_radar_block(markets: dict[str, _BuyMarketStatus]) -> None:
