@@ -88,7 +88,7 @@
         },
         "transactions": [
             {"cycle": 0, "amount": 11.2, "type": "SELL", "description": "Sell 50 Руда"},
-            {"cycle": 0, "amount": -2, "type": "FEE", "description": "Storage fee for 44 Руда"}
+            {"cycle": 0, "amount": -2, "type": "STORAGE_FEE", "description": "Storage fee for 44 Руда"}
         ]
     }
 }

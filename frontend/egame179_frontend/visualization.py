@@ -75,10 +75,10 @@ def radar_chart(thetas: dict[str, float]) -> pyecharts.charts.Radar:
     """Radar chart for theta visualization.
 
     Args:
-        thetas (dict[str, float]): _description_
+        thetas (dict[str, float]): player's thetas state.
 
     Returns:
-        pyecharts.charts.Radar: _description_
+        pyecharts.charts.Radar: radar chart for rendering.
     """
     radar = pyecharts.charts.Radar()
     indicators = [opts.RadarIndicatorItem(name=market, max_=MAX_THETA) for market in thetas]
