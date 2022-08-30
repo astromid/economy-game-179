@@ -73,6 +73,7 @@
     "player": {
         "name": "NoName",
         "home": "Руда",
+        "active_markets": ["Руда", "Дерево", "Титаны"],
         "balances": [43576.22, 47000.99, 55000, 50450.7],
         "products": {
             "Руда": {"theta": 0.1, "storage": 12, "top": {"SFT": 0.5, "AGX": 0.3}},

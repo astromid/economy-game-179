@@ -21,7 +21,7 @@ TOOLTIP_JS_CODE = "".join(
 )
 
 
-def markets(state: PlayerState) -> None:
+def markets_view(state: PlayerState) -> None:
     st.markdown("## Граф рынков")
 
     with st.expander("Статус отдельных рынков"):

@@ -1,7 +1,9 @@
 import streamlit as st
 
+from egame179_frontend.api.models import PlayerState
 
-def sales() -> None:
+
+def sales_view(state: PlayerState) -> None:
     st.markdown("## Поставки")
     # В форме поставки должны отображаться только те товары, которые есть в наличии
     with st.expander("Активные поставки"):

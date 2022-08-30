@@ -18,7 +18,7 @@ C_AXIS = "market"
 CHART_SIZE = MappingProxyType({"width": 1000, "height": 600})
 
 
-def manufacturing(state: PlayerState) -> None:
+def manufacturing_view(state: PlayerState) -> None:
     """Entry point for manufacturing view.
 
     Args:
@@ -27,6 +27,7 @@ def manufacturing(state: PlayerState) -> None:
     view_state = _cache_view_data(
         cycle=state.cycle,
         balance=state.player.balances[-1],
+        active_markets=state.player.active_markets,
         markets_buy={market: m_state.buy for market, m_state in state.markets.items()},
         thetas={market: pm_info.theta for market, pm_info in state.player.products.items()},
     )
@@ -53,11 +54,15 @@ class _ViewState:
 def _cache_view_data(
     cycle: int,
     balance: float,
+    active_markets: list[str],
     markets_buy: dict[str, list[float]],
     thetas: dict[str, float],
 ) -> _ViewState:
     markets: dict[str, _BuyMarketStatus] = {}
     for market, prices in markets_buy.items():
+        if market not in active_markets:
+            continue
+
         price_delta_pct = None
         if cycle > 1:
             *_, price_prev, price = prices
@@ -127,7 +132,7 @@ def _manufacturing(volume: int, market: str) -> None:
 
 
 def _theta_radar_block(markets: dict[str, _BuyMarketStatus]) -> None:
-    st.markdown("### Эффективность производства")
+    st.markdown("### Текущая эффективность производства")
     st_pyecharts(
         radar_chart(thetas={market: market_status.theta for market, market_status in markets.items()}),
         height="500px",

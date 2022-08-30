@@ -13,7 +13,7 @@ C_AXIS = "ticket"
 CHART_SIZE = MappingProxyType({"width": 1000, "height": 600})
 
 
-def stocks(state: PlayerState) -> None:
+def stocks_view(state: PlayerState) -> None:
     """Entry point for stocks view.
 
     Args:

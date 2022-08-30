@@ -51,6 +51,7 @@ class PlayerInfo(BaseModel):
     name: str
     home: str
     balances: list[float]
+    active_markets: list[str]
     products: dict[str, PlayerMarketInfo]
     transactions: list[Transaction]
 

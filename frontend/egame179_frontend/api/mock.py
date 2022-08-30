@@ -14,13 +14,15 @@ def mock_player_state() -> PlayerState:
 
 
 def mock_auth(login: str, password: str) -> str | None:
-    auth_user: str | None = None
-    match (login, password):
-        case ("root", "root"):
-            auth_user = "root"
-        case ("corp", "123"):
-            auth_user = "corp"
-    return auth_user
+    user: str | None = None
+    match login, password:
+        case "root", "root":
+            user = "root"
+        case "corp", "123":
+            user = "corp"
+        case "news", "12345":
+            user = "news"
+    return user
 
 
 def mock_manufacturing(volume: int, market: str) -> bool:

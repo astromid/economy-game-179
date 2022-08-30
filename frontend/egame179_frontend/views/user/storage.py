@@ -9,7 +9,7 @@ from egame179_frontend.api.models import PlayerState
 MAX_METRICS_IN_ROW = 5
 
 
-def storage(state: PlayerState) -> None:
+def storage_view(state: PlayerState) -> None:
     """Entry point for storage view.
 
     Args:
@@ -60,12 +60,3 @@ def _render_view(state: _ViewState) -> None:
     st.text(f"Суммарно товаров на складе: {state.storage_sum} шт.")
     st.text("Ожидаемые расходы на хранение в этом цикле:")
     st.text(f"{state.storage_sum} шт. x {state.gamma} = {state.expected_fee}")
-
-    st.markdown("### История расходов на хранение")
-    bcol1, _ = st.columns(2)
-    with bcol1:
-        st.bar_chart(
-            data={"cycle": list(range(1, state.cycle + 1)), "storage_fee": state.player.balances},
-            x="cycle",
-            y="balance",
-        )

@@ -41,6 +41,7 @@ repos:
     entry: black
     language: system
     types: [python]
+    args: [--diff, --check]
 
 - repo: https://github.com/asottile/blacken-docs
   rev: v1.12.1
