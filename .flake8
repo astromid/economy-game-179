@@ -28,6 +28,7 @@ ignore =
   WPS412,
   WPS226,
   WPS237,
+  WPS431,
 
 per-file-ignores =
   ; all tests

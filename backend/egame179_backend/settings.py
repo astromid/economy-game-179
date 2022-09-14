@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     port: int = 8000
     # quantity of workers for uvicorn
     workers_count: int = 1
-    # Enable uvicorn reloading
+    # enable uvicorn reloading
     reload: bool = False
     db_host: str = "localhost"
     db_port: int = 3306
@@ -25,10 +25,10 @@ class Settings(BaseSettings):
 
     @property
     def db_url(self) -> URL:
-        """
-        Assemble database URL from settings.
+        """Assemble database URL from settings.
 
-        :return: database URL.
+        Returns:
+            URL: database URL.
         """
         return URL.build(
             scheme="mysql+aiomysql",

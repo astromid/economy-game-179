@@ -5,8 +5,8 @@ from alembic import context
 from sqlalchemy.ext.asyncio.engine import create_async_engine
 from sqlalchemy.future import Connection
 
-from egame179_backend.db.meta import meta
-from egame179_backend.db.models import load_all_models
+# from egame179_backend.db.meta import meta
+# from egame179_backend.db.models import load_all_models
 from egame179_backend.settings import settings
 
 # this is the Alembic Config object, which provides
@@ -56,8 +56,7 @@ async def run_migrations_offline() -> None:
 
 
 def do_run_migrations(connection: Connection) -> None:
-    """
-    Run actual sync migrations.
+    """Run actual sync migrations.
 
     :param connection: connection to the database.
     """
@@ -68,8 +67,7 @@ def do_run_migrations(connection: Connection) -> None:
 
 
 async def run_migrations_online() -> None:
-    """
-    Run migrations in 'online' mode.
+    """Run migrations in 'online' mode.
 
     In this scenario we need to create an Engine
     and associate a connection with the context.

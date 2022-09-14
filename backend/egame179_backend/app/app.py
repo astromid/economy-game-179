@@ -2,7 +2,7 @@ from importlib import metadata
 from pathlib import Path
 
 from fastapi import FastAPI
-from fastapi.responses import UJSONResponse
+from fastapi.responses import ORJSONResponse
 
 from egame179_backend.app.api.router import api_router
 
@@ -10,12 +10,12 @@ APP_ROOT = Path(__file__).parent.parent
 
 
 def get_app() -> FastAPI:
-    """
-    Get FastAPI application.
+    """Get FastAPI application.
 
     This is the main constructor of an application.
 
-    :return: application.
+    Returns:
+        FastAPI: application instance.
     """
     app = FastAPI(
         title="egame179_backend",
@@ -24,7 +24,7 @@ def get_app() -> FastAPI:
         docs_url=None,
         redoc_url=None,
         openapi_url="/api/openapi.json",
-        default_response_class=UJSONResponse,
+        default_response_class=ORJSONResponse,
     )
     app.include_router(router=api_router, prefix="/api")
 
