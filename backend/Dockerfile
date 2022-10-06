@@ -6,6 +6,8 @@ RUN apt-get update && apt-get install -y default-libmysqlclient-dev
 COPY pyproject.toml setup.py /app/src/
 WORKDIR /app/src
 
+# Copying database migrations
+COPY ./migrations /app/src/migrations
 # Copying actual application
 COPY ./egame179_backend /app/src/
 RUN pip install --no-cache-dir --upgrade .

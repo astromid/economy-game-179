@@ -12,15 +12,13 @@ class Settings(BaseSettings):
 
     host: str = "127.0.0.1"
     port: int = 8000
-    # quantity of workers for uvicorn
-    workers_count: int = 1
-    # enable uvicorn reloading
-    reload: bool = False
+    workers_count: int = 1  # quantity of workers for uvicorn
+    reload: bool = False  # enable uvicorn reloading
     db_host: str = "localhost"
     db_port: int = 3306
     db_user: str = "egame179_backend"
-    db_pass: str = "egame179_backend"
-    db_base: str = "egame179_backend"
+    db_pass: str = ""
+    db_base: str = "egame179"
     db_echo: bool = False
 
     @property

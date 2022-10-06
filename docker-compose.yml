@@ -14,28 +14,31 @@ services:
         condition: service_healthy
     environment:
       EGAME179_BACKEND_HOST: 0.0.0.0
+      EGAME179_BACKEND_PORT: 8179
       EGAME179_BACKEND_DB_HOST: egame179-backend-db
       EGAME179_BACKEND_DB_PORT: 3306
-      EGAME179_BACKEND_DB_USER: egame179-backend
-      EGAME179_BACKEND_DB_PASS: egame179_backend
-      EGAME179_BACKEND_DB_BASE: egame179_backend
+      EGAME179_BACKEND_DB_USER: ${EGAME179_BACKEND_DB_USER}
+      EGAME179_BACKEND_DB_PASS: ${EGAME179_BACKEND_DB_PASS}
+      EGAME179_BACKEND_DB_BASE: egame179
 
   db:
     image: mariadb:latest
     hostname: egame179-backend-db
     restart: always
+    env_file:
+    - .env
     environment:
-      ALLOW_EMPTY_PASSWORD: "yes"
-      MYSQL_ROOT_PASSWORD: "egame179_backend"
-      MYSQL_ROOT_USER: "egame179_backend"
-      MYSQL_DATABASE: "egame179_backend"
+      MARIADB_ROOT_PASSWORD: ${EGAME179_BACKEND_DB_ROOT_PASS}
+      MARIADB_USER: ${EGAME179_BACKEND_DB_USER}
+      MARIADB_PASSWORD: ${EGAME179_BACKEND_DB_PASS}
+      MARIADB_DATABASE: egame179
     healthcheck:
       test:
       - CMD
       - mysql
       - -u
-      - egame179_backend
-      - -pegame179_backend
+      - ${EGAME179_BACKEND_DB_USER}
+      - -p********
       - -e
       - SELECT 1
       interval: 3s
@@ -48,12 +51,14 @@ services:
     image: egame179-backend:${EGAME179_BACKEND_VERSION:-latest}
     restart: "no"
     command: alembic upgrade head
+    env_file:
+    - .env
     environment:
-      EGAME179_BACKEND_DB_HOST: egame179_backend-db
+      EGAME179_BACKEND_DB_HOST: egame179-backend-db
       EGAME179_BACKEND_DB_PORT: 3306
-      EGAME179_BACKEND_DB_USER: egame179_backend
-      EGAME179_BACKEND_DB_PASS: egame179_backend
-      EGAME179_BACKEND_DB_BASE: egame179_backend
+      EGAME179_BACKEND_DB_USER: ${EGAME179_BACKEND_DB_USER}
+      EGAME179_BACKEND_DB_PASS: ${EGAME179_BACKEND_DB_PASS}
+      EGAME179_BACKEND_DB_BASE: egame179
     depends_on:
       db:
         condition: service_healthy
@@ -70,12 +75,10 @@ services:
       db:
         condition: service_healthy
     environment:
-      EGAME179_BACKEND_HOST: 0.0.0.0
-      EGAME179_BACKEND_DB_HOST: egame179-backend-db
-      EGAME179_BACKEND_DB_PORT: 3306
-      EGAME179_BACKEND_DB_USER: egame179_backend
-      EGAME179_BACKEND_DB_PASS: egame179_backend
-      EGAME179_BACKEND_DB_BASE: egame179_backend
+      EGAME179_FRONTEND_HOST: 0.0.0.0
+      EGAME179_FRONTEND_PORT: 8501
+      EGAME179_BACKEND_HOST: 127.0.0.1
+      EGAME179_BACKEND_PORT: 8179
 
 volumes:
   egame179-backend-db-data:

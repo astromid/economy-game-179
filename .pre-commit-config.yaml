@@ -15,7 +15,7 @@ repos:
     args: [--fix=no]
 
 - repo: https://github.com/asottile/add-trailing-comma
-  rev: v2.2.3
+  rev: v2.3.0
   hooks:
   - id: add-trailing-comma
 
@@ -49,13 +49,13 @@ repos:
   - id: blacken-docs
 
 - repo: https://github.com/asottile/pyupgrade # A tool to automatically upgrade syntax for newer versions of the language.
-  rev: v2.37.3
+  rev: v3.0.0
   hooks:
   - id: pyupgrade
     args: [--py310-plus]
 
 - repo: https://github.com/nbQA-dev/nbQA
-  rev: 1.4.0
+  rev: 1.5.2
   hooks:
   - id: nbqa-black
   - id: nbqa-isort

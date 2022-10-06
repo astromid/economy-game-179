@@ -33,6 +33,7 @@ dependencies:
 - jupyterlab
 - mypy
 - mypy_extensions
+- pandas-stubs
 - pytest
 - pytest-asyncio
 - pytest-cov

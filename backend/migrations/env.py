@@ -5,8 +5,7 @@ from alembic import context
 from sqlalchemy.ext.asyncio.engine import create_async_engine
 from sqlalchemy.future import Connection
 
-# from egame179_backend.db.meta import meta
-# from egame179_backend.db.models import load_all_models
+from egame179_backend.db.meta import meta
 from egame179_backend.settings import settings
 
 # this is the Alembic Config object, which provides
@@ -14,7 +13,6 @@ from egame179_backend.settings import settings
 config = context.config
 
 
-load_all_models()
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
 if config.config_file_name is not None:
@@ -22,8 +20,6 @@ if config.config_file_name is not None:
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
 target_metadata = meta
 
 # other values from the config, defined by the needs of env.py,
@@ -58,7 +54,8 @@ async def run_migrations_offline() -> None:
 def do_run_migrations(connection: Connection) -> None:
     """Run actual sync migrations.
 
-    :param connection: connection to the database.
+    Args:
+        connection (Connection): connection to the database.
     """
     context.configure(connection=connection, target_metadata=target_metadata)
 
@@ -72,6 +69,7 @@ async def run_migrations_online() -> None:
     In this scenario we need to create an Engine
     and associate a connection with the context.
     """
+    print(f"{settings.db_url = }")
     connectable = create_async_engine(str(settings.db_url))
 
     async with connectable.connect() as connection:
