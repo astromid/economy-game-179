@@ -1,14 +1,13 @@
 """Initial migration.
 
-Revision ID: 819cbf6e030b
+Revision ID: 1
 Revises:
-Create Date: 2022-08-31 17:00:00.000000
+Create Date: 2022-10-06 23:00:00.000000
 
 """
 
-
 # revision identifiers, used by Alembic.
-revision = "819cbf6e030b"
+revision = "1"
 down_revision = None
 branch_labels = None
 depends_on = None

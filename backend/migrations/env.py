@@ -69,7 +69,6 @@ async def run_migrations_online() -> None:
     In this scenario we need to create an Engine
     and associate a connection with the context.
     """
-    print(f"{settings.db_url = }")
     connectable = create_async_engine(str(settings.db_url))
 
     async with connectable.connect() as connection:

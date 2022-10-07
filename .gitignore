@@ -132,3 +132,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Inital game data
+backend/migrations/initial-data/*.csv
