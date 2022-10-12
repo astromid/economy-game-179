@@ -7,7 +7,7 @@ COPY pyproject.toml setup.py /app/src/
 WORKDIR /app/src
 
 # Copying database migrations
-COPY ./migrations /app/src/migrations
+# COPY ./migrations /app/src/
 # Copying actual application
 COPY ./egame179_backend /app/src/
 RUN pip install --no-cache-dir --upgrade .

@@ -134,4 +134,6 @@ dmypy.json
 .pyre/
 
 # Inital game data
-backend/migrations/initial-data/*.csv
+migrations/initial_data.yaml
+# Run db locally script
+start-maria-db.sh
