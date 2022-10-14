@@ -135,5 +135,3 @@ dmypy.json
 
 # Inital game data
 migrations/initial_data.yaml
-# Run db locally script
-start-maria-db.sh

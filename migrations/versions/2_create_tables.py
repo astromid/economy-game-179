@@ -31,7 +31,7 @@ def upgrade() -> None:
 
     create_cycles(initial_cycle)
     create_markets(initial_data["markets"])
-    create_prices(initial_data["initial_market_prices"])
+    create_prices(initial_data["initial_market_prices"], initial_cycle=initial_cycle)
     create_transactions(initial_cycle, initial_data["initial_player_balance"], player_ids)
     create_balances(initial_cycle, initial_data["initial_player_balance"], player_ids)
     create_stocks(initial_cycle, initial_data["initial_stocks_price"], player_ids + npc_ids)
@@ -47,7 +47,7 @@ def upgrade() -> None:
         sa.Column("description", sa.Text),
     )
     create_products(
-        n_players=len(player_ids),
+        player_ids=player_ids,
         n_markets=len(initial_data["markets"]),
         initial_cycle=initial_cycle,
         initial_theta=initial_data["initial_theta"],
@@ -59,7 +59,7 @@ def upgrade() -> None:
         sa.Column("cycle", sa.Integer, sa.ForeignKey("cycles.cycle")),
         sa.Column("user_id", sa.Integer, sa.ForeignKey("users.id")),
         sa.Column("market_id", sa.Integer, sa.ForeignKey("markets.id")),
-        sa.Column("parameter", sa.Text, nullable=False),
+        sa.Column("parameter", sa.String(20), nullable=False),
         sa.Column("value", sa.Float, nullable=False),
         sa.PrimaryKeyConstraint("cycle", "user_id", "market_id", "parameter"),
     )
@@ -96,6 +96,7 @@ def create_cycles(initial_cycle: int) -> None:
         sa.Column("finished", sa.DateTime),
     )
     if cycles_table is not None:
+        op.execute("SET SESSION sql_mode='NO_AUTO_VALUE_ON_ZERO'")
         op.bulk_insert(cycles_table, [{"cycle": initial_cycle}])
     else:
         raise RuntimeError("Failed to create cycles table")
@@ -105,7 +106,7 @@ def create_markets(markets: list[dict[str, int | str]]) -> None:
     # markets graph table (as an adjacency list)
     markets_table = op.create_table(
         "markets",
-        sa.Column("id", sa.Integer, primary_key=True),
+        sa.Column("id", sa.Integer, autoincrement=False, primary_key=True),
         sa.Column("name", sa.Text, nullable=False),
         sa.Column("ring", sa.Integer, nullable=False),  # 2, 1, 0
         sa.Column("link1", sa.Integer),
@@ -120,7 +121,9 @@ def create_markets(markets: list[dict[str, int | str]]) -> None:
         raise RuntimeError("Failed to create markets table")
 
 
-def create_prices(initial_prices: list[dict[str, int | float]]) -> None:
+def create_prices(initial_prices: list[dict[str, int | float]], initial_cycle: int) -> None:
+    for price in initial_prices:
+        price["cycle"] = initial_cycle
     prices_table = op.create_table(
         "prices",
         sa.Column("cycle", sa.Integer, sa.ForeignKey("cycles.cycle")),
@@ -143,7 +146,7 @@ def create_transactions(initial_cycle: int, initial_balance: float, player_ids: 
     transactions_table = op.create_table(
         "transactions",
         sa.Column("id", sa.Integer, autoincrement=True, primary_key=True),
-        sa.Column("timestamp", sa.DateTime),
+        sa.Column("timestamp", sa.DateTime, server_default=sa.text("CURRENT_TIMESTAMP")),
         sa.Column("cycle", sa.Integer, sa.ForeignKey("cycles.cycle")),
         sa.Column("user_id", sa.Integer, sa.ForeignKey("users.id")),
         sa.Column("amount", sa.Float, nullable=False),
@@ -185,8 +188,8 @@ def create_stocks(initial_cycle: int, initial_stock_price: float, user_ids: list
         raise RuntimeError("Failed to create stocks table")
 
 
-def create_products(n_players: int, n_markets: int, initial_cycle: int, initial_theta: float) -> None:
-    user_market_combs = itertools.product(range(n_players), range(n_markets))
+def create_products(player_ids: list[int], n_markets: int, initial_cycle: int, initial_theta: float) -> None:
+    user_market_combs = itertools.product(player_ids, range(n_markets))
     products = [
         {"cycle": initial_cycle, "user_id": user_id, "market_id": market_id, "storage": 0, "theta": initial_theta}
         for user_id, market_id in user_market_combs
