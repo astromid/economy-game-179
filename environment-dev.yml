@@ -40,4 +40,5 @@ dependencies:
 - pytest-cov
 - pytest-env
 - pytest-mypy
+- types-pyyaml
 - types-ujson

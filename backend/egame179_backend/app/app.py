@@ -4,7 +4,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse
 
-from egame179_backend.app.api.router import api_router
+from egame179_backend.app.web.api.router import api_router
 
 APP_ROOT = Path(__file__).parent.parent
 
