@@ -4,7 +4,8 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse
 
-from egame179_backend.app.web.api.router import api_router
+from egame179_backend.app.api.router import api_router
+from egame179_backend.app.lifetime import shutdown, startup
 
 APP_ROOT = Path(__file__).parent.parent
 
@@ -26,6 +27,8 @@ def get_app() -> FastAPI:
         openapi_url="/api/openapi.json",
         default_response_class=ORJSONResponse,
     )
-    app.include_router(router=api_router, prefix="/api")
+    app.on_event("startup")(startup(app))
+    app.on_event("shutdown")(shutdown(app))
 
+    app.include_router(router=api_router, prefix="/api")
     return app
