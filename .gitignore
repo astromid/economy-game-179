@@ -134,4 +134,4 @@ dmypy.json
 .pyre/
 
 # Inital game data
-migrations/initial_data.yaml
+backend/alembic/initial_data.yaml

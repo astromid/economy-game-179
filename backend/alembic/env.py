@@ -2,32 +2,31 @@ import asyncio
 from logging.config import fileConfig
 
 from alembic import context
-from sqlalchemy.ext.asyncio.engine import create_async_engine
+from sqlalchemy.ext.asyncio.engine import AsyncEngine
 from sqlalchemy.future import Connection
+from sqlmodel import SQLModel, create_engine
 
-from egame179_backend.db.meta import meta
-from egame179_backend.settings import settings
+from egame179_backend.settings import Settings
 
+settings = Settings()
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
-
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# add your model's MetaData object here
-# for 'autogenerate' support
-target_metadata = meta
+# add your model's MetaData object here for 'autogenerate' support
+target_metadata = SQLModel.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired: my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
 
-async def run_migrations_offline() -> None:
+def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
 
     This configures the context with just a URL
@@ -43,6 +42,7 @@ async def run_migrations_offline() -> None:
         url=str(settings.db_url),
         target_metadata=target_metadata,
         literal_binds=True,
+        compare_type=True,
         dialect_opts={"paramstyle": "named"},
     )
 
@@ -68,16 +68,15 @@ async def run_migrations_online() -> None:
     In this scenario we need to create an Engine
     and associate a connection with the context.
     """
-    connectable = create_async_engine(str(settings.db_url))
+    connectable = AsyncEngine(create_engine(str(settings.db_url), future=True))
 
     async with connectable.connect() as connection:
         await connection.run_sync(do_run_migrations)
 
+    await connectable.dispose()
 
-loop = asyncio.get_event_loop()
+
 if context.is_offline_mode():
-    task = run_migrations_offline()
+    run_migrations_offline()
 else:
-    task = run_migrations_online()
-
-loop.run_until_complete(task)
+    asyncio.run(run_migrations_online())

@@ -16,6 +16,7 @@ dependencies = [
     "httpx",
     "mysqlclient",
     "omegaconf",
+    "orjson",
     "pydantic[dotenv]",
     "sqlalchemy[asyncio]",
     "sqlmodel",

@@ -7,10 +7,10 @@ COPY pyproject.toml setup.py /app/src/
 WORKDIR /app/src
 
 # Copying database migrations
-COPY ../migrations /app/src/
-COPY ../alembic.ini /app/src/
+COPY alembic /app/src/
+COPY alembic.ini /app/src/
 # Copying actual application
-COPY ./egame179_backend /app/src/
+COPY egame179_backend /app/src/
 RUN pip install --no-cache-dir --upgrade .
 
 CMD ["/usr/local/bin/python", "-m", "egame179_backend"]

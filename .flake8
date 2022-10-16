@@ -53,7 +53,15 @@ per-file-ignores =
   ; Found wrong metadata variable
   WPS410,
 
+  ; all migrations
+  backend/alembic/*.py:
+  D103,
+  WPS102,
+  WPS202,
+  WPS211,
+  WPS213,
+  WPS420,
+
 exclude =
   ./.git,
   ./var,
-  migrations/*,
