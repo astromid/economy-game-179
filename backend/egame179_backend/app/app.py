@@ -22,7 +22,6 @@ def get_app() -> FastAPI:
         title="egame179_backend",
         description="FastAPI backend for economic strategy game",
         version=metadata.version("egame179_backend"),
-        docs_url=None,
         redoc_url=None,
         openapi_url="/api/openapi.json",
         default_response_class=ORJSONResponse,

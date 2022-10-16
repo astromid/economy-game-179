@@ -1,11 +1,12 @@
-from asyncio import current_task
 from collections.abc import Awaitable, Callable
 
 from fastapi import FastAPI
-from sqlalchemy.ext.asyncio import AsyncSession, async_scoped_session, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.orm import sessionmaker
+from sqlmodel import create_engine
+from sqlmodel.ext.asyncio.session import AsyncSession
 
-from egame179_backend.settings import settings
+from egame179_backend.settings import Settings
 
 
 def _setup_db(app: FastAPI) -> None:
@@ -17,14 +18,15 @@ def _setup_db(app: FastAPI) -> None:
     Args:
         app (FastAPI): fastAPI application.
     """
-    engine = create_async_engine(str(settings.db_url), echo=settings.db_echo)
-    session_factory = async_scoped_session(
-        sessionmaker(
-            engine,
-            expire_on_commit=False,
-            class_=AsyncSession,  # type: ignore
-        ),
-        scopefunc=current_task,
+    settings = Settings()
+
+    engine = AsyncEngine(create_engine(str(settings.db_url), echo=settings.db_echo, future=True))
+    session_factory = sessionmaker(
+        engine,
+        autocommit=False,
+        autoflush=False,
+        class_=AsyncSession,  # type: ignore
+        expire_on_commit=False,
     )
     app.state.db_engine = engine
     app.state.db_session_factory = session_factory

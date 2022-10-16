@@ -41,6 +41,3 @@ class Settings(BaseSettings):
         env_file = ".env"
         env_prefix = "EGAME179_BACKEND_"
         env_file_encoding = "utf-8"
-
-
-settings = Settings()

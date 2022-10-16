@@ -1,1 +1,1 @@
-"""WEB API for egame179_backend."""
+"""REST API for egame179_backend."""
