@@ -2,6 +2,14 @@
 from pydantic import BaseModel
 
 
+class User(BaseModel):
+    """User model."""
+
+    id: int
+    role: str
+    name: str
+
+
 class GameParams(BaseModel):
     """Game parameters."""
 

@@ -1,11 +1,11 @@
 import streamlit as st
 
-from egame179_frontend.api.mock import mock_auth
+from egame179_frontend.api.auth import auth_request
 from egame179_frontend.views import View
 
 
 def logout(*args) -> None:
-    """Clear user session."""
+    """Clear user session."""  # noqa: DAR101
     st.session_state.user = None
     refresh()
 
@@ -21,7 +21,7 @@ LOGOUT_OPTION = View(menu_option="Выход", icon="box-arrow-right", page_func
 
 def login_callback() -> None:
     """Login callback, using backend for auth."""
-    st.session_state.user = mock_auth(login=st.session_state.login, password=st.session_state.password)
+    st.session_state.user = auth_request(login=st.session_state.login, password=st.session_state.password)
 
 
 def login_form() -> None:
