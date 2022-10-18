@@ -1,23 +1,17 @@
 import asyncio
 import sys
-from typing import AsyncGenerator, Generator
+from collections.abc import AsyncGenerator, Generator
 
 import nest_asyncio
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from sqlalchemy.ext.asyncio import (
-    AsyncConnection,
-    AsyncEngine,
-    AsyncSession,
-    create_async_engine,
-)
+from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
 from egame179_backend.app.app import get_app
 from egame179_backend.db.dependencies import get_db_session
-from egame179_backend.db.utils import create_database, drop_database
-from egame179_backend.settings import settings
+from egame179_backend.settings import Settings
 
 nest_asyncio.apply()
 

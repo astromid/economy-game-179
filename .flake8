@@ -10,6 +10,8 @@ extend-ignore = E203
 docstring_style=google
 
 ignore =
+  ; Do not perform function calls in argument defaults
+  B008,
   ; Missing docstring in public module
   D100,
   ; Missing docstring in magic method
@@ -26,8 +28,13 @@ ignore =
   WPS326,
   ; Found `__init__.py` module with logic
   WPS412,
+  ; Found string literal over-use
   WPS226,
+  ; Found a too complex `f` string
   WPS237,
+  ; Found complex default value
+  WPS404,
+  ; Found nested class
   WPS431,
 
 per-file-ignores =

@@ -12,12 +12,7 @@ class UserDAO:
     def __init__(self, session: AsyncSession = Depends(get_db_session)):
         self.session = session
 
-    async def get_all_users(self) -> list[User]:
-        query = select(User)
-        raw_users = await self.session.execute(query)
-        return raw_users.scalars().all()
-
-    async def auth_user(self, login: str, password: str) -> User | None:
+    async def auth(self, login: str, password: str) -> User | None:
         query = select(User).where(User.login == login, User.password == password)
-        raw_user = await self.session.execute(query)
-        return raw_user.scalars().one_or_none()
+        raw_user = await self.session.exec(query)  # type: ignore
+        return raw_user.one_or_none()

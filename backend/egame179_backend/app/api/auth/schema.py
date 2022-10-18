@@ -1,8 +1,9 @@
 from pydantic import BaseModel
 
 
-class AuthData(BaseModel):
-    """Login & password."""
+class UserOut(BaseModel):
+    """User model without sensitive information."""
 
-    login: str
-    password: str
+    id: int
+    role: str
+    name: str
