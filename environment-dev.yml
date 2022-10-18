@@ -16,9 +16,11 @@ dependencies:
 - omegaconf
 - orjson
 - pandas
+- passlib
 - prettytable
 - pyarrow
 - python-dotenv
+- python-jose
 - simplejson
 - seaborn
 - sqlalchemy

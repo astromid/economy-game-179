@@ -11,6 +11,7 @@ from pathlib import Path
 import sqlalchemy as sa
 import yaml
 from alembic import op
+from passlib.context import CryptContext
 from sqlmodel.sql.sqltypes import AutoString
 
 # revision identifiers, used by Alembic.
@@ -69,6 +70,11 @@ def upgrade() -> None:
 
 
 def create_users(users: list[dict[str, int | str]]) -> None:
+    # hash user passwords
+    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+    for user in users:
+        if user["password"] is not None:
+            user["password"] = pwd_context.hash(user["password"])  # type: ignore
     # users table (root, players, NPCs)
     users_table = op.create_table(
         "users",
