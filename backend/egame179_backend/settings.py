@@ -17,10 +17,10 @@ class Settings(BaseSettings):
     db_host: str = "localhost"
     db_port: int = 3306
     db_user: str = "egame179_backend"
-    db_pass: str
+    db_pass: str = ""
     db_base: str = "egame179"
     db_echo: bool = False
-    jwt_secret: str
+    jwt_secret: str = ""
 
     @property
     def db_url(self) -> URL:
@@ -42,3 +42,6 @@ class Settings(BaseSettings):
         env_file = ".env"
         env_prefix = "EGAME179_BACKEND_"
         env_file_encoding = "utf-8"
+
+
+settings = Settings()

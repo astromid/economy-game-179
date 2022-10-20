@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlmodel import create_engine
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from egame179_backend.settings import Settings
+from egame179_backend.settings import settings
 
 
 def _setup_db(app: FastAPI) -> None:
@@ -18,8 +18,6 @@ def _setup_db(app: FastAPI) -> None:
     Args:
         app (FastAPI): fastAPI application.
     """
-    settings = Settings()
-
     engine = AsyncEngine(create_engine(str(settings.db_url), echo=settings.db_echo, future=True))
     session_factory = sessionmaker(
         engine,

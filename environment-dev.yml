@@ -21,6 +21,7 @@ dependencies:
 - pyarrow
 - python-dotenv
 - python-jose
+- python-multipart
 - simplejson
 - seaborn
 - sqlalchemy

@@ -20,6 +20,7 @@ dependencies = [
     "passlib",
     "pydantic[dotenv]",
     "python-jose",
+    "python-multipart",
     "sqlalchemy[asyncio]",
     "sqlmodel",
     "ujson",
