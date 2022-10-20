@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from sqlmodel import Field, SQLModel
 
 
@@ -36,3 +38,13 @@ class UnlockedMarket(SQLModel, table=True):
     user_id: int = Field(primary_key=True)
     market_id: int = Field(primary_key=True)
     protected: bool
+
+
+class Cycle(SQLModel, table=True):
+    """Cycles table."""
+
+    __tablename__ = "cycles"  # type: ignore
+
+    cycle: int | None = Field(default=None, primary_key=True)
+    started: datetime | None = Field(default_factory=datetime.now)
+    finished: datetime | None = None
