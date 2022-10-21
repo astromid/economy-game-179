@@ -8,4 +8,4 @@ WORKDIR /app/src
 COPY ./egame179_frontend /app/src/
 RUN pip install --no-cache-dir --upgrade .
 
-CMD ["streamlit", "egame179_frontend/app.py"]
+CMD ["streamlit", "run", "egame179_frontend/app.py" "--logger.level=info",  "2> streamlit.log"]

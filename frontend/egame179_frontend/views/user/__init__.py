@@ -1,6 +1,5 @@
 """User views."""
 from egame179_frontend.views import View
-from egame179_frontend.views.login import LOGOUT_OPTION
 from egame179_frontend.views.user.manufacturing import manufacturing_view
 from egame179_frontend.views.user.markets import markets_view
 from egame179_frontend.views.user.overview import overview
@@ -17,5 +16,4 @@ USER_VIEWS = (
     View(menu_option="Продажи", icon="receipt-cutoff", page_func=sales_view),
     View(menu_option="Акции", icon="graph-up", page_func=stocks_view),
     View(menu_option="Транзакции", icon="cash-stack", page_func=transactions_view),
-    LOGOUT_OPTION,
 )

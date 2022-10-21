@@ -1,27 +1,16 @@
 import streamlit as st
 
-from egame179_frontend.api.auth import auth_request
-from egame179_frontend.views import View
-
-
-def logout(*args) -> None:
-    """Clear user session."""  # noqa: DAR101
-    st.session_state.user = None
-    refresh()
-
-
-def refresh() -> None:
-    """Refresh user session."""
-    st.experimental_memo.clear()  # type: ignore
-    st.experimental_rerun()
-
-
-LOGOUT_OPTION = View(menu_option="Выход", icon="box-arrow-right", page_func=logout)
+from egame179_frontend.api.auth import get_auth_header, get_user
 
 
 def login_callback() -> None:
     """Login callback, using backend for auth."""
-    st.session_state.user = auth_request(login=st.session_state.login, password=st.session_state.password)
+    auth_header = get_auth_header(login=st.session_state.login, password=st.session_state.password)
+    if auth_header is not None:
+        user = get_user(auth_header)
+        if user is not None:
+            st.session_state.auth_header = auth_header
+            st.session_state.user = user
 
 
 def login_form() -> None:
