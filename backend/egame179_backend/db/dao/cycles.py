@@ -20,7 +20,7 @@ class CycleDAO:
         Returns:
             Cycle: current cycle info.
         """
-        query = select(Cycle).where(col(Cycle.finished).is_(None))
+        query = select(Cycle).order_by(col(Cycle.cycle).desc()).limit(1)
         raw_cycle = await self.session.exec(query)  # type: ignore
         return raw_cycle.one()
 

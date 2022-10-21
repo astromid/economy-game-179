@@ -5,6 +5,7 @@ class UserInfo(BaseModel):
     """User model without sensitive information."""
 
     id: int
+    role: str
     name: str
 
 
