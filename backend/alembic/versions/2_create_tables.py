@@ -6,6 +6,7 @@ Create Date: 2022-10-07 17:32:00.000000
 
 """
 import itertools
+from datetime import datetime
 from pathlib import Path
 
 import sqlalchemy as sa
@@ -133,7 +134,7 @@ def create_cycles(initial_cycle: int) -> None:
     )
     if cycles_table is not None:
         op.execute("SET SESSION sql_mode='NO_AUTO_VALUE_ON_ZERO'")
-        op.bulk_insert(cycles_table, [{"cycle": initial_cycle}])
+        op.bulk_insert(cycles_table, [{"cycle": initial_cycle, "finished": datetime.now()}])
     else:
         raise RuntimeError("Failed to create cycles table")
 
