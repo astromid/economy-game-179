@@ -1,3 +1,5 @@
+from types import MappingProxyType
+
 import streamlit as st
 
 from egame179_frontend.api import mock
@@ -6,7 +8,12 @@ from egame179_frontend.views import View
 from egame179_frontend.views.root import ROOT_VIEWS
 from egame179_frontend.views.user import USER_VIEWS
 
-INIT_NONE_FIELDS = ("auth_header", "user", "views")
+SESSION_INIT_STATE = MappingProxyType({
+    "auth_header": None,
+    "user": None,
+    "views": (),
+    "synced": False,
+})
 
 
 def init_server_state() -> None:
@@ -16,9 +23,9 @@ def init_server_state() -> None:
 
 def init_session_state() -> None:
     """Initialize the session state of the streamlit app."""
-    for field in INIT_NONE_FIELDS:
+    for field, init_value in SESSION_INIT_STATE.items():
         if field not in st.session_state:
-            st.session_state[field] = None
+            st.session_state[field] = init_value
 
     match st.session_state.user:
         case User(role="player"):
@@ -51,5 +58,6 @@ def logout(*args) -> None:
 
 def clean_session_state() -> None:
     """Refresh user session."""
+    st.session_state.synced = False
     st.experimental_memo.clear()  # type: ignore
     st.experimental_rerun()

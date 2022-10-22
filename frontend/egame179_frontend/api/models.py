@@ -1,4 +1,4 @@
-"""Input JSON models with game state from backend."""
+"""Input API models from backend."""
 from pydantic import BaseModel
 
 
@@ -10,68 +10,94 @@ class User(BaseModel):
     name: str
 
 
-class GameParams(BaseModel):
-    """Game parameters."""
+class Market(BaseModel):
+    """Market model."""
 
-    tau: int
-    alpha: float
-    beta: float
-    gamma: float
-
-
-class MarketState(BaseModel):
-    """Market state."""
-
-    adjacency: list[str]
-    buy: list[float]
-    sell: list[float]
-
-
-class GameState(BaseModel):
-    """Shared state of the game."""
-
-    cycle: int
-    game_params: GameParams
-    markets: dict[str, MarketState]
-    stocks: dict[str, dict[str, list[float]]]
-
-
-class Transaction(BaseModel):
-    """Transaction model."""
-
-    cycle: int
-    amount: float
-    type: str
-    description: str | None
-
-
-class PlayerMarketInfo(BaseModel):
-    """Player market info."""
-
-    theta: float
-    storage: int
-    top: dict[str, float | None]
-
-
-class PlayerInfo(BaseModel):
-    """Player state."""
-
+    id: int
     name: str
-    home: str
-    balances: list[float]
-    active_markets: list[str]
-    products: dict[str, PlayerMarketInfo]
-    transactions: list[Transaction]
+    ring: int
+    link1: int
+    link2: int
+    link3: int
+    link4: int | None
+    link5: int | None
 
 
-class PlayerState(GameState):
-    """Game state from current player POV."""
+class VariableState(BaseModel):
+    """Base model for variable game state."""
 
-    player: PlayerInfo
+    synced: bool = False
 
 
-class MasterState(GameState):
-    """Game state from the game master POV."""
+class Cycle(BaseModel):
+    """Cycle model."""
 
-    god_mode: bool = True
-    players: dict[str, PlayerInfo]
+    cycle: int
+    started: str
+    finished: str | None
+
+
+# class GameParams(BaseModel):
+#     """Game parameters."""
+
+#     tau: int
+#     alpha: float
+#     beta: float
+#     gamma: float
+
+
+# class MarketState(BaseModel):
+#     """Market state."""
+
+#     adjacency: list[str]
+#     buy: list[float]
+#     sell: list[float]
+
+
+# class GameState(BaseModel):
+#     """Shared state of the game."""
+
+#     cycle: int
+#     game_params: GameParams
+#     markets: dict[str, MarketState]
+#     stocks: dict[str, dict[str, list[float]]]
+
+
+# class Transaction(BaseModel):
+#     """Transaction model."""
+
+#     cycle: int
+#     amount: float
+#     type_: str
+#     description: str | None
+
+
+# class PlayerMarketInfo(BaseModel):
+#     """Player market info."""
+
+#     theta: float
+#     storage: int
+#     top: dict[str, float | None]
+
+
+# class PlayerInfo(BaseModel):
+#     """Player state."""
+
+#     name: str
+#     home: str
+#     balances: list[float]
+#     active_markets: list[str]
+#     products: dict[str, PlayerMarketInfo]
+#     transactions: list[Transaction]
+
+
+# class PlayerState(GameState):
+#     """Game state from current player POV."""
+
+#     player: PlayerInfo
+
+
+# class MasterState(GameState):
+#     """Game state from the game master POV."""
+
+#     players: dict[str, PlayerInfo]

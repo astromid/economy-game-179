@@ -104,7 +104,7 @@ def _prices_block(n_rows: int, markets: dict[str, _BuyMarketStatus]) -> None:
 
 def _buy_form_block(markets: dict[str, _BuyMarketStatus], balance: float) -> None:
     st.markdown("### Производство товаров")
-    chosen_market: str = st.selectbox("Целевой рынок", list(markets.keys()))
+    chosen_market = st.selectbox("Целевой рынок", list(markets.keys()))
     real_price = (1 - markets[chosen_market].theta) * markets[chosen_market].price_history[-1]
     real_price = round(real_price, 2)
     max_volume = int(balance // real_price)
