@@ -24,17 +24,12 @@ class CycleDAO:
         raw_cycle = await self.session.exec(query)  # type: ignore
         return raw_cycle.one()
 
-    async def finish_current_cycle(self) -> Cycle:
-        """Finish current cycle.
-
-        Returns:
-            Cycle: finished cycle info.
-        """
+    async def finish_current_cycle(self) -> None:
+        """Finish current cycle."""
         current_cycle = await self.get_current_cycle()
         current_cycle.finished = datetime.now()
         self.session.add(current_cycle)
         await self.session.commit()
-        return current_cycle
 
     async def start_new_cycle(self) -> None:
         """Start new cycle."""

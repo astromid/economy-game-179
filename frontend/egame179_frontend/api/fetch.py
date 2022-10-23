@@ -1,5 +1,5 @@
-from typing import Any
 from collections.abc import Callable
+from typing import Any
 
 from egame179_frontend.api.cycle import get_current_cycle
 from egame179_frontend.models import Cycle

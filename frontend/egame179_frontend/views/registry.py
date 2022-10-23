@@ -1,5 +1,5 @@
-from typing import ClassVar, Protocol, Type
 from collections.abc import Iterable
+from typing import ClassVar, Protocol, Type
 
 
 class AppView(Protocol):
