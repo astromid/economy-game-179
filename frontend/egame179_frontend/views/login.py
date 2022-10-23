@@ -1,16 +1,20 @@
 import streamlit as st
 
-from egame179_frontend.api.auth import get_auth_header, get_user
+from egame179_frontend.api.auth import AuthAPI
+from egame179_frontend.views.registry import AppViews
 
 
 def login_callback() -> None:
     """Login callback, using backend for auth."""
-    auth_header = get_auth_header(login=st.session_state.login, password=st.session_state.password)
+    auth_header = AuthAPI.get_auth_header(st.session_state.login, st.session_state.password)
     if auth_header is not None:
-        user = get_user(auth_header)
+        user = AuthAPI.get_user(auth_header)
         if user is not None:
             st.session_state.auth_header = auth_header
             st.session_state.user = user
+
+            views = AppViews.filter_views(user.role)
+            st.session_state.views = {option: view() for option, view in views.items()}
 
 
 def login_form() -> None:
@@ -19,7 +23,7 @@ def login_form() -> None:
         "<center><h2>Необходим авторизованный доступ</h2></center>",
         unsafe_allow_html=True,
     )
-    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("---")
     _, col, _ = st.columns([1.5, 1, 1.5])
     with col:
         with st.form(key="login_form"):

@@ -8,7 +8,7 @@ from millify import millify
 from streamlit_echarts import st_pyecharts
 
 from egame179_frontend.api.mock import mock_manufacturing
-from egame179_frontend.api.models import PlayerState
+from egame179_frontend.models import PlayerState
 from egame179_frontend.visualization import radar_chart
 
 MAX_METRICS_IN_ROW = 5

@@ -1,5 +1,17 @@
 """Input API models from backend."""
+from datetime import datetime
+from collections.abc import Callable
+
 from pydantic import BaseModel
+
+
+class Roles:
+    """User roles."""
+
+    root = "root"
+    editor = "editor"
+    news = "news"
+    player = "player"
 
 
 class User(BaseModel):
@@ -27,14 +39,15 @@ class VariableState(BaseModel):
     """Base model for variable game state."""
 
     synced: bool = False
+    sync_callback: Callable[[], None] | None = None
 
 
 class Cycle(BaseModel):
     """Cycle model."""
 
     cycle: int
-    started: str
-    finished: str | None
+    started: datetime
+    finished: datetime | None
 
 
 # class GameParams(BaseModel):

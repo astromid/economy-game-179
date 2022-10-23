@@ -4,37 +4,41 @@ import time
 import httpx
 import streamlit as st
 from streamlit_option_menu import option_menu
-from streamlit_server_state import server_state
 
-from egame179_frontend.state import clean_session_state, init_server_state, init_session_state, logout
+from egame179_frontend.state import clean_session_state, init_session_state
 from egame179_frontend.views.login import login_form
-from egame179_frontend.views.sync import fetch_data
+from egame179_frontend.views.registry import AppView
 
 
 def app() -> None:
     """Entry point for the game frontend."""
-    if st.session_state.views:
-        selected_option = sidebar()
-        header()
-        if st.session_state.synced:  # check sync between session and server state
-            pass
-        else:
-            fetch_data()
-            st.session_state.synced = True
-
-        view_func = st.session_state.option2view[selected_option]
-        view_func(st.session_state.game_state)
-    else:
+    if st.session_state.views is None:
         login_form()
+    else:
+        header()
+        selected_option = sidebar()
+
+        current_view: AppView = st.session_state.views[selected_option]
+        current_view.render()
+
+
+def header() -> None:
+    """UI header."""
+    st.markdown("### Система корпоративного управления CP v2022/10.77")
+    st.title(f"Пользователь {st.session_state.user.name}")
 
 
 def sidebar() -> str:
-    """UI sidebar."""
+    """UI sidebar.
+
+    Returns:
+        str: selected option.
+    """
     with st.sidebar:
         selected_option = option_menu(
             "Меню",
-            options=[view.menu_option for view in st.session_state.views],
-            icons=[view.icon for view in st.session_state.views],
+            options=list(st.session_state.views.keys()),
+            icons=[view.icon for view in st.session_state.views.values()],
             menu_icon="cast",
             default_index=0,
             key="option_menu",
@@ -44,27 +48,35 @@ def sidebar() -> str:
     return selected_option
 
 
-def header() -> None:
-    """UI header."""
-    st.markdown("### Система корпоративного управления CP v2022/10.77")
-    st.title(f"Пользователь {st.session_state.user.name}")
+def http_exception_handler(exc: httpx.HTTPStatusError) -> None:
+    """Handle HTTPStatus exceptions.
+
+    Args:
+        exc (httpx.HTTPStatusError): exception.
+
+    Raises:
+        exc: not a auth / server exception.
+    """
+    logging.exception(exc)
+    if exc.response.status_code == httpx.codes.UNAUTHORIZED:
+        st.error("Сессия истекла, необходима повторная авторизация")
+        time.sleep(1)
+        # logout
+        st.session_state.auth_header = None
+        st.session_state.user = None
+        clean_session_state()
+    elif exc.response.is_server_error:
+        st.error("Ошибка сервера, повторная попытка через 3с...")
+        st.exception(exc)
+        time.sleep(3)
+        clean_session_state()
+    raise exc  # raise any other exception
 
 
 if __name__ == "__main__":
     st.set_page_config(page_title="CP v2022/10.77", layout="wide")
-    init_server_state()
     init_session_state()
     try:
         app()
     except httpx.HTTPStatusError as exc:
-        if exc.response.status_code == httpx.codes.UNAUTHORIZED:
-            logging.exception(f"Unauthorized access: {exc}")
-            st.error("Сессия истекла, необходима повторная авторизация")
-            time.sleep(1)
-            logout()
-        elif exc.response.is_server_error:
-            logging.exception(f"Server error: {exc}")
-            st.error("Ошибка сервера, повторная попытка...")
-            time.sleep(1)
-            clean_session_state()
-        raise exc
+        http_exception_handler(exc)

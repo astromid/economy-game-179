@@ -1,6 +1,8 @@
-from typing import Any, Callable
+from typing import Any
+from collections.abc import Callable
+
 from egame179_frontend.api.cycle import get_current_cycle
-from egame179_frontend.api.models import Cycle
+from egame179_frontend.models import Cycle
 
 
 def get_fetch_func(user_role: str) -> Callable[[], Any]:
