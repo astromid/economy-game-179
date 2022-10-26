@@ -1,5 +1,5 @@
 from collections.abc import Iterable
-from typing import ClassVar, Protocol, Type
+from typing import ClassVar, Protocol
 
 
 class AppView(Protocol):
@@ -20,21 +20,20 @@ class AppViews:
     views: dict[int, type[AppView]] = {}
 
     @classmethod
-    def filter_views(cls, role: str) -> dict[str, type[AppView]]:
+    def role_views(cls, role: str) -> dict[str, AppView]:
         """Filter views by role.
 
         Args:
             role (str): role to filter views by.
 
         Returns:
-            dict[str, Type[AppView]]: filtered views.
+            dict[str, AppView]: views for this role.
         """
-        filtered_views: dict[str, type[AppView]] = {}
-        for idx in range(len(cls.views)):  # noqa: WPS518
-            view = cls.views[idx]
-            if role in view.roles:
-                filtered_views[view.menu_option] = view
-        return filtered_views
+        views = cls.views
+        filtered_indexes = sorted(idx for idx, view in views.items() if role in view.roles)
+        filtered_views = {views[idx].menu_option: views[idx] for idx in filtered_indexes}
+        # create AppView instances
+        return {option: view() for option, view in filtered_views.items()}
 
 
 def appview(cls: type[AppView]) -> type[AppView]:

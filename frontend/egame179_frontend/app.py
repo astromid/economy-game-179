@@ -1,51 +1,55 @@
 import logging
 import time
+from datetime import datetime
 
 import httpx
 import streamlit as st
 from streamlit_option_menu import option_menu
 
-from egame179_frontend.state import clean_session_state, init_session_state
+from egame179_frontend.state import GameNotStartedError, clean_cached_state, init_game_state
+from egame179_frontend.style import load_css
 from egame179_frontend.views.login import login_form
 from egame179_frontend.views.registry import AppView
 
 
 def app() -> None:
     """Entry point for the game frontend."""
-    if st.session_state.views is None:
+    init_game_state()
+    user_views: dict[str, AppView] | None = st.session_state.views
+    if user_views is None:
         login_form()
     else:
         header()
-        selected_option = sidebar()
+        with st.sidebar:
+            menu_option = option_menu(
+                "Меню",
+                options=list(st.session_state.views.keys()),
+                icons=[view.icon for view in st.session_state.views.values()],
+                menu_icon="cast",
+                default_index=0,
+                key="option_menu",
+            )
 
-        current_view: AppView = st.session_state.views[selected_option]
+        current_view = user_views[menu_option]
         current_view.render()
+
+        with st.sidebar:
+            under_menu_block()
 
 
 def header() -> None:
     """UI header."""
-    st.markdown("### Система корпоративного управления CP v2022/10.77")
-    st.title(f"Пользователь {st.session_state.user.name}")
+    st.markdown("## Система корпоративного управления CP v2022/10.77")
+    st.markdown("---")
 
 
-def sidebar() -> str:
-    """UI sidebar.
-
-    Returns:
-        str: selected option.
-    """
-    with st.sidebar:
-        selected_option = option_menu(
-            "Меню",
-            options=list(st.session_state.views.keys()),
-            icons=[view.icon for view in st.session_state.views.values()],
-            menu_icon="cast",
-            default_index=0,
-            key="option_menu",
-        )
-        if st.button("Обновить данные"):
-            clean_session_state()
-    return selected_option
+def under_menu_block() -> None:
+    """UI block under menu."""
+    st.button("Обновить данные", on_click=clean_cached_state)
+    st.markdown("---")
+    st.markdown(f"*User: {st.session_state.user.name}*")
+    st.markdown(f"*Last update: {datetime.now().isoformat()}*")
+    st.markdown(f"*Sync status:* {':green_cicrle:' if st.session_state.synced else ':red_circle:'}")
 
 
 def http_exception_handler(exc: httpx.HTTPStatusError) -> None:
@@ -59,24 +63,40 @@ def http_exception_handler(exc: httpx.HTTPStatusError) -> None:
     """
     logging.exception(exc)
     if exc.response.status_code == httpx.codes.UNAUTHORIZED:
-        st.error("Сессия истекла, необходима повторная авторизация")
-        time.sleep(1)
         # logout
         st.session_state.auth_header = None
-        st.session_state.user = None
-        clean_session_state()
+        st.session_state.views = None
+
+        error_spinner("Сессия истекла, необходима повторная авторизация", sleep=1)
     elif exc.response.is_server_error:
-        st.error("Ошибка сервера, повторная попытка через 3с...")
+        error_spinner("Ошибка сервера", sleep=3, exc=exc)
+    else:
+        raise exc  # raise any other exception
+
+
+def error_spinner(error: str, sleep: int, exc: Exception | None = None) -> None:
+    """Rerun app with error and spinner.
+
+    Args:
+        error (str): error message.
+        sleep (int): sleep time in seconds.
+        exc (Exception | None, optional): handled exception. Defaults to None.
+    """
+    st.error(error)
+    if exc is not None:
         st.exception(exc)
-        time.sleep(3)
-        clean_session_state()
-    raise exc  # raise any other exception
+    with st.spinner(f"Повторная попытка через {sleep}с..."):
+        time.sleep(sleep)
+    clean_cached_state()
+    st.experimental_rerun()
 
 
 if __name__ == "__main__":
     st.set_page_config(page_title="CP v2022/10.77", layout="wide")
-    init_session_state()
+    load_css()
     try:
         app()
     except httpx.HTTPStatusError as exc:
         http_exception_handler(exc)
+    except GameNotStartedError:
+        error_spinner("Игра ещё не началась", sleep=5)

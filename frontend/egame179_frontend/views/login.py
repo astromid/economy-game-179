@@ -1,6 +1,6 @@
 import streamlit as st
 
-from egame179_frontend.api.auth import AuthAPI
+from egame179_frontend.api import AuthAPI
 from egame179_frontend.views.registry import AppViews
 
 
@@ -12,9 +12,7 @@ def login_callback() -> None:
         if user is not None:
             st.session_state.auth_header = auth_header
             st.session_state.user = user
-
-            views = AppViews.filter_views(user.role)
-            st.session_state.views = {option: view() for option, view in views.items()}
+            st.session_state.views = AppViews.role_views(user.role)
 
 
 def login_form() -> None:

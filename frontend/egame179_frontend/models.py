@@ -1,5 +1,4 @@
 """Input API models from backend."""
-from collections.abc import Callable
 from datetime import datetime
 
 from pydantic import BaseModel
@@ -33,13 +32,6 @@ class Market(BaseModel):
     link3: int
     link4: int | None
     link5: int | None
-
-
-class VariableState(BaseModel):
-    """Base model for variable game state."""
-
-    synced: bool = False
-    sync_callback: Callable[[], None] | None = None
 
 
 class Cycle(BaseModel):

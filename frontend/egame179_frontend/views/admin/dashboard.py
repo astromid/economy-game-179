@@ -1,7 +1,9 @@
 from dataclasses import dataclass
+from datetime import datetime
 
 import streamlit as st
 
+from egame179_frontend.api.cycle import CycleAPI
 from egame179_frontend.models import Cycle, Roles
 from egame179_frontend.views.registry import AppView, appview
 
@@ -11,6 +13,19 @@ class _ViewState:
     cycle: int
     started: str
     finished: str | None
+
+
+@st.experimental_memo(max_entries=1)  # type: ignore
+def _cache_view_state(
+    cycle: int,
+    started: datetime,
+    finished: datetime | None,
+) -> _ViewState:
+    return _ViewState(
+        cycle,
+        started.isoformat(),
+        finished.isoformat() if finished is not None else None,
+    )
 
 
 @appview
@@ -25,13 +40,11 @@ class RootDashboard(AppView):
     def __init__(self) -> None:
         self.state: _ViewState | None = None
 
-    @st.experimental_memo  # type: ignore
-    def cache_state(self) -> None:
-        """Cache state of the view."""
-        pass
-
     def render(self) -> None:
         """Render view."""
+        cycle = CycleAPI.get_current_cycle()
+        self.state = _cache_view_state(**cycle.dict())
+
         _cycle_stats(self.state)
         st.markdown("---")
         _cycle_controls(self.state)

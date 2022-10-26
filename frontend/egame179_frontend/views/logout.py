@@ -1,7 +1,7 @@
 import streamlit as st
 
 from egame179_frontend.models import Roles
-from egame179_frontend.state import clean_session_state
+from egame179_frontend.state import clean_cached_state
 from egame179_frontend.views.registry import AppView, appview
 
 
@@ -20,5 +20,6 @@ class Logout(AppView):
     def render(self) -> None:
         """Logout user."""  # noqa: DAR101
         st.session_state.auth_header = None
-        st.session_state.user = None
-        clean_session_state()
+        st.session_state.views = None
+        clean_cached_state()
+        st.experimental_rerun()
