@@ -4,7 +4,7 @@ from types import MappingProxyType
 import streamlit as st
 from millify import millify
 
-from egame179_frontend.models import PlayerState
+from egame179_frontend.api.models import PlayerState
 
 CHART_SIZE = MappingProxyType({"width": 768, "height": 480})
 

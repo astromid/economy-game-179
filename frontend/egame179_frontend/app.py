@@ -6,7 +6,7 @@ import httpx
 import streamlit as st
 from streamlit_option_menu import option_menu
 
-from egame179_frontend.state import GameNotStartedError, clean_cached_state, init_game_state
+from egame179_frontend.state import GameNotStartedError, clean_cached_state, init_game_state, init_session_state
 from egame179_frontend.style import load_css
 from egame179_frontend.views.login import login_form
 from egame179_frontend.views.registry import AppView
@@ -14,11 +14,11 @@ from egame179_frontend.views.registry import AppView
 
 def app() -> None:
     """Entry point for the game frontend."""
-    init_game_state()
     user_views: dict[str, AppView] | None = st.session_state.views
     if user_views is None:
         login_form()
     else:
+        init_game_state()
         header()
         with st.sidebar:
             menu_option = option_menu(
@@ -49,7 +49,7 @@ def under_menu_block() -> None:
     st.markdown("---")
     st.markdown(f"*User: {st.session_state.user.name}*")
     st.markdown(f"*Last update: {datetime.now().isoformat()}*")
-    st.markdown(f"*Sync status:* {':green_cicrle:' if st.session_state.synced else ':red_circle:'}")
+    st.markdown(f"*Sync status:* {':green_circle:' if st.session_state.synced else ':red_circle:'}")
 
 
 def http_exception_handler(exc: httpx.HTTPStatusError) -> None:
@@ -93,6 +93,7 @@ def error_spinner(error: str, sleep: int, exc: Exception | None = None) -> None:
 
 if __name__ == "__main__":
     st.set_page_config(page_title="CP v2022/10.77", layout="wide")
+    init_session_state()
     load_css()
     try:
         app()

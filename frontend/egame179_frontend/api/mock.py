@@ -4,7 +4,7 @@ from pathlib import Path
 import streamlit as st
 import ujson
 
-from egame179_frontend.models import PlayerState
+from egame179_frontend.api.models import PlayerState
 
 
 @st.experimental_memo  # type: ignore

@@ -4,7 +4,7 @@ from math import ceil
 
 import streamlit as st
 
-from egame179_frontend.models import PlayerState
+from egame179_frontend.api.models import PlayerState
 
 MAX_METRICS_IN_ROW = 5
 

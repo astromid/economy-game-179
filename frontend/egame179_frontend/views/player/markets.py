@@ -3,7 +3,7 @@ import numpy as np
 import pyecharts as pe
 import streamlit as st
 
-from egame179_frontend.models import PlayerState
+from egame179_frontend.api.models import PlayerState
 
 TOOLTIP_JS_CODE = "".join(
     [

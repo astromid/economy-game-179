@@ -4,8 +4,10 @@ from datetime import datetime
 import streamlit as st
 
 from egame179_frontend.api.cycle import CycleAPI
-from egame179_frontend.models import Cycle, Roles
-from egame179_frontend.views.registry import AppView, appview
+from egame179_frontend.api.models import Roles
+from egame179_frontend.fetch import fetch_spinner
+from egame179_frontend.state import RootState, SharedGameState
+from egame179_frontend.views.registry import appview
 
 
 @dataclass
@@ -29,16 +31,20 @@ def _cache_view_state(
 
 
 @appview
-class RootDashboard(AppView):
+class RootDashboard:
     """Root game dashboard."""
 
     idx = 0
     menu_option = "Статус"
     icon = "house"
-    roles = [Roles.root]
+    roles = (Roles.root,)
 
     def __init__(self) -> None:
         self.state: _ViewState | None = None
+
+    @fetch_spinner()
+    def fetch_data(self) -> None:
+        pass
 
     def render(self) -> None:
         """Render view."""

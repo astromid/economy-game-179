@@ -1,4 +1,3 @@
-from collections.abc import Iterable
 from typing import ClassVar, Protocol
 
 
@@ -8,13 +7,19 @@ class AppView(Protocol):
     idx: ClassVar[int]
     menu_option: ClassVar[str]
     icon: ClassVar[str]
-    roles: ClassVar[Iterable[str]]
+    roles: ClassVar[tuple[str]]
+
+    def fetch_data(self) -> None:
+        """Fetch data for view from backend via API.
+
+        Implementations should check if data is already fetched.
+        """
 
     def render(self) -> None:
         """Render view."""
 
 
-class AppViews:
+class AppViewsRegistry:
     """App views registry."""
 
     views: dict[int, type[AppView]] = {}
@@ -45,5 +50,5 @@ def appview(cls: type[AppView]) -> type[AppView]:
     Returns:
         AppView: input class.
     """
-    AppViews.views[cls.idx] = cls
+    AppViewsRegistry.views[cls.idx] = cls
     return cls

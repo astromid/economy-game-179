@@ -1,7 +1,7 @@
 import httpx
 import streamlit as st
 
-from egame179_frontend.models import Cycle
+from egame179_frontend.api.models import Cycle
 from egame179_frontend.settings import settings
 
 

@@ -1,7 +1,7 @@
 import pandas as pd
 import streamlit as st
 
-from egame179_frontend.models import PlayerState
+from egame179_frontend.api.models import PlayerState
 
 
 def transactions_view(state: PlayerState) -> None:
