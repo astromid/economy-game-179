@@ -6,7 +6,7 @@ import httpx
 import streamlit as st
 from streamlit_option_menu import option_menu
 
-from egame179_frontend.state import GameNotStartedError, clean_cached_state, init_game_state, init_session_state
+from egame179_frontend.state import WaitingForMasterError, clean_cached_state, init_game_state, init_session_state
 from egame179_frontend.style import load_css
 from egame179_frontend.views.login import login_form
 from egame179_frontend.views.registry import AppView
@@ -67,9 +67,9 @@ def http_exception_handler(exc: httpx.HTTPStatusError) -> None:
         st.session_state.auth_header = None
         st.session_state.views = None
 
-        error_spinner("Сессия истекла, необходима повторная авторизация", sleep=1)
+        error_spinner("Сессия истекла, необходима повторная авторизация", sleep=2)
     elif exc.response.is_server_error:
-        error_spinner("Ошибка сервера", sleep=3, exc=exc)
+        error_spinner("Ошибка сервера", sleep=5, exc=exc)
     else:
         raise exc  # raise any other exception
 
@@ -99,5 +99,5 @@ if __name__ == "__main__":
         app()
     except httpx.HTTPStatusError as exc:
         http_exception_handler(exc)
-    except GameNotStartedError:
-        error_spinner("Игра ещё не началась", sleep=5)
+    except WaitingForMasterError:
+        error_spinner("Ожидание сервера игры", sleep=5)

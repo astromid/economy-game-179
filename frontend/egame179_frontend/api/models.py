@@ -100,9 +100,3 @@ class PlayerState(GameState):
     """Game state from current player POV."""
 
     player: PlayerInfo
-
-
-class MasterState(GameState):
-    """Game state from the game master POV."""
-
-    players: dict[str, PlayerInfo]

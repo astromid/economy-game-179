@@ -1,8 +1,12 @@
+import time
 from collections.abc import Callable
+from dataclasses import dataclass
 from functools import wraps
 from typing import Any
 
 import streamlit as st
+
+from egame179_frontend import api as egame179_api
 
 
 def fetch_spinner(stage: int | None = None, total: int | None = None) -> Callable:
@@ -19,7 +23,7 @@ def fetch_spinner(stage: int | None = None, total: int | None = None) -> Callabl
     def decorator(func: Callable) -> Callable[[], Any]:
         @wraps(func)
         def wrapper() -> Any:
-            msg = "Синхронизация..."
+            msg = "Синхронизация данных..."
             if stage is not None:
                 if total is not None:
                     msg = f"{msg} [{stage}/{total}]"
@@ -31,3 +35,26 @@ def fetch_spinner(stage: int | None = None, total: int | None = None) -> Callabl
         return wrapper
 
     return decorator
+
+
+@dataclass
+class SharedGameState:
+    """Shared game state for all players."""
+
+    synced: bool
+    cycle: egame179_api.models.Cycle
+    markets: list[egame179_api.models.Market]
+
+
+def fetch_shared_state() -> SharedGameState:
+    return SharedGameState(
+        synced=True,
+        cycle=fetch_current_cycle(),
+        markets=[],
+    )
+
+
+@fetch_spinner(stage=1, total=4)
+def fetch_current_cycle() -> egame179_api.models.Cycle:
+    time.sleep(5)  # !DEBUG
+    return egame179_api.CycleAPI.get_current_cycle()

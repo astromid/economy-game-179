@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime
 
 import streamlit as st
+from streamlit_server_state import server_state
 
 from egame179_frontend.api.cycle import CycleAPI
 from egame179_frontend.api.models import Roles
@@ -48,7 +49,7 @@ class RootDashboard:
 
     def render(self) -> None:
         """Render view."""
-        cycle = CycleAPI.get_current_cycle()
+        
         self.state = _cache_view_state(**cycle.dict())
 
         _cycle_stats(self.state)
