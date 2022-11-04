@@ -49,7 +49,7 @@ repos:
   - id: blacken-docs
 
 - repo: https://github.com/asottile/pyupgrade # A tool to automatically upgrade syntax for newer versions of the language.
-  rev: v3.1.0
+  rev: v3.2.0
   hooks:
   - id: pyupgrade
     args: [--py310-plus]

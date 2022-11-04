@@ -93,7 +93,7 @@ def check_sync_status() -> bool:
     """Check if session game state is synced with server.
 
     Returns:
-        bool: True if user state is synced with root, False otherwise.
+        bool: True if user state is synced with shared, False otherwise.
     """
     if not st.session_state.synced:
         return False
