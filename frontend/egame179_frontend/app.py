@@ -49,7 +49,6 @@ def under_menu_block() -> None:
     st.markdown("---")
     st.markdown(f"*User: {st.session_state.user.name}*")
     st.markdown(f"*Last update: {datetime.now().isoformat()}*")
-    st.markdown(f"*Sync status:* {':green_circle:' if st.session_state.synced else ':red_circle:'}")
 
 
 def http_exception_handler(exc: httpx.HTTPStatusError) -> None:
@@ -92,7 +91,7 @@ def error_spinner(error: str, sleep: int, exc: Exception | None = None) -> None:
 
 
 if __name__ == "__main__":
-    st.set_page_config(page_title="CP v2022/10.77", layout="wide")
+    st.set_page_config(page_title="CP v2022/11.77", layout="wide")
     init_session_state()
     load_css()
     try:

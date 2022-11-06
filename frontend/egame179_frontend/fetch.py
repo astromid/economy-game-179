@@ -37,13 +37,7 @@ def fetch_spinner(stage: int | None = None, total: int | None = None) -> Callabl
     return decorator
 
 
-@dataclass
-class SharedGameState:
-    """Shared game state for all players."""
 
-    synced: bool
-    cycle: egame179_api.models.Cycle
-    markets: list[egame179_api.models.Market]
 
 
 def fetch_shared_state() -> SharedGameState:
