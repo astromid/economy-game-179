@@ -14,6 +14,7 @@ from egame179_frontend.views.registry import AppView
 
 def app() -> None:
     """Entry point for the game frontend."""
+    init_session_state()
     user_views: dict[str, AppView] | None = st.session_state.views
     if user_views is None:
         login_form()
@@ -92,7 +93,6 @@ def error_spinner(error: str, sleep: int, exc: Exception | None = None) -> None:
 
 if __name__ == "__main__":
     st.set_page_config(page_title="CP v2022/11.77", layout="wide")
-    init_session_state()
     load_css()
     try:
         app()

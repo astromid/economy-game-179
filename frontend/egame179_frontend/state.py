@@ -20,7 +20,8 @@ SESSION_INIT_STATE = MappingProxyType(
 class SharedGameState:
     """Shared game state for all players."""
 
-    cycle: api_models.Cycle
+    synced: bool = False
+    cycle: api_models.Cycle | None = None
 
 
 @dataclass
@@ -55,31 +56,34 @@ class WaitingForMasterError(Exception):
 
 
 def init_game_state() -> None:
-    """Initialize game state for auth user.
-
-    Raises:
-        WaitingForMasterError: if game is waiting for master actions.
-    """
+    """Initialize game state after user auth."""
     user: api_models.User = st.session_state.user
-    if user.role == api_models.Roles.root:
-        # root game initialization (server state, shared game info)
-        init_server_state()
-        if not check_shared_state():
-            with server_state_lock["game"]:
-                server_state.game = fetch_shared_state()
-    else:
-        if server_state.game is None:
-            raise WaitingForMasterError
-        
-        if not check_sync_status():
-            clean_cached_state()
+    if st.session_state.game is None:
+        # first run for this user, we need to create empty game states
+        match user.role:
+            case api_models.Roles.root:
+                init_server_state()  # init empty server state
+                st.session_state.game = RootState()
+            case api_models.Roles.player:
+                st.session_state.game = PlayerState()
+    
 
 
 def init_server_state() -> None:
     """Initialize server state (from root)."""
     with server_state_lock["game"]:
         if "game" not in server_state:
-            server_state.game = None
+            server_state["game"] = SharedGameState()
+
+
+def check_server_state_sync() -> None:
+    """Check if server state is actual.
+
+    Raises:
+        WaitingForMasterError: if server state is not actual.
+    """
+    if not server_state.game.synced:
+        raise WaitingForMasterError
 
 
 def check_sync_with_shared() -> bool:

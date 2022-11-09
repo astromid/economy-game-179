@@ -1,12 +1,13 @@
 import time
 from collections.abc import Callable
-from dataclasses import dataclass
 from functools import wraps
 from typing import Any
 
 import streamlit as st
+from streamlit_server_state import server_state, server_state_lock
 
 from egame179_frontend import api as egame179_api
+from egame179_frontend.state import SharedGameState
 
 
 def fetch_spinner(stage: int | None = None, total: int | None = None) -> Callable:

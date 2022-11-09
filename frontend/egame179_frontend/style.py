@@ -1,4 +1,5 @@
 import json
+import logging
 from pathlib import Path
 
 import streamlit as st
@@ -9,6 +10,7 @@ STYLES_DIR = Path(__file__).parent.parent / "css"
 
 def load_css() -> None:
     """Load CSS styles."""
+    log = logging.getLogger(__name__)
     main_style = server_state.get("style", None)
     menu_style = server_state.get("menu_style", None)
 
@@ -16,10 +18,12 @@ def load_css() -> None:
         main_style = STYLES_DIR.joinpath("style.css").read_text()
         with server_state_lock["style"]:
             server_state["style"] = main_style
+        log.debug("style.css loaded")
 
     if menu_style is None:
-        menu_style = json.loads(STYLES_DIR.joinpath("menu.json").read_text())
+        menu_style = json.loads(STYLES_DIR.joinpath("menu.css.json").read_text())
         with server_state_lock["menu_style"]:
             server_state["menu_style"] = menu_style
+        log.debug("menu.css loaded")
 
     st.markdown(f"<style>{server_state.style}</style>", unsafe_allow_html=True)
