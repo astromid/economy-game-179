@@ -7,7 +7,7 @@ class AppView(Protocol):
     idx: ClassVar[int]
     menu_option: ClassVar[str]
     icon: ClassVar[str]
-    roles: ClassVar[tuple[str]]
+    roles: ClassVar[tuple[str, ...]]
 
     def check_view_data(self) -> bool:
         """Check if data for this view is already fetched.

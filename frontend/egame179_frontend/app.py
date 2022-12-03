@@ -6,7 +6,8 @@ import httpx
 import streamlit as st
 from streamlit_option_menu import option_menu
 
-from egame179_frontend.state import WaitingForMasterError, clean_cached_state, init_game_state, init_session_state
+from egame179_frontend.initialize import WaitingForMasterError, check_state_sync, init_game_state
+from egame179_frontend.state.session import clean_cached_state, init_session_state
 from egame179_frontend.style import load_css
 from egame179_frontend.views.login import login_form
 from egame179_frontend.views.registry import AppView
@@ -30,17 +31,17 @@ def app() -> None:
                 default_index=0,
                 key="option_menu",
             )
+            under_menu_block()
 
+        check_state_sync()
+        # render current app view
         current_view = user_views[menu_option]
         current_view.render()
-
-        with st.sidebar:
-            under_menu_block()
 
 
 def header() -> None:
     """UI header."""
-    st.markdown("## Система корпоративного управления CP v2022/10.77")
+    st.markdown("## Система корпоративного управления CP v2022/12.77")
     st.markdown("---")
 
 
@@ -80,7 +81,7 @@ def error_spinner(error: str, sleep: int, exc: Exception | None = None) -> None:
     Args:
         error (str): error message.
         sleep (int): sleep time in seconds.
-        exc (Exception | None, optional): handled exception. Defaults to None.
+        exc (Exception, optional): handled exception. Defaults to None.
     """
     st.error(error)
     if exc is not None:
@@ -92,7 +93,7 @@ def error_spinner(error: str, sleep: int, exc: Exception | None = None) -> None:
 
 
 if __name__ == "__main__":
-    st.set_page_config(page_title="CP v2022/11.77", layout="wide")
+    st.set_page_config(page_title="CP v2022/12.77", layout="wide")
     load_css()
     try:
         app()

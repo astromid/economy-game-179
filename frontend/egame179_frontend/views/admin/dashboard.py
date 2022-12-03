@@ -1,13 +1,15 @@
 from dataclasses import dataclass
 from datetime import datetime
+from typing import ClassVar
 
 import streamlit as st
 from streamlit_server_state import server_state
 
 from egame179_frontend.api.cycle import CycleAPI
 from egame179_frontend.api.models import Roles
-from egame179_frontend.fetch import fetch_spinner
-from egame179_frontend.state import RootState, SharedGameState
+from egame179_frontend.fetch_ui import fetch_spinner
+from egame179_frontend.state.session import RootState
+from egame179_frontend.state.shared import SharedGameState
 from egame179_frontend.views.registry import appview
 
 
@@ -33,15 +35,24 @@ def _cache_view_state(
 
 @appview
 class RootDashboard:
-    """Root game dashboard."""
+    """Root game dashboard AppView."""
 
-    idx = 0
-    menu_option = "Статус"
-    icon = "house"
-    roles = (Roles.root,)
+    idx: ClassVar[int] = 0
+    menu_option: ClassVar[str] = "Статус"
+    icon: ClassVar[str] = "house"
+    roles: ClassVar[tuple[str, ...]] = (Roles.root,)
 
     def __init__(self) -> None:
         self.state: _ViewState | None = None
+
+    def check_view_data(self) -> bool:
+        """Check if data for this view is already fetched.
+
+        Returns:
+            bool: True if data is already fetched.
+        """
+        state: RootState = st.session_state.game
+
 
     @fetch_spinner()
     def fetch_data(self) -> None:
@@ -49,7 +60,7 @@ class RootDashboard:
 
     def render(self) -> None:
         """Render view."""
-        
+
         self.state = _cache_view_state(**cycle.dict())
 
         _cycle_stats(self.state)
