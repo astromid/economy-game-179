@@ -1,3 +1,4 @@
+"""Module with initialize game states functions."""
 import streamlit as st
 from streamlit_server_state import server_state
 
@@ -18,12 +19,22 @@ def init_game_state() -> None:
                 st.session_state.game = PlayerState()
 
 
+def ensure_session_shared_sync() -> None:
+    """Ensure session game state is synced with shared."""
+    check_shared_state()
+    if not check_session_sync():  # check session state
+        # reset and reinit session game state
+        st.session_state.game = None
+        init_game_state()
+        fill_state_from_shared()
+
+
 class WaitingForMasterError(Exception):
     """Game is waiting for master actions."""
 
 
-def check_state_sync():
-    """Check if state is synced.
+def check_shared_state() -> None:
+    """Check if shared state is synced.
 
     If shared state is not synced and user is root, fetch it.
 
@@ -37,8 +48,6 @@ def check_state_sync():
             fetch_shared_state()
         else:
             raise WaitingForMasterError
-    if not check_session_sync():  # check session state
-        st.session_state.game.cycle = None  # reset cycle as flag to refresh state
 
 
 def check_session_sync() -> bool:
@@ -50,3 +59,10 @@ def check_session_sync() -> bool:
     player_state: PlayerState | RootState = st.session_state.game
     shared_state: SharedGameState = server_state.game
     return player_state.cycle == shared_state.cycle
+
+
+def fill_state_from_shared() -> None:
+    """Fill session game state from shared."""
+    player_state: PlayerState | RootState = st.session_state.game
+    shared_state: SharedGameState = server_state.game
+    player_state.cycle = shared_state.cycle.copy(deep=True)

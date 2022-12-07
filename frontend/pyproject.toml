@@ -60,3 +60,6 @@ allow_untyped_decorators = true
 warn_return_any = false
 warn_unused_configs = true
 plugins = ["sqlalchemy.ext.mypy.plugin", "numpy.typing.mypy_plugin", "pydantic.mypy"]
+
+[tool.refurb]
+python_version = "3.10"

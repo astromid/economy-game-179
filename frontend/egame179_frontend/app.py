@@ -6,7 +6,7 @@ import httpx
 import streamlit as st
 from streamlit_option_menu import option_menu
 
-from egame179_frontend.initialize import WaitingForMasterError, check_state_sync, init_game_state
+from egame179_frontend.initialize import WaitingForMasterError, ensure_session_shared_sync, init_game_state
 from egame179_frontend.state.session import clean_cached_state, init_session_state
 from egame179_frontend.style import load_css
 from egame179_frontend.views.login import login_form
@@ -25,15 +25,15 @@ def app() -> None:
         with st.sidebar:
             menu_option = option_menu(
                 "Меню",
-                options=list(st.session_state.views.keys()),
-                icons=[view.icon for view in st.session_state.views.values()],
+                options=list(user_views.keys()),
+                icons=[view.icon for view in user_views.values()],
                 menu_icon="cast",
                 default_index=0,
                 key="option_menu",
             )
             under_menu_block()
 
-        check_state_sync()
+        ensure_session_shared_sync()
         # render current app view
         current_view = user_views[menu_option]
         current_view.render()

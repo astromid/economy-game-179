@@ -3,30 +3,26 @@ from datetime import datetime
 from typing import ClassVar
 
 import streamlit as st
-from streamlit_server_state import server_state
 
-from egame179_frontend.api.cycle import CycleAPI
 from egame179_frontend.api.models import Roles
-from egame179_frontend.fetch_ui import fetch_spinner
 from egame179_frontend.state.session import RootState
-from egame179_frontend.state.shared import SharedGameState
 from egame179_frontend.views.registry import appview
 
 
 @dataclass
-class _ViewState:
+class _ViewData:
     cycle: int
     started: str
     finished: str | None
 
 
-@st.experimental_memo(max_entries=1)  # type: ignore
-def _cache_view_state(
+@st.experimental_memo(max_entries=1)
+def _cache_view_data(
     cycle: int,
     started: datetime,
     finished: datetime | None,
-) -> _ViewState:
-    return _ViewState(
+) -> _ViewData:
+    return _ViewData(
         cycle,
         started.isoformat(),
         finished.isoformat() if finished is not None else None,
@@ -43,7 +39,7 @@ class RootDashboard:
     roles: ClassVar[tuple[str, ...]] = (Roles.root,)
 
     def __init__(self) -> None:
-        self.state: _ViewState | None = None
+        self.state: _ViewData | None = None
 
     def check_view_data(self) -> bool:
         """Check if data for this view is already fetched.
@@ -51,24 +47,23 @@ class RootDashboard:
         Returns:
             bool: True if data is already fetched.
         """
-        state: RootState = st.session_state.game
+        return True
 
-
-    @fetch_spinner()
-    def fetch_data(self) -> None:
-        pass
+    def fetch_view_data(self) -> None:
+        """Fetch data for this view."""
 
     def render(self) -> None:
         """Render view."""
-
-        self.state = _cache_view_state(**cycle.dict())
+        self.fetch_view_data()
+        game_state: RootState = st.session_state.game
+        self.state = _cache_view_data(**game_state.cycle.dict())  # type: ignore
 
         _cycle_stats(self.state)
         st.markdown("---")
         _cycle_controls(self.state)
 
 
-def _cycle_stats(state: _ViewState) -> None:
+def _cycle_stats(state: _ViewData) -> None:
     col1, col2, col3 = st.columns(3)
     with col1:
         st.metric("Текущий цикл", state.cycle)
@@ -78,7 +73,7 @@ def _cycle_stats(state: _ViewState) -> None:
         st.metric("Закончился", state.finished)
 
 
-def _cycle_controls(state: _ViewState) -> None:
+def _cycle_controls(state: _ViewData) -> None:
     col1, col2 = st.columns(2)
     with col1:
         st.button("Завершить цикл", disabled=state.finished is not None)

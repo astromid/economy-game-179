@@ -17,7 +17,7 @@ class AppView(Protocol):
         """
         return True
 
-    def fetch_data(self) -> None:
+    def fetch_view_data(self) -> None:
         """Fetch data for view from backend via API."""
 
     def render(self) -> None:
