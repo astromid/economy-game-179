@@ -15,7 +15,7 @@ class CycleDAO:
         self.session = session
 
     async def get_current_cycle(self) -> Cycle:
-        """Get current (unfinished) cycle.
+        """Get current cycle.
 
         Returns:
             Cycle: current cycle info.

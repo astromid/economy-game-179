@@ -9,17 +9,6 @@ class AppView(Protocol):
     icon: ClassVar[str]
     roles: ClassVar[tuple[str, ...]]
 
-    def check_view_data(self) -> bool:
-        """Check if data for this view is already fetched.
-
-        Returns:
-            bool: True if data is already fetched.
-        """
-        return True
-
-    def fetch_view_data(self) -> None:
-        """Fetch data for view from backend via API."""
-
     def render(self) -> None:
         """Render view."""
 

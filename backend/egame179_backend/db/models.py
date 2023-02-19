@@ -48,3 +48,13 @@ class Cycle(SQLModel, table=True):
     cycle: int | None = Field(default=None, primary_key=True)
     started: datetime | None = Field(default_factory=datetime.now)
     finished: datetime | None = None
+
+
+class Balance(SQLModel, table=True):
+    """Balances table."""
+
+    __tablename__ = "balances"  # type: ignore
+
+    cycle: int = Field(primary_key=True)
+    user_id: int = Field(primary_key=True)
+    amount: float
