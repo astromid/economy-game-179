@@ -25,8 +25,8 @@ dependencies:
 - simplejson
 - seaborn
 - sqlalchemy
-- sqlmodel
-- streamlit
+- sqlmodel>=0.0.8
+- streamlit>=1.19
 - tqdm
 - ujson
 - uvicorn

@@ -5,6 +5,9 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "egame179_backend"
 description = "FastAPI backend for economic strategy game"
+authors = [
+    {name = "Yan Budakyan", email = "astromid@gmail.com"}
+]
 version = "0.0.1"
 readme = "README.md"
 license = {text = "MIT License"}
@@ -27,6 +30,10 @@ dependencies = [
     "uvicorn",
     "yarl",
 ]
+
+[tool.setuptools.packages.find]
+include = ["egame179_backend"]
+namespaces = false
 
 [tool.black]
 line-length = 120
