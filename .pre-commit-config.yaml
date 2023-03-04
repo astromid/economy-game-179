@@ -12,41 +12,20 @@ repos:
   - id: debug-statements
   - id: end-of-file-fixer
   - id: mixed-line-ending
-    args: [--fix=no]
 
 - repo: https://github.com/asottile/add-trailing-comma
-  rev: v2.3.0
+  rev: v2.4.0
   hooks:
   - id: add-trailing-comma
 
 - repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
-  rev: v2.5.0
+  rev: v2.7.0
   hooks:
   - id: pretty-format-yaml
     args:
     - --autofix
     - --preserve-quotes
     - --indent=2
-
-- repo: http://github.com/timothycrosley/isort
-  rev: 5.10.1
-  hooks:
-  - id: isort
-
-- repo: local
-  hooks:
-  - id: black
-    name: black
-    description: black style enforcement
-    entry: black
-    language: system
-    types: [python]
-    args: [--diff, --check]
-
-- repo: https://github.com/asottile/blacken-docs
-  rev: v1.12.1
-  hooks:
-  - id: blacken-docs
 
 - repo: https://github.com/asottile/pyupgrade
   rev: v3.3.1
@@ -55,12 +34,36 @@ repos:
     args: [--py310-plus]
 
 - repo: https://github.com/dosisod/refurb
-  rev: 'v1.8.0'
+  rev: v1.13.0
   hooks:
   - id: refurb
 
+- repo: http://github.com/timothycrosley/isort
+  rev: 5.12.0
+  hooks:
+  - id: isort
+
+- repo: https://github.com/psf/black
+  rev: 23.1.0
+  hooks:
+  - id: black
+    language_version: python3.10
+
+- repo: https://github.com/charliermarsh/ruff-pre-commit
+  # Ruff version.
+  rev: 'v0.0.254'
+  hooks:
+  - id: ruff
+
 - repo: local
   hooks:
+  - id: flake8
+    name: flake8
+    description: wemake-python-styleguide enforcement
+    entry: flake8
+    language: system
+    types: [python]
+
   - id: mypy-backend
     name: mypy-backend
     language: system
@@ -76,10 +79,3 @@ repos:
     pass_filenames: false
     files: ^frontend/egame179_frontend/
     entry: bash -c 'cd frontend && mypy -p egame179_frontend "$@"' --
-
-  - id: flake8
-    name: flake8
-    description: wemake-python-styleguide enforcement
-    entry: flake8
-    language: system
-    types: [python]

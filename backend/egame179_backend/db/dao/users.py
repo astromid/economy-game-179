@@ -26,12 +26,13 @@ class UserDAO:
         """
         query = select(User).where(User.login == login)
         raw_user = await self.session.exec(query)  # type: ignore
-        user = raw_user.one_or_none()
+        user: User | None = raw_user.one_or_none()
         if user is not None:
             if self.pwd_context.verify(password, user.password):
                 return user
+        return None
 
-    async def get_user(self, name: str) -> User | None:
+    async def get_user_by_name(self, name: str) -> User | None:
         """Get user info by name.
 
         Args:

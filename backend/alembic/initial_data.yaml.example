@@ -1,38 +1,29 @@
-initial_cycle: 0
+initial_cycle: 1
 initial_player_balance: 1
 initial_stocks_price: 1
 initial_theta: 1
 users:
-  - {type: "admin", name: "root", login: "xxx", password: "*****"}
-  - {type: "player", name: "PlayerCorp1", login: "xxxx", password: "*****"}
+  - {type: "admin", name: "root", login: "", password: ""}
+  - {type: "player", name: "PlayerCorp1", login: "", password: ""}
+  - { ... }
 markets:
-  - {id: 0, name: "Руда", ring: 2, link1: 1, link2: 2, link3: 2, link4: 6, link5: null}
-  - {id: 1, name: "Дерево", ring: 2, link1: 0, link2: 3, link3: 3, link4: 8, link5: null}
-  - {id: 2, name: "Ртуть", ring: 2, link1: 5, link2: 0, link3: 0, link4: 6, link5: null}
-  - {id: 3, name: "Сера", ring: 2, link1: 4, link2: 1, link3: 1, link4: 8, link5: null}
-  - {id: 4, name: "Самоцветы", ring: 2, link1: 3, link2: 5, link3: 5, link4: 7, link5: null}
-  - {id: 5, name: "Кристаллы", ring: 2, link1: 2, link2: 4, link3: 4, link4: 7, link5: null}
-  - {id: 6, name: "Титаны", ring: 1, link1: 0, link2: 2, link3: 7, link4: 8, link5: 9}
-  - {id: 7, name: "Чёрные драконы", ring: 1, link1: 4, link2: 5, link3: 6, link4: 8, link5: 9}
-  - {id: 8, name: "Архангелы", ring: 1, link1: 1, link2: 3, link3: 6, link4: 7, link5: 9}
-  - {id: 9, name: "Крестьяне", ring: 0, link1: 6, link2: 8, link3: 7, link4: null, link5: null}
+  - {id: 0, name: "", ring: 2, link1: 1, link2: 2, link3: 3, link4: null, link5: null}
+  - {id: 1, name: "", ring: 2, link1: 0, link2: 2, link3: 3, link4: null, link5: null}
+  - {id: 2, name: "", ring: 2, link1: 0, link2: 1, link3: 3, link4: null, link5: null}
+  - {id: 3, name: "", ring: 2, link1: 0, link2: 1, link3: 2, link4: null, link5: null}
+  - { ... }
 initial_market_prices:
-  - {market_id: 0, buy: 0.01, sell: 0.015}
-  - {market_id: 1, buy: 0.01, sell: 0.015}
-  - {market_id: 2, buy: 0.01, sell: 0.015}
-  - {market_id: 3, buy: 0.01, sell: 0.015}
-  - {market_id: 4, buy: 0.01, sell: 0.015}
-  - {market_id: 5, buy: 0.01, sell: 0.015}
-  - {market_id: 6, buy: 0.015, sell: 0.018}
-  - {market_id: 7, buy: 0.015, sell: 0.018}
-  - {market_id: 8, buy: 0.015, sell: 0.018}
-  - {market_id: 9, buy: 0.025, sell: 0.02}
+  - {market_id: 0, buy: 0.0, sell: 0.0}
+  - {market_id: 1, buy: 0.0, sell: 0.0}
+  - {market_id: 2, buy: 0.0, sell: 0.0}
+  - {market_id: 3, buy: 0.0, sell: 0.0}
+  - { ... }
 cycle_params:
-  initial_alpha: 0.15
-  alpha_multiplier: 1.2
-  beta: 0.05
-  gamma: 0.005
-  tau_sec: 600
+  initial_alpha: 1.0
+  alpha_multiplier: 1.0
+  beta: 1.0
+  gamma: 1.0
+  tau_sec: 0
   demand:
     ring2: [...]
     ring1: [...]

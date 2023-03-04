@@ -11,7 +11,7 @@ from egame179_backend.db.dao.users import UserDAO
 from egame179_backend.db.models import User
 from egame179_backend.settings import settings
 
-TOKEN_EXPIRE_MINUTES = 60
+TOKEN_EXPIRE_MINUTES = 300
 
 router = APIRouter()
 

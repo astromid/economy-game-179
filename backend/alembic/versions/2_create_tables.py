@@ -6,7 +6,6 @@ Create Date: 2022-10-07 17:32:00.000000
 
 """
 import itertools
-from datetime import datetime
 from pathlib import Path
 
 import sqlalchemy as sa
@@ -129,12 +128,11 @@ def create_cycles(initial_cycle: int) -> None:
     cycles_table = op.create_table(
         "cycles",
         sa.Column("cycle", sa.Integer, autoincrement=True, primary_key=True),
-        sa.Column("started", sa.DateTime, server_default=sa.text("CURRENT_TIMESTAMP")),
+        sa.Column("started", sa.DateTime),
         sa.Column("finished", sa.DateTime),
     )
     if cycles_table is not None:
-        op.execute("SET SESSION sql_mode='NO_AUTO_VALUE_ON_ZERO'")
-        op.bulk_insert(cycles_table, [{"cycle": initial_cycle, "finished": datetime.now()}])
+        op.bulk_insert(cycles_table, [{"cycle": initial_cycle}])
     else:
         raise RuntimeError("Failed to create cycles table")
 
@@ -233,18 +231,18 @@ def create_cycle_params(
     demand: dict[str, list[int]],
     constant_params: dict[str, float | int],
 ) -> None:
-    cycles = len(demand["ring0"])
-    alphas = [round(initial_alpha * alpha_multiplier**cycle, 3) for cycle in range(cycles)]
+    cycles = range(1, len(demand["ring0"]) + 1)
+    alphas = [round(initial_alpha * alpha_multiplier ** (cycle - 1), 3) for cycle in cycles]
     cycle_params = [
         {
             "cycle": cycle,
-            "alpha": alphas[cycle],
-            "demand_ring2": demand["ring2"][cycle],
-            "demand_ring1": demand["ring1"][cycle],
-            "demand_ring0": demand["ring0"][cycle],
+            "alpha": alphas[cycle - 1],
+            "demand_ring2": demand["ring2"][cycle - 1],
+            "demand_ring1": demand["ring1"][cycle - 1],
+            "demand_ring0": demand["ring0"][cycle - 1],
             **constant_params,
         }
-        for cycle in range(cycles)
+        for cycle in cycles
     ]
     cycle_params_table = op.create_table(
         "cycle_params",
