@@ -38,7 +38,7 @@ class Cycle(BaseModel):
     """Cycle model."""
 
     cycle: int
-    started: datetime
+    started: datetime | None
     finished: datetime | None
 
 

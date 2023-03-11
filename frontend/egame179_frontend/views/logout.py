@@ -3,7 +3,7 @@ from typing import ClassVar
 import streamlit as st
 
 from egame179_frontend.api.models import Roles
-from egame179_frontend.state.session import clean_cached_state
+from egame179_frontend.state import clean_cached_state
 from egame179_frontend.views.registry import appview
 
 
@@ -20,7 +20,7 @@ class Logout:
         """Empty constructor."""
 
     def render(self) -> None:
-        """Logout user."""  # noqa: DAR101
+        """Logout user."""
         st.session_state.auth_header = None
         st.session_state.views = None
         clean_cached_state()

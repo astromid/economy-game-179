@@ -5,9 +5,9 @@ from datetime import datetime
 import httpx
 import streamlit as st
 from streamlit_option_menu import option_menu
+from streamlit_server_state import server_state
 
-from egame179_frontend.initialize import WaitingForMasterError, ensure_session_shared_sync, init_game_state
-from egame179_frontend.state.session import clean_cached_state, init_session_state
+from egame179_frontend.state import clean_cached_state, init_game_state, init_session_state
 from egame179_frontend.style import load_css
 from egame179_frontend.views.login import login_form
 from egame179_frontend.views.registry import AppView
@@ -32,16 +32,13 @@ def app() -> None:
                 key="option_menu",
             )
             under_menu_block()
-
-        ensure_session_shared_sync()
         # render current app view
-        current_view = user_views[menu_option]
-        current_view.render()
+        user_views[menu_option].render()
 
 
 def header() -> None:
     """UI header."""
-    st.markdown("## Система корпоративного управления CP v2022/12.77")
+    st.markdown("## Система корпоративного управления CP v2023/04.77")
     st.markdown("---")
 
 
@@ -51,6 +48,7 @@ def under_menu_block() -> None:
     st.markdown("---")
     st.markdown(f"*User: {st.session_state.user.name}*")
     st.markdown(f"*Last update: {datetime.now().isoformat()}*")
+    st.markdown(f"*Block input mode: {server_state.block_input}*")
 
 
 def http_exception_handler(exc: httpx.HTTPStatusError) -> None:
@@ -67,7 +65,6 @@ def http_exception_handler(exc: httpx.HTTPStatusError) -> None:
         # logout
         st.session_state.auth_header = None
         st.session_state.views = None
-
         error_spinner("Сессия истекла, необходима повторная авторизация", sleep=2)
     elif exc.response.is_server_error:
         error_spinner("Ошибка сервера", sleep=5, exc=exc)
@@ -93,11 +90,13 @@ def error_spinner(error: str, sleep: int, exc: Exception | None = None) -> None:
 
 
 if __name__ == "__main__":
-    st.set_page_config(page_title="CP v2022/12.77", layout="wide")
+    st.set_page_config(page_title="CP v2023/04.77", layout="wide")
     load_css()
     try:
         app()
     except httpx.HTTPStatusError as exc:
         http_exception_handler(exc)
-    except WaitingForMasterError:
-        error_spinner("Ожидание сервера игры", sleep=5)
+    except httpx.ConnectError as exc:
+        error_spinner("Сервер недоступен", sleep=5, exc=exc)
+    except ConnectionRefusedError as exc:
+        error_spinner("Сервер недоступен", sleep=5, exc=exc)

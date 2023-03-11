@@ -5,7 +5,7 @@ from typing import ClassVar
 import streamlit as st
 
 from egame179_frontend.api.models import Roles
-from egame179_frontend.state.session import RootState
+from egame179_frontend.state import RootState
 from egame179_frontend.views.registry import appview
 
 
@@ -16,7 +16,7 @@ class _ViewData:
     finished: str | None
 
 
-@st.experimental_memo(max_entries=1)
+@st.cache_data(max_entries=1)
 def _cache_view_data(
     cycle: int,
     started: datetime,

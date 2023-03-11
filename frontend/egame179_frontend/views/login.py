@@ -25,7 +25,7 @@ def login_form() -> None:
     _, col, _ = st.columns([1.5, 1, 1.5])
     with col:
         with st.form(key="login_form"):
-            st.text("Corporate Portal [CP] v2022/10.77")
+            st.text("Corporate Portal [CP] v2023/04.77")
             st.text_input("Логин:", key="login")
             st.text_input("Пароль:", type="password", key="password")
             if st.form_submit_button("Войти", on_click=login_callback):
