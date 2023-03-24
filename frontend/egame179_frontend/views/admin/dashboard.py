@@ -12,19 +12,19 @@ from egame179_frontend.views.registry import appview
 @dataclass
 class _ViewData:
     cycle: int
-    started: str
+    started: str | None
     finished: str | None
 
 
 @st.cache_data(max_entries=1)
 def _cache_view_data(
     cycle: int,
-    started: datetime,
+    started: datetime | None,
     finished: datetime | None,
 ) -> _ViewData:
     return _ViewData(
         cycle,
-        started.isoformat(),
+        started.isoformat() if started is not None else None,
         finished.isoformat() if finished is not None else None,
     )
 
@@ -34,7 +34,7 @@ class RootDashboard:
     """Root game dashboard AppView."""
 
     idx: ClassVar[int] = 0
-    menu_option: ClassVar[str] = "Статус"
+    menu_option: ClassVar[str] = "Обзор"
     icon: ClassVar[str] = "house"
     roles: ClassVar[tuple[str, ...]] = (Roles.root,)
 
@@ -76,6 +76,6 @@ def _cycle_stats(state: _ViewData) -> None:
 def _cycle_controls(state: _ViewData) -> None:
     col1, col2 = st.columns(2)
     with col1:
-        st.button("Завершить цикл", disabled=state.finished is not None)
+        st.button("Начать цикл", disabled=state.finished is None)
     with col2:
-        st.button("Начать новый цикл", disabled=state.finished is None)
+        st.button("Завершить цикл", disabled=state.finished is not None)
