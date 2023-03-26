@@ -5,9 +5,8 @@ from datetime import datetime
 import httpx
 import streamlit as st
 from streamlit_option_menu import option_menu
-from streamlit_server_state import server_state
 
-from egame179_frontend.state import clean_cached_state, init_game_state, init_session_state
+from egame179_frontend.state.state import clean_cached_state, init_game_state, init_session_state
 from egame179_frontend.style import load_css
 from egame179_frontend.views.login import login_form
 from egame179_frontend.views.registry import AppView
@@ -48,7 +47,7 @@ def under_menu_block() -> None:
     st.markdown("---")
     st.markdown(f"*User: {st.session_state.user.name}*")
     st.markdown(f"*Last update: {datetime.now().isoformat()}*")
-    st.markdown(f"*Block input mode: {server_state.block_input}*")
+    st.markdown(f"*Cycle interim: {st.session_state.interim_block}*")
 
 
 def http_exception_handler(exc: httpx.HTTPStatusError) -> None:

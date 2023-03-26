@@ -5,12 +5,12 @@ class AppView(Protocol):
     """App view protocol."""
 
     idx: ClassVar[int]
-    menu_option: ClassVar[str]
+    name: ClassVar[str]
     icon: ClassVar[str]
     roles: ClassVar[tuple[str, ...]]
 
-    def render(self) -> None:
-        """Render view."""
+    def render(self) -> None:  # noqa: D102
+        ...  # noqa: WPS428
 
 
 class AppViewsRegistry:
@@ -30,7 +30,7 @@ class AppViewsRegistry:
         """
         views = cls.views
         filtered_indexes = sorted(idx for idx, view in views.items() if role in view.roles)
-        filtered_views = {views[idx].menu_option: views[idx] for idx in filtered_indexes}
+        filtered_views = {views[idx].name: views[idx] for idx in filtered_indexes}
         # create AppView instances
         return {option: view() for option, view in filtered_views.items()}
 
@@ -41,8 +41,13 @@ def appview(cls: type[AppView]) -> type[AppView]:
     Args:
         cls (AppView): app view class.
 
+    Raises:
+        KeyError: in case of duplicated AppView indexes.
+
     Returns:
         AppView: input class.
     """
+    if cls.idx in AppViewsRegistry.views:
+        raise KeyError(f"Incorrect idx in {cls}: index {cls.idx} already in use")
     AppViewsRegistry.views[cls.idx] = cls
     return cls

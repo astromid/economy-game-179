@@ -1,24 +1,5 @@
 """Backend API models."""
-from datetime import datetime
-
 from pydantic import BaseModel
-
-
-class Roles:
-    """User roles."""
-
-    root = "root"
-    editor = "editor"
-    news = "news"
-    player = "player"
-
-
-class User(BaseModel):
-    """User model."""
-
-    id: int
-    role: str
-    name: str
 
 
 class Market(BaseModel):
@@ -32,14 +13,6 @@ class Market(BaseModel):
     link3: int
     link4: int | None
     link5: int | None
-
-
-class Cycle(BaseModel):
-    """Cycle model."""
-
-    cycle: int
-    started: datetime | None
-    finished: datetime | None
 
 
 class GameParams(BaseModel):

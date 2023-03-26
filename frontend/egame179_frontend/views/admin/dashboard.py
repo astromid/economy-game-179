@@ -4,8 +4,8 @@ from typing import ClassVar
 
 import streamlit as st
 
-from egame179_frontend.api.models import Roles
-from egame179_frontend.state import RootState
+from egame179_frontend.api.user import UserRoles
+from egame179_frontend.state.state import RootState
 from egame179_frontend.views.registry import appview
 
 
@@ -34,33 +34,29 @@ class RootDashboard:
     """Root game dashboard AppView."""
 
     idx: ClassVar[int] = 0
-    menu_option: ClassVar[str] = "Обзор"
+    name: ClassVar[str] = "Обзор"
     icon: ClassVar[str] = "house"
-    roles: ClassVar[tuple[str, ...]] = (Roles.root,)
+    roles: ClassVar[tuple[str, ...]] = (UserRoles.ROOT.value,)
 
     def __init__(self) -> None:
         self.state: _ViewData | None = None
 
-    def check_view_data(self) -> bool:
-        """Check if data for this view is already fetched.
-
-        Returns:
-            bool: True if data is already fetched.
-        """
-        return True
-
-    def fetch_view_data(self) -> None:
+    def fetch_api_data(self) -> None:
         """Fetch data for this view."""
 
     def render(self) -> None:
         """Render view."""
-        self.fetch_view_data()
+        self.fetch_api_data()
         game_state: RootState = st.session_state.game
         self.state = _cache_view_data(**game_state.cycle.dict())  # type: ignore
 
-        _cycle_stats(self.state)
-        st.markdown("---")
-        _cycle_controls(self.state)
+        col1, col2 = st.columns(2)
+        with col1:
+            _cycle_stats(self.state)
+            st.markdown("---")
+            _cycle_controls(self.state)
+        with col2:
+            st.write("WIP")
 
 
 def _cycle_stats(state: _ViewData) -> None:

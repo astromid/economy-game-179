@@ -1,7 +1,26 @@
-import httpx
+from enum import Enum
 
-from egame179_frontend.api.models import User
+import httpx
+from pydantic import BaseModel
+
 from egame179_frontend.settings import settings
+
+
+class UserRoles(Enum):
+    """User roles."""
+
+    ROOT = "root"  # noqa: WPS115
+    EDITOR = "editor"  # noqa: WPS115
+    NEWS = "news"  # noqa: WPS115
+    PLAYER = "player"  # noqa: WPS115
+
+
+class User(BaseModel):
+    """User model."""
+
+    id: int
+    role: str
+    name: str
 
 
 class AuthAPI:

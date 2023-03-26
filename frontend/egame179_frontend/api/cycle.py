@@ -1,8 +1,18 @@
+from datetime import datetime
+
 import httpx
 import streamlit as st
+from pydantic import BaseModel
 
-from egame179_frontend.api.models import Cycle
 from egame179_frontend.settings import settings
+
+
+class Cycle(BaseModel):
+    """Cycle model."""
+
+    cycle: int
+    started: datetime | None
+    finished: datetime | None
 
 
 class CycleAPI:
@@ -13,7 +23,7 @@ class CycleAPI:
     start_cycle_url = str(settings.backend_url / "cycle" / "new")
 
     @classmethod
-    def get_current_cycle(cls) -> Cycle:
+    def get_cycle(cls) -> Cycle:
         """Get current cycle.
 
         Returns:
@@ -24,13 +34,13 @@ class CycleAPI:
         return Cycle.parse_obj(response.json())
 
     @classmethod
-    def finish_current_cycle(cls) -> None:
+    def finish_cycle(cls) -> None:
         """Finish current cycle."""
-        response = httpx.get(cls.finish_cycle_url, headers=st.session_state.auth_header)
+        response = httpx.post(cls.finish_cycle_url, headers=st.session_state.auth_header)
         response.raise_for_status()
 
     @classmethod
-    def start_new_cycle(cls) -> None:
+    def start_cycle(cls) -> None:
         """Start new cycle."""
         response = httpx.post(cls.start_cycle_url, headers=st.session_state.auth_header)
         response.raise_for_status()

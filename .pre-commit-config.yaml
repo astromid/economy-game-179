@@ -19,7 +19,7 @@ repos:
   - id: add-trailing-comma
 
 - repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
-  rev: v2.7.0
+  rev: v2.8.0
   hooks:
   - id: pretty-format-yaml
     args:
@@ -34,7 +34,7 @@ repos:
     args: [--py310-plus]
 
 - repo: https://github.com/dosisod/refurb
-  rev: v1.14.0
+  rev: v1.15.0
   hooks:
   - id: refurb
 
@@ -51,7 +51,7 @@ repos:
 
 - repo: https://github.com/charliermarsh/ruff-pre-commit
   # Ruff version.
-  rev: 'v0.0.255'
+  rev: 'v0.0.259'
   hooks:
   - id: ruff
 

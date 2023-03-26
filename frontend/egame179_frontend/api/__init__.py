@@ -1,10 +1,8 @@
 """API for communicate with backend."""
-# from egame179_frontend.api import models
-from egame179_frontend.api.auth import AuthAPI
 from egame179_frontend.api.cycle import CycleAPI
+from egame179_frontend.api.user import AuthAPI
 
 __all__ = [
-    # "models",
     "AuthAPI",
     "CycleAPI",
 ]
