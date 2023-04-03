@@ -1,3 +1,4 @@
+"""Cycles API."""
 from datetime import datetime
 
 import httpx

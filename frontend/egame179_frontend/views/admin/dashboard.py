@@ -1,12 +1,11 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import ClassVar
 
 import streamlit as st
 
 from egame179_frontend.api.user import UserRoles
 from egame179_frontend.state.state import RootState
-from egame179_frontend.views.registry import appview
+from egame179_frontend.views.registry import AppView, appview
 
 
 @dataclass
@@ -30,23 +29,19 @@ def _cache_view_data(
 
 
 @appview
-class RootDashboard:
+class RootDashboard(AppView):
     """Root game dashboard AppView."""
 
-    idx: ClassVar[int] = 0
-    name: ClassVar[str] = "Обзор"
-    icon: ClassVar[str] = "house"
-    roles: ClassVar[tuple[str, ...]] = (UserRoles.ROOT.value,)
+    idx = 0
+    name = "Обзор"
+    icon = "house"
+    roles = (UserRoles.ROOT.value,)
 
     def __init__(self) -> None:
         self.state: _ViewData | None = None
 
-    def fetch_api_data(self) -> None:
-        """Fetch data for this view."""
-
     def render(self) -> None:
         """Render view."""
-        self.fetch_api_data()
         game_state: RootState = st.session_state.game
         self.state = _cache_view_data(**game_state.cycle.dict())  # type: ignore
 

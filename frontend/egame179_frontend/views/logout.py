@@ -1,20 +1,18 @@
-from typing import ClassVar
-
 import streamlit as st
 
 from egame179_frontend.api.user import UserRoles
 from egame179_frontend.state.state import clean_cached_state
-from egame179_frontend.views.registry import appview
+from egame179_frontend.views.registry import AppView, appview
 
 
 @appview
-class Logout:
+class Logout(AppView):
     """Logout option."""
 
-    idx: ClassVar[int] = 99
-    name: ClassVar[str] = "Выход"
-    icon: ClassVar[str] = "box-arrow-right"
-    roles: ClassVar[tuple[str, ...]] = (
+    idx = 99
+    name = "Выход"
+    icon = "box-arrow-right"
+    roles = (
         UserRoles.ROOT.value,
         UserRoles.EDITOR.value,
         UserRoles.NEWS.value,

@@ -29,8 +29,8 @@ class AppViewsRegistry:
             dict[str, AppView]: views for this role.
         """
         views = cls.views
-        filtered_indexes = sorted(idx for idx, view in views.items() if role in view.roles)
-        filtered_views = {views[idx].name: views[idx] for idx in filtered_indexes}
+        filtered_ids = sorted(idx for idx, view in views.items() if role in view.roles)
+        filtered_views = {views[idx].name: views[idx] for idx in filtered_ids}
         # create AppView instances
         return {option: view() for option, view in filtered_views.items()}
 

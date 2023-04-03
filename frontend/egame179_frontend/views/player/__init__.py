@@ -1,5 +1,7 @@
 """User views."""
-from types import MappingProxyType
+from egame179_frontend.views.player.overview import PlayerDashboard
+
+__all__ = ["PlayerDashboard"]
 
 # from egame179_frontend.views.player.manufacturing import manufacturing_view
 # from egame179_frontend.views.player.markets import markets_view

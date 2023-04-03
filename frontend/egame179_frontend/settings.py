@@ -4,7 +4,7 @@ from tempfile import gettempdir
 from pydantic import BaseSettings
 from yarl import URL
 
-TEMP_DIR = Path(gettempdir())
+# TEMP_DIR = Path(gettempdir())
 
 
 class Settings(BaseSettings):

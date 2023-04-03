@@ -1,7 +1,9 @@
 from dataclasses import dataclass, fields
 
+import networkx as nx
 import streamlit as st
 
+from egame179_frontend.api.balance import BalanceAPI
 from egame179_frontend.api.cycle import Cycle, CycleAPI
 from egame179_frontend.api.user import User, UserRoles
 
@@ -10,16 +12,30 @@ from egame179_frontend.api.user import User, UserRoles
 class RootState:
     """Root game state."""
 
-    cycle: Cycle | None = None
-    markets: None = None
+    cycle: Cycle
+    _markets: nx.Graph | None = None
 
 
 @dataclass
 class PlayerState:
     """Player game state."""
 
-    cycle: Cycle | None = None
-    markets: None = None
+    cycle: Cycle
+    _markets: nx.Graph | None = None
+    _balances: list[float] | None = None
+
+    @property
+    def markets(self) -> nx.Graph:
+        if self._markets is None:
+            ...
+        return self._markets
+
+    @property
+    def balances(self) -> list[float]:
+        if self._balances is None:
+            raw_balances = BalanceAPI.get_user_balances()
+            self._balances = [bal.amount for bal in raw_balances]
+        return self._balances
 
 
 def init_session_state() -> None:
@@ -59,6 +75,7 @@ def init_game_state() -> None:
                 raise ValueError(f"Unsupported user.role {user.role}")
     elif st.session_state.game.cycle != server_cycle:
         st.session_state.game.cycle = server_cycle
+        # clear cached state (except new cycle & constant markets graph)
         for field in fields(st.session_state.game):
-            if field.name not in {"cycle", "markets"}:
+            if field.name not in {"cycle", "_markets"}:
                 setattr(st.session_state.game, field.name, None)

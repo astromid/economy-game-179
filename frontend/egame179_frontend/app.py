@@ -91,11 +91,13 @@ def error_spinner(error: str, sleep: int, exc: Exception | None = None) -> None:
 if __name__ == "__main__":
     st.set_page_config(page_title="CP v2023/04.77", layout="wide")
     load_css()
-    try:
-        app()
-    except httpx.HTTPStatusError as exc:
-        http_exception_handler(exc)
-    except httpx.ConnectError as exc:
-        error_spinner("Сервер недоступен", sleep=5, exc=exc)
-    except ConnectionRefusedError as exc:
-        error_spinner("Сервер недоступен", sleep=5, exc=exc)
+    app()
+
+    # try:
+    #     app()
+    # except httpx.HTTPStatusError as exc:
+    #     http_exception_handler(exc)
+    # except httpx.ConnectError as exc:
+    #     error_spinner("Сервер недоступен", sleep=5, exc=exc)
+    # except ConnectionRefusedError as exc:
+    #     error_spinner("Сервер недоступен", sleep=5, exc=exc)
