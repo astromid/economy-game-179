@@ -19,9 +19,9 @@ class Cycle(BaseModel):
 class CycleAPI:
     """Cycle API."""
 
-    current_cycle_url = str(settings.backend_url / "cycle" / "current")
-    finish_cycle_url = str(settings.backend_url / "cycle" / "finish")
-    start_cycle_url = str(settings.backend_url / "cycle" / "new")
+    current_cycle_url = str(settings.backend_url / "cycle/current")
+    finish_cycle_url = str(settings.backend_url / "cycle/finish")
+    start_cycle_url = str(settings.backend_url / "cycle/new")
 
     @classmethod
     def get_cycle(cls) -> Cycle:

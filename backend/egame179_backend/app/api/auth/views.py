@@ -30,15 +30,12 @@ def create_access_token(payload: dict[str, Any]) -> str:
 
 
 @router.post("/token")
-async def get_access_token(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    user_dao: UserDAO = Depends(),
-) -> Token:
+async def get_access_token(form_data: OAuth2PasswordRequestForm = Depends(), dao: UserDAO = Depends()) -> Token:
     """Get user access token.
 
     Args:
         form_data (OAuth2PasswordRequestForm): login and password from form.
-        user_dao (UserDAO): user table data access object.
+        dao (UserDAO): user table data access object.
 
     Raises:
         HTTPException: incorrect username or password.
@@ -46,7 +43,7 @@ async def get_access_token(
     Returns:
         Token: generated token.
     """
-    user = await user_dao.check_credentials(form_data.username, form_data.password)
+    user = await dao.check_credentials(form_data.username, form_data.password)
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

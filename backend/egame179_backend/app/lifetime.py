@@ -23,7 +23,7 @@ def _setup_db(app: FastAPI) -> None:
         engine,
         autocommit=False,
         autoflush=False,
-        class_=AsyncSession,  # type: ignore
+        class_=AsyncSession,
         expire_on_commit=False,
     )
     app.state.db_engine = engine

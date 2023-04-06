@@ -2,19 +2,6 @@
 from pydantic import BaseModel
 
 
-class Market(BaseModel):
-    """Market model."""
-
-    id: int
-    name: str
-    ring: int
-    link1: int
-    link2: int
-    link3: int
-    link4: int | None
-    link5: int | None
-
-
 class GameParams(BaseModel):
     """Game parameters."""
 

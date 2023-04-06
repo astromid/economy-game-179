@@ -8,33 +8,33 @@ router = APIRouter()
 
 
 @router.get("/current", dependencies=[Security(get_current_user)])
-async def get_current_cycle(cycle_dao: CycleDAO = Depends()) -> Cycle:
+async def get_current_cycle(dao: CycleDAO = Depends()) -> Cycle:
     """Get current cycle information.
 
     Args:
-        cycle_dao (CycleDAO): cycles table data access object.
+        dao (CycleDAO): cycles table data access object.
 
     Returns:
         Cycle: current cycle info.
     """
-    return await cycle_dao.get_current_cycle()
+    return await dao.get_current_cycle()
 
 
 @router.get("/finish", dependencies=[Security(get_current_user, scopes=["root"])])
-async def finish_cycle(cycle_dao: CycleDAO = Depends()) -> None:
+async def finish_cycle(dao: CycleDAO = Depends()) -> None:
     """Finish current cycle.
 
     Args:
-        cycle_dao (CycleDAO): cycles table data access object.
+        dao (CycleDAO): cycles table data access object.
     """
-    await cycle_dao.finish_current_cycle()
+    await dao.finish_current_cycle()
 
 
 @router.get("/new", dependencies=[Security(get_current_user, scopes=["root"])])
-async def start_cycle(cycle_dao: CycleDAO = Depends()) -> None:
+async def start_cycle(dao: CycleDAO = Depends()) -> None:
     """Start new cycle.
 
     Args:
-        cycle_dao (CycleDAO): cycles table data access object.
+        dao (CycleDAO): cycles table data access object.
     """
-    await cycle_dao.start_new_cycle()
+    await dao.start_new_cycle()

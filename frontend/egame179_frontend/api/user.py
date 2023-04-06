@@ -1,3 +1,4 @@
+"""Users auth API."""
 from enum import Enum
 
 import httpx

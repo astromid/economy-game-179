@@ -2,7 +2,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, SecurityScopes
 from jose import JWTError, jwt
 
-from egame179_backend.db.dao.users import UserDAO
+from egame179_backend.db.dao import UserDAO
 from egame179_backend.db.models import User
 from egame179_backend.settings import settings
 
