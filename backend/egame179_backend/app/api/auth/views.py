@@ -7,7 +7,7 @@ from jose import jwt
 
 from egame179_backend.app.api.auth.dependencies import ALGORITHM, get_current_user
 from egame179_backend.app.api.auth.schema import Token, UserInfo
-from egame179_backend.db.dao.users import UserDAO
+from egame179_backend.db.dao import UserDAO
 from egame179_backend.db.models import User
 from egame179_backend.settings import settings
 

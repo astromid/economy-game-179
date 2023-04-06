@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Security
 
 from egame179_backend.app.api.auth.dependencies import get_current_user
-from egame179_backend.db.dao.balances import BalanceDAO
+from egame179_backend.db.dao import BalanceDAO
 from egame179_backend.db.models import Balance, User
 
 router = APIRouter()
