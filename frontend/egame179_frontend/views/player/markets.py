@@ -1,9 +1,13 @@
+from dataclasses import dataclass
+
 import networkx as nx
 import numpy as np
 import pyecharts as pe
 import streamlit as st
 
-from egame179_frontend.api.models import PlayerState
+from egame179_frontend.api.user import UserRoles
+from egame179_frontend.state.state import PlayerState
+from egame179_frontend.views.registry import AppView, appview
 
 TOOLTIP_JS_CODE = "".join(
     [
@@ -34,3 +38,38 @@ def make_markets_graph() -> pe.charts.Graph:
 
 def get_node_size_px(demand: float, start_demand: float) -> float:
     return 30 * (np.log10(demand / start_demand) + 1)
+
+
+@dataclass
+class _ViewData:
+    markets_graph: pe.charts.Graph | None
+
+
+@st.cache_data(max_entries=1)
+def _cache_view_data(nx_graph: nx.Graph) -> _ViewData:
+    pe_graph = pe.charts.Graph()
+    nodes = [
+        {
+            
+        }
+        for node in nx_graph.nodes
+    ]
+
+
+@appview
+class MarketsView(AppView):
+    """Markets AppView."""
+
+    idx = 11
+    name = "Рынки"
+    icon = "pie-chart-fill"
+    roles = (UserRoles.PLAYER.value,)
+
+    def __init__(self) -> None:
+        self.view_data: _ViewData | None = None
+
+    def render(self) -> None:
+        """Render view."""
+        state: PlayerState = st.session_state.game
+        markets_graph = state.markets
+        st.write(markets_graph)

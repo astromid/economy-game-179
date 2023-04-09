@@ -1,11 +1,10 @@
 """User views."""
+from egame179_frontend.views.player.markets import MarketsView
 from egame179_frontend.views.player.overview import PlayerDashboard
 
-__all__ = ["PlayerDashboard"]
+__all__ = ["PlayerDashboard", "MarketsView"]
 
 # from egame179_frontend.views.player.manufacturing import manufacturing_view
-# from egame179_frontend.views.player.markets import markets_view
-# from egame179_frontend.views.player.overview import overview
 # from egame179_frontend.views.player.sales import sales_view
 # from egame179_frontend.views.player.stocks import stocks_view
 # from egame179_frontend.views.player.storage import storage_view
@@ -13,8 +12,6 @@ __all__ = ["PlayerDashboard"]
 
 # USER_VIEWS = MappingProxyType(
 #     {
-#         "Статус": ("house", overview),
-#         "Рынки": ("pie-chart-fill", markets_view),
 #         "Производство": ("gear", manufacturing_view),
 #         "Склад": ("box-seam", storage_view),
 #         "Продажи": ("receipt-cutoff", sales_view),

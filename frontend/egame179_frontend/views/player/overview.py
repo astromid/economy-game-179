@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from types import MappingProxyType
 
 import streamlit as st
 from millify import millify
@@ -7,8 +6,6 @@ from millify import millify
 from egame179_frontend.api.user import UserRoles
 from egame179_frontend.state.state import PlayerState
 from egame179_frontend.views.registry import AppView, appview
-
-CHART_SIZE = MappingProxyType({"width": 768, "height": 480})
 
 
 @dataclass
@@ -40,7 +37,6 @@ class PlayerDashboard(AppView):
     name = "Обзор"
     icon = "house"
     roles = (UserRoles.PLAYER.value,)
-    dependencies = ("balances",)
 
     def __init__(self) -> None:
         self.view_data: _ViewData | None = None
