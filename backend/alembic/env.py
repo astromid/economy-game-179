@@ -6,9 +6,8 @@ from sqlalchemy.ext.asyncio.engine import AsyncEngine
 from sqlalchemy.future import Connection
 from sqlmodel import SQLModel, create_engine
 
-from egame179_backend.settings import Settings
+from egame179_backend.settings import settings
 
-settings = Settings()
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config

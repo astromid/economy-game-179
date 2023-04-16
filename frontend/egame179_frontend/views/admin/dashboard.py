@@ -65,8 +65,10 @@ def _cycle_stats(state: _ViewData) -> None:
 
 
 def _cycle_controls(state: _ViewData) -> None:
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns(3)
     with col1:
-        st.button("Начать цикл", disabled=state.finished is None)
+        st.button("Новый цикл", disabled=state.finished is not None)
     with col2:
+        st.button("Начать цикл", disabled=state.started is not None)
+    with col3:
         st.button("Завершить цикл", disabled=state.finished is not None)

@@ -13,8 +13,8 @@ class Cycle(SQLModel, table=True):
     __tablename__ = "cycles"  # type: ignore
 
     cycle: int | None = Field(default=None, primary_key=True)
-    started: datetime | None = Field(default_factory=datetime.now)
-    finished: datetime | None = None
+    ts_start: datetime | None = None
+    ts_finish: datetime | None = None
 
 
 class CycleDAO:
@@ -23,7 +23,7 @@ class CycleDAO:
     def __init__(self, session: AsyncSession = Depends(get_db_session)):
         self.session = session
 
-    async def get_current_cycle(self) -> Cycle:
+    async def get_cycle(self) -> Cycle:
         """Get current cycle.
 
         Returns:
@@ -33,14 +33,21 @@ class CycleDAO:
         raw_cycle = await self.session.exec(query)  # type: ignore
         return raw_cycle.one()
 
-    async def finish_current_cycle(self) -> None:
-        """Finish current cycle."""
-        current_cycle = await self.get_current_cycle()
-        current_cycle.finished = datetime.now()
-        self.session.add(current_cycle)
+    async def create_cycle(self) -> None:
+        """Create new cycle."""
+        self.session.add(Cycle())
         await self.session.commit()
 
-    async def start_new_cycle(self) -> None:
-        """Start new cycle."""
-        self.session.add(Cycle())
+    async def start_cycle(self) -> None:
+        """Start current cycle."""
+        cycle = await self.get_cycle()
+        cycle.ts_start = datetime.now()
+        self.session.add(cycle)
+        await self.session.commit()
+
+    async def finish_cycle(self) -> None:
+        """Finish current cycle."""
+        cycle = await self.get_cycle()
+        cycle.ts_finish = datetime.now()
+        self.session.add(cycle)
         await self.session.commit()
