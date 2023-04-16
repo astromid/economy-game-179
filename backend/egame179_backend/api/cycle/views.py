@@ -1,8 +1,7 @@
 from fastapi import APIRouter, Depends, Security
 
-from egame179_backend.app.api.auth.dependencies import get_current_user
-from egame179_backend.db.dao import CycleDAO
-from egame179_backend.db.models import Cycle
+from egame179_backend.api.auth.dependencies import get_current_user
+from egame179_backend.db.cycle import Cycle, CycleDAO
 
 router = APIRouter()
 

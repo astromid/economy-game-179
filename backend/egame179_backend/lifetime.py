@@ -16,27 +16,26 @@ def _setup_db(app: FastAPI) -> None:
         and stores them in the application's state property.
 
     Args:
-        app (FastAPI): fastAPI application.
+        app (FastAPI): FastAPI application.
     """
     engine = AsyncEngine(create_engine(str(settings.db_url), echo=settings.db_echo, future=True))
-    session_factory = sessionmaker(
+    app.state.db_engine = engine
+    app.state.db_session_factory = sessionmaker(
         engine,
         autocommit=False,
         autoflush=False,
         class_=AsyncSession,
         expire_on_commit=False,
     )
-    app.state.db_engine = engine
-    app.state.db_session_factory = session_factory
 
 
 def startup(app: FastAPI) -> Callable[[], Awaitable[None]]:
     """Actions to run on application startup.
 
-    This function use fastAPI app to store data, such as db_engine.
+    This function use FastAPI app to store data, such as db_engine.
 
     Args:
-        app (FastAPI): the fastAPI application.
+        app (FastAPI): the FastAPI application.
 
     Returns:
         Callable: function that actually performs actions.
@@ -52,7 +51,7 @@ def shutdown(app: FastAPI) -> Callable[[], Awaitable[None]]:
     """Actions to run on application's shutdown.
 
     Args:
-        app (FastAPI): fastAPI application.
+        app (FastAPI): FastAPI application.
 
     Returns:
         Callable: function that actually performs actions.

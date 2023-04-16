@@ -1,9 +1,18 @@
 from fastapi import Depends
-from sqlmodel import select
+from sqlmodel import Field, SQLModel, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from egame179_backend.db.dependencies import get_db_session
-from egame179_backend.db.models import Balance
+from egame179_backend.db import get_db_session
+
+
+class Balance(SQLModel, table=True):
+    """Balances table."""
+
+    __tablename__ = "balances"  # type: ignore
+
+    cycle: int = Field(primary_key=True)
+    user_id: int = Field(primary_key=True)
+    amount: float
 
 
 class BalanceDAO:

@@ -1,10 +1,21 @@
 from fastapi import Depends
 from passlib.context import CryptContext
-from sqlmodel import select
+from sqlmodel import Field, SQLModel, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from egame179_backend.db.dependencies import get_db_session
-from egame179_backend.db.models import User
+from egame179_backend.db import get_db_session
+
+
+class User(SQLModel, table=True):
+    """Users table."""
+
+    __tablename__ = "users"  # type: ignore
+
+    id: int = Field(primary_key=True)
+    role: str
+    name: str
+    login: str | None
+    password: str | None
 
 
 class UserDAO:

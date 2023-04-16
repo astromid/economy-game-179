@@ -1,11 +1,20 @@
 from datetime import datetime
 
 from fastapi import Depends
-from sqlmodel import col, select
+from sqlmodel import Field, SQLModel, col, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from egame179_backend.db.dependencies import get_db_session
-from egame179_backend.db.models import Cycle
+from egame179_backend.db import get_db_session
+
+
+class Cycle(SQLModel, table=True):
+    """Cycles table."""
+
+    __tablename__ = "cycles"  # type: ignore
+
+    cycle: int | None = Field(default=None, primary_key=True)
+    started: datetime | None = Field(default_factory=datetime.now)
+    finished: datetime | None = None
 
 
 class CycleDAO:

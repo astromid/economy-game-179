@@ -48,6 +48,9 @@ repos:
   hooks:
   - id: black
     language_version: python3.10
+    args:
+    - "--check"
+    - "--verbose"
 
 - repo: https://github.com/charliermarsh/ruff-pre-commit
   # Ruff version.

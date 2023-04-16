@@ -1,3 +1,4 @@
+"""Communication with database module."""
 from collections.abc import AsyncGenerator
 
 from sqlmodel.ext.asyncio.session import AsyncSession

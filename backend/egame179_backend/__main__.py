@@ -6,7 +6,7 @@ from egame179_backend.settings import settings
 def main() -> None:
     """Entrypoint of the application."""
     uvicorn.run(
-        "egame179_backend.app.app:get_app",
+        "egame179_backend.app:get_app",
         workers=settings.workers_count,
         host=settings.host,
         port=settings.port,

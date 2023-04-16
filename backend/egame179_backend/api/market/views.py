@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, Security
 
-from egame179_backend.app.api.auth.dependencies import get_current_user
-from egame179_backend.db.dao import MarketDAO, UnlockedMarketDAO
-from egame179_backend.db.models import Market, UnlockedMarket, User
+from egame179_backend.api.auth.dependencies import get_current_user
+from egame179_backend.db.market import Market, MarketDAO, UnlockedMarket, UnlockedMarketDAO
+from egame179_backend.db.user import User
 
 router = APIRouter()
 
