@@ -3,6 +3,7 @@ from datetime import datetime
 
 import streamlit as st
 
+from egame179_frontend.api import CycleAPI
 from egame179_frontend.api.user import UserRoles
 from egame179_frontend.state.state import RootState
 from egame179_frontend.views.registry import AppView, appview
@@ -11,20 +12,20 @@ from egame179_frontend.views.registry import AppView, appview
 @dataclass
 class _ViewData:
     cycle: int
-    started: str | None
-    finished: str | None
+    ts_start: str | None
+    ts_finish: str | None
 
 
 @st.cache_data(max_entries=1)
 def _cache_view_data(
     cycle: int,
-    started: datetime | None,
-    finished: datetime | None,
+    ts_start: datetime | None,
+    ts_finish: datetime | None,
 ) -> _ViewData:
     return _ViewData(
         cycle,
-        started.isoformat() if started is not None else None,
-        finished.isoformat() if finished is not None else None,
+        ts_start.isoformat() if ts_start is not None else None,
+        ts_finish.isoformat() if ts_finish is not None else None,
     )
 
 
@@ -45,7 +46,7 @@ class RootDashboard(AppView):
         game_state: RootState = st.session_state.game
         self.state = _cache_view_data(**game_state.cycle.dict())  # type: ignore
 
-        col1, col2 = st.columns(2)
+        col1, col2 = st.columns([2, 1])
         with col1:
             _cycle_stats(self.state)
             st.markdown("---")
@@ -59,16 +60,20 @@ def _cycle_stats(state: _ViewData) -> None:
     with col1:
         st.metric("Текущий цикл", state.cycle)
     with col2:
-        st.metric("Начался", state.started)
+        st.metric("Начался", state.ts_start)
     with col3:
-        st.metric("Закончился", state.finished)
+        st.metric("Закончился", state.ts_finish)
 
 
 def _cycle_controls(state: _ViewData) -> None:
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.button("Новый цикл", disabled=state.finished is not None)
+        st.button("Новый цикл", on_click=CycleAPI.create_cycle, disabled=state.ts_finish is None)
     with col2:
-        st.button("Начать цикл", disabled=state.started is not None)
+        st.button("Начать цикл", on_click=CycleAPI.start_cycle, disabled=state.ts_start is not None)
     with col3:
-        st.button("Завершить цикл", disabled=state.finished is not None)
+        st.button(
+            "Завершить цикл",
+            on_click=CycleAPI.finish_cycle,
+            disabled=(state.ts_start is None) or (state.ts_finish is not None),
+        )

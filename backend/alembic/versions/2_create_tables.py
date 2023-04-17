@@ -235,8 +235,8 @@ def create_products(player_ids: list[int], n_markets: int, cycle: int, theta: fl
 def create_cycle_params(
     alpha: float,
     alpha_multiplier: float,
-    demand: dict[str, list[int]],
     constant_params: dict[str, float | int],
+    demand: dict[str, list[int]],
 ) -> None:
     cycle_params_table = op.create_table(
         "cycle_params",
