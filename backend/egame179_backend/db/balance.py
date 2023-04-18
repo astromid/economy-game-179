@@ -43,3 +43,14 @@ class BalanceDAO:
         query = select(Balance).order_by(Balance.cycle)
         raw_balances = await self.session.exec(query)  # type: ignore
         return raw_balances.all()
+
+    async def update_balance(self, balance: Balance, amount: float) -> None:
+        """Update user balance.
+
+        Args:
+            balance (Balance): target Balance object
+            amount (float): amout of money.
+        """
+        balance.amount = amount
+        self.session.add(balance)
+        await self.session.commit()

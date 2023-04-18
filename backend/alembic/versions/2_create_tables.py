@@ -248,9 +248,9 @@ def create_cycle_params(
         sa.Column("h", sa.Integer, nullable=False),
         sa.Column("k", sa.Integer, nullable=False),
         sa.Column("l", sa.Integer, nullable=False),
-        sa.Column("demand_ring2", sa.Integer, nullable=False),
-        sa.Column("demand_ring1", sa.Integer, nullable=False),
         sa.Column("demand_ring0", sa.Integer, nullable=False),
+        sa.Column("demand_ring1", sa.Integer, nullable=False),
+        sa.Column("demand_ring2", sa.Integer, nullable=False),
     )
     if cycle_params_table is not None:
         cycles = range(1, len(demand["ring0"]) + 1)
