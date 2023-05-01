@@ -1,6 +1,8 @@
 import streamlit as st
 
-from egame179_frontend.api.models import PlayerState
+from egame179_frontend.api.user import UserRoles
+from egame179_frontend.state.state import PlayerState
+from egame179_frontend.views.registry import AppView, appview
 
 
 def sales_view(state: PlayerState) -> None:
@@ -17,3 +19,20 @@ def sales_view(state: PlayerState) -> None:
         with col3:
             st.progress(0.5)
             st.progress(0.33)
+
+
+@appview
+class SuppliesView(AppView):
+    """Supplies AppView."""
+
+    idx = 13
+    name = "Склады и поставки"
+    icon = "box-seam"
+    roles = (UserRoles.PLAYER.value,)
+
+    def __init__(self) -> None:
+        self.view_data: _ViewData | None = None
+
+    def render(self) -> None:
+        """Render view."""
+        state: PlayerState = st.session_state.game

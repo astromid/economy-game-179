@@ -7,8 +7,10 @@ import streamlit as st
 from millify import millify
 from streamlit_echarts import st_pyecharts
 
-from egame179_frontend.api.mock import mock_manufacturing
 from egame179_frontend.api.models import PlayerState
+from egame179_frontend.api.user import UserRoles
+from egame179_frontend.state.state import PlayerState
+from egame179_frontend.views.registry import AppView, appview
 from egame179_frontend.visualization import radar_chart
 
 MAX_METRICS_IN_ROW = 5
@@ -137,3 +139,20 @@ def _theta_radar_block(markets: dict[str, _BuyMarketStatus]) -> None:
         radar_chart(thetas={market: market_status.theta for market, market_status in markets.items()}),
         height="500px",
     )
+
+
+@appview
+class ManufacturingView(AppView):
+    """Manufacturing AppView."""
+
+    idx = 12
+    name = "Производство"
+    icon = "gear"
+    roles = (UserRoles.PLAYER.value,)
+
+    def __init__(self) -> None:
+        self.view_data: _ViewData | None = None
+
+    def render(self) -> None:
+        """Render view."""
+        state: PlayerState = st.session_state.game

@@ -7,7 +7,7 @@ from egame179_backend.db.user import User
 router = APIRouter()
 
 
-@router.get("/user", dependencies=[Security(get_current_user, scopes=["player"])])
+@router.get("/user")
 async def get_user_balances(user: User = Depends(get_current_user), dao: BalanceDAO = Depends()) -> list[Balance]:
     """Get balances history for user.
 

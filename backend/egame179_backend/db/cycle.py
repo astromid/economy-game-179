@@ -12,7 +12,7 @@ class Cycle(SQLModel, table=True):
 
     __tablename__ = "cycles"  # type: ignore
 
-    cycle: int | None = Field(default=None, primary_key=True)
+    cycle: int = Field(default=None, primary_key=True)
     ts_start: datetime | None = None
     ts_finish: datetime | None = None
 

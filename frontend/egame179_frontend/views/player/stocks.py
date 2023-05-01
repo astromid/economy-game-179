@@ -4,7 +4,9 @@ from types import MappingProxyType
 import pandas as pd
 import streamlit as st
 
-from egame179_frontend.api.models import PlayerState
+from egame179_frontend.api.user import UserRoles
+from egame179_frontend.state.state import PlayerState
+from egame179_frontend.views.registry import AppView, appview
 from egame179_frontend.visualization import stocks_chart
 
 X_AXIS = "cycle"
@@ -74,3 +76,20 @@ def _render_view(state: _ViewState) -> None:
             chart_size=CHART_SIZE,  # type: ignore
         ),
     )
+
+
+@appview
+class StocksView(AppView):
+    """Stocks AppView."""
+
+    idx = 14
+    name = "Биржевые сводки"
+    icon = "graph-up"
+    roles = (UserRoles.PLAYER.value,)
+
+    def __init__(self) -> None:
+        self.view_data: _ViewData | None = None
+
+    def render(self) -> None:
+        """Render view."""
+        state: PlayerState = st.session_state.game

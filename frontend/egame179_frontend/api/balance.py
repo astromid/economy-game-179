@@ -16,9 +16,10 @@ class Balance(BaseModel):
 
 class BalanceAPI:
     """Balance API."""
+    _api_url = settings.backend_url / "balance"
 
-    user_balances_url = str(settings.backend_url / "balance" / "user")
-    all_balances_url = str(settings.backend_url / "balance" / "all")
+    _user_balances_url = str(_api_url / "user")
+    _all_balances_url = str(_api_url / "all")
 
     @classmethod
     def get_user_balances(cls) -> list[Balance]:
@@ -27,7 +28,7 @@ class BalanceAPI:
         Returns:
             list[Balance]: current user balance history.
         """
-        response = httpx.get(cls.user_balances_url, headers=st.session_state.auth_header)
+        response = httpx.get(cls._user_balances_url, headers=st.session_state.auth_header)
         response.raise_for_status()
         return parse_obj_as(list[Balance], response.json())
 
@@ -38,6 +39,6 @@ class BalanceAPI:
         Returns:
             list[Balance]: all users balance history.
         """
-        response = httpx.get(cls.all_balances_url, headers=st.session_state.auth_header)
+        response = httpx.get(cls._all_balances_url, headers=st.session_state.auth_header)
         response.raise_for_status()
         return parse_obj_as(list[Balance], response.json())

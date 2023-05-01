@@ -27,8 +27,8 @@ class User(BaseModel):
 class AuthAPI:
     """Authentication API."""
 
-    token_url = str(settings.backend_url / "token")
-    userinfo_url = str(settings.backend_url / "userinfo")
+    _token_url = str(settings.backend_url / "token")
+    _userinfo_url = str(settings.backend_url / "userinfo")
 
     @classmethod
     def get_auth_header(cls, login: str, password: str) -> dict[str, str] | None:
@@ -41,7 +41,7 @@ class AuthAPI:
         Returns:
             dict[str, str] | None: auth header or None if login or password is incorrect.
         """
-        response = httpx.post(cls.token_url, data={"username": login, "password": password})
+        response = httpx.post(cls._token_url, data={"username": login, "password": password})
         if response.status_code == httpx.codes.UNAUTHORIZED:
             return None
         token_data = response.json()
@@ -57,7 +57,7 @@ class AuthAPI:
         Returns:
             User | None: user info or None if auth header is incorrect.
         """
-        response = httpx.get(cls.userinfo_url, headers=auth_header)
+        response = httpx.get(cls._userinfo_url, headers=auth_header)
         if response.status_code == httpx.codes.UNAUTHORIZED:
             return None
         return User.parse_obj(response.json())

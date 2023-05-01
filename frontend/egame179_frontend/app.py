@@ -37,7 +37,7 @@ def app() -> None:
 
 def header() -> None:
     """UI header."""
-    st.markdown("## Система корпоративного управления CP v2023/04.77")
+    st.markdown("### Система корпоративного управления CP v.2023/05.77")
     st.markdown("---")
 
 
@@ -89,7 +89,7 @@ def error_spinner(error: str, sleep: int, exc: Exception | None = None) -> None:
 
 
 if __name__ == "__main__":
-    st.set_page_config(page_title="CP v2023/04.77", layout="wide")
+    st.set_page_config(page_title="CP v.2023/05.77", layout="wide")
     load_css()
     app()
 
