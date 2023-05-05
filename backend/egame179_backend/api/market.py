@@ -7,7 +7,7 @@ from egame179_backend.db.user import User
 router = APIRouter()
 
 
-@router.get("/all", dependencies=[Security(get_current_user)])
+@router.get("/all")
 async def get_all_markets(dao: MarketDAO = Depends()) -> list[Market]:
     """Get all markets graph nodes.
 

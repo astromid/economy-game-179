@@ -30,9 +30,11 @@ class UnlockedMarket(BaseModel):
 class MarketAPI:
     """Market API."""
 
-    all_markets_url = str(settings.backend_url / "market/all")
-    user_unlocked_markets_url = str(settings.backend_url / "market/unlocked/user")
-    all_unlocked_markets_url = str(settings.backend_url / "market/unlocked/all")
+    _api_url = settings.backend_url / "market"
+
+    _all_markets_url = str(_api_url / "all")
+    _user_unlocked_markets_url = str(_api_url / "unlocked/user")
+    _all_unlocked_markets_url = str(_api_url / "unlocked/all")
 
     @classmethod
     def get_markets(cls) -> list[Market]:
@@ -41,7 +43,7 @@ class MarketAPI:
         Returns:
             list[Market]: all market graph nodes.
         """
-        response = httpx.get(cls.all_markets_url, headers=st.session_state.auth_header)
+        response = httpx.get(cls._all_markets_url, headers=st.session_state.auth_header)
         response.raise_for_status()
         return parse_obj_as(list[Market], response.json())
 
@@ -52,7 +54,7 @@ class MarketAPI:
         Returns:
             list[UnlockedMarket]: list of unlocked markets for the user.
         """
-        response = httpx.get(cls.user_unlocked_markets_url, headers=st.session_state.auth_header)
+        response = httpx.get(cls._user_unlocked_markets_url, headers=st.session_state.auth_header)
         response.raise_for_status()
         return parse_obj_as(list[UnlockedMarket], response.json())
 
@@ -63,6 +65,6 @@ class MarketAPI:
         Returns:
             list[UnlockedMarket]: list of unlocked markets.
         """
-        response = httpx.get(cls.all_unlocked_markets_url, headers=st.session_state.auth_header)
+        response = httpx.get(cls._all_unlocked_markets_url, headers=st.session_state.auth_header)
         response.raise_for_status()
         return parse_obj_as(list[UnlockedMarket], response.json())

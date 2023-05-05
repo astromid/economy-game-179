@@ -6,7 +6,7 @@ from egame179_backend.db.cycle import Cycle, CycleDAO
 router = APIRouter()
 
 
-@router.get("/info", dependencies=[Security(get_current_user)])
+@router.get("/info")
 async def get_cycle(dao: CycleDAO = Depends()) -> Cycle:
     """Get current cycle information.
 

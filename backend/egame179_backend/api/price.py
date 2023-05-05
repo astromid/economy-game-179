@@ -1,13 +1,12 @@
-from fastapi import APIRouter, Depends, Security
+from fastapi import APIRouter, Depends
 
-from egame179_backend.api.auth.dependencies import get_current_user
 from egame179_backend.db.price import Price, PriceDAO
 
 router = APIRouter()
 
 
-@router.get("/all", dependencies=[Security(get_current_user)])
-async def get_all_markets(dao: PriceDAO = Depends()) -> list[Price]:
+@router.get("/all")
+async def get_all_prices(dao: PriceDAO = Depends()) -> list[Price]:
     """Get all markets prices.
 
     Args:

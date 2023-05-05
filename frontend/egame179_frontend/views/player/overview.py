@@ -30,6 +30,7 @@ def _cache_view_data(
     transactions: list[dict[str, Any]],
 ) -> _ViewData:
     balance_delta = millify(balances[-1] - balances[-2], precision=3) if cycle > 1 else None
+    transactions_df = pd.DataFrame(transactions).drop("user_id", axis=1).sort_values("ts", ascending=False)
     return _ViewData(
         name=name,
         cycle=cycle,
@@ -37,7 +38,7 @@ def _cache_view_data(
         balance_delta=balance_delta,
         balances=balances,
         cycle_params=cycle_params,
-        transactions=pd.DataFrame(transactions).drop("user_id", axis=1).sort_values("ts", ascending=False),
+        transactions=transactions_df,
     )
 
 
@@ -66,6 +67,7 @@ class PlayerDashboard(AppView):
 
         col11, col12 = st.columns([1, 1])
         with col11:
+            # TODO: change to ECharts bar chart
             st.bar_chart(
                 data={
                     "cycle": list(range(1, self.view_data.cycle + 1)),

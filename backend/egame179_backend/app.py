@@ -3,7 +3,7 @@ from importlib import metadata
 from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse
 
-from egame179_backend.api.router import api_router
+from egame179_backend.api import api_router
 from egame179_backend.lifetime import shutdown, startup
 
 

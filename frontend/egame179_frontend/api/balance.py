@@ -16,6 +16,7 @@ class Balance(BaseModel):
 
 class BalanceAPI:
     """Balance API."""
+
     _api_url = settings.backend_url / "balance"
 
     _user_balances_url = str(_api_url / "user")

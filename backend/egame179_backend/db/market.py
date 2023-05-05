@@ -62,7 +62,7 @@ class UnlockedMarketDAO:
         Returns:
             list[UnlockedMarket]: unlocked markets for the user.
         """
-        query = select(UnlockedMarket).where(UnlockedMarket.user_id == user_id)
+        query = select(UnlockedMarket).where(UnlockedMarket.user_id == user_id).order_by(UnlockedMarket.protected)
         raw_markets = await self.session.exec(query)  # type: ignore
         return raw_markets.all()
 
