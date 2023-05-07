@@ -22,7 +22,7 @@ async def get_user_balances(user: User = Depends(get_current_user), dao: Balance
 
 
 @router.get("/all", dependencies=[Security(get_current_user, scopes=["root"])])
-async def get_all_balances(dao: BalanceDAO = Depends()) -> list[Balance]:
+async def get_balances(dao: BalanceDAO = Depends()) -> list[Balance]:
     """Get balances history for all users.
 
     Args:
@@ -31,4 +31,4 @@ async def get_all_balances(dao: BalanceDAO = Depends()) -> list[Balance]:
     Returns:
         list[Balance]: balances history for all users.
     """
-    return await dao.get_all_balances()
+    return await dao.get_balances()

@@ -82,6 +82,20 @@ def _cache_view_data(
     )
 
 
+@appview
+class ManufacturingView(AppView):
+    """Manufacturing AppView."""
+
+    idx = 12
+    name = "Производство"
+    icon = "gear"
+    roles = (UserRoles.PLAYER.value,)
+
+    def render(self) -> None:
+        """Render view."""
+        state: PlayerState = st.session_state.game
+
+
 def _render_view(state: _ViewState) -> None:
     st.markdown("## Производство")
     _prices_block(
@@ -138,20 +152,3 @@ def _theta_radar_block(markets: dict[str, _BuyMarketStatus]) -> None:
         radar_chart(thetas={market: market_status.theta for market, market_status in markets.items()}),
         height="500px",
     )
-
-
-@appview
-class ManufacturingView(AppView):
-    """Manufacturing AppView."""
-
-    idx = 12
-    name = "Производство"
-    icon = "gear"
-    roles = (UserRoles.PLAYER.value,)
-
-    def __init__(self) -> None:
-        self.view_data: _ViewData | None = None
-
-    def render(self) -> None:
-        """Render view."""
-        state: PlayerState = st.session_state.game

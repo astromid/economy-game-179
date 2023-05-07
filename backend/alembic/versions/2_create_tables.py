@@ -55,7 +55,6 @@ def upgrade() -> None:
         player_ids=player_ids,
         n_markets=len(initial_data["markets"]),
         cycle=initial_cycle,
-        theta=initial_data["initial_theta"],
     )
     create_cycle_params(**initial_data["cycle_params"])
     # player modificators table doesn't have initial data
@@ -212,7 +211,7 @@ def create_stocks(cycle: int, price: float, user_ids: list[int]) -> None:
         raise RuntimeError("Failed to create stocks table")
 
 
-def create_products(player_ids: list[int], n_markets: int, cycle: int, theta: float) -> None:
+def create_products(player_ids: list[int], n_markets: int, cycle: int) -> None:
     products_table = op.create_table(
         "products",
         sa.Column("cycle", sa.Integer, sa.ForeignKey("cycles.cycle")),
@@ -220,11 +219,12 @@ def create_products(player_ids: list[int], n_markets: int, cycle: int, theta: fl
         sa.Column("market_id", sa.Integer, sa.ForeignKey("markets.id")),
         sa.Column("storage", sa.Integer, nullable=False),
         sa.Column("theta", sa.Float, nullable=False),
+        sa.Column("share", sa.Float, nullable=False),
         sa.PrimaryKeyConstraint("cycle", "user_id", "market_id"),
     )
     if products_table is not None:
         products = [
-            {"cycle": cycle, "user_id": user_id, "market_id": market_id, "storage": 0, "theta": theta}
+            {"cycle": cycle, "user_id": user_id, "market_id": market_id, "storage": 0, "theta": 0, "share": 0}
             for user_id, market_id in itertools.product(player_ids, range(n_markets))
         ]
         op.bulk_insert(products_table, products)
@@ -245,9 +245,9 @@ def create_cycle_params(
         sa.Column("beta", sa.Float, nullable=False),
         sa.Column("gamma", sa.Float, nullable=False),
         sa.Column("tau_s", sa.Integer, nullable=False),
-        sa.Column("h", sa.Integer, nullable=False),
-        sa.Column("k", sa.Integer, nullable=False),
-        sa.Column("l", sa.Integer, nullable=False),
+        sa.Column("coeff_h", sa.Integer, nullable=False),
+        sa.Column("coeff_k", sa.Integer, nullable=False),
+        sa.Column("coeff_l", sa.Integer, nullable=False),
         sa.Column("demand_ring0", sa.Integer, nullable=False),
         sa.Column("demand_ring1", sa.Integer, nullable=False),
         sa.Column("demand_ring2", sa.Integer, nullable=False),

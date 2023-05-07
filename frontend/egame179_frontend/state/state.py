@@ -39,7 +39,7 @@ def init_game_state() -> None:
             case UserRoles.ROOT.value:
                 st.session_state.game = RootState(cycle=server_cycle)
             case UserRoles.PLAYER.value:
-                st.session_state.game = PlayerState(cycle=server_cycle)
+                st.session_state.game = PlayerState(user_id=user.id, cycle=server_cycle)
             case _:
                 # TODO: support news & editor roles
                 raise ValueError(f"Unsupported user.role {user.role}")
@@ -47,5 +47,5 @@ def init_game_state() -> None:
         st.session_state.game.cycle = server_cycle
         # clear cached state (except new cycle & constant markets graph)
         for field in fields(st.session_state.game):
-            if field.name not in {"cycle", "_markets"}:
+            if field.name not in {"cycle", "_players", "_markets"}:
                 setattr(st.session_state.game, field.name, None)

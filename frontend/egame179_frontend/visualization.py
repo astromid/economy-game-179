@@ -9,7 +9,7 @@ from egame179_frontend.style import ThemeColors
 
 Y_MAX_SCALE = 1.05
 MAX_THETA = 0.48
-NODE_SIZE_PX = 30
+NODE_SIZE_PX = 40
 TOOLTIP_JS = "".join(
     [
         "function(params){",
@@ -18,6 +18,7 @@ TOOLTIP_JS = "".join(
         "let tip = bulletItem('Цена производства', params.data.buy);",
         "tip += bulletItem('Цена продажи', params.data.sell);",
         "tip += bulletItem('Фактор спроса', params.data.demand_factor);",
+        "tip += bulletItem('Склад', params.data.storage);",
         "tip += bulletItem('Владелец', params.data.top1);",
         "tip += bulletItem('Конкурент', params.data.top2);",
         "return tip;}",
@@ -121,6 +122,7 @@ def markets_graph(nx_graph: nx.Graph, unlocked_markets: list[int]) -> pyecharts.
             "buy": node["buy"],
             "sell": node["sell"],
             "demand_factor": node["demand_factor"],
+            "storage": node["storage"],
             "top1": node["top1"],
             "top2": node["top2"],
             "symbol": "circle",
@@ -143,7 +145,6 @@ def markets_graph(nx_graph: nx.Graph, unlocked_markets: list[int]) -> pyecharts.
         "Markets",
         repulsion=2000,
         edge_length=100,
-        # gravity=1e6,
         edge_symbol=["arrow", "arrow"],
         edge_symbol_size=8,
         label_opts=opts.LabelOpts(position="inside"),

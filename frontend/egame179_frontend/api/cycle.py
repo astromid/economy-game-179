@@ -3,7 +3,7 @@ from datetime import datetime
 
 import httpx
 import streamlit as st
-from pydantic import BaseModel
+from pydantic import BaseModel, parse_obj_as
 
 from egame179_frontend.settings import settings
 
@@ -16,6 +16,22 @@ class Cycle(BaseModel):
     ts_finish: datetime | None
 
 
+class CycleParams(BaseModel):
+    """Cycle parameters model."""
+
+    alpha: float
+    beta: float
+    gamma: float
+    tau_s: int
+
+
+class DemandFactor(BaseModel):
+    """Demand factors for each market."""
+
+    market_id: int
+    factor: float
+
+
 class CycleAPI:
     """Cycle API."""
 
@@ -25,6 +41,8 @@ class CycleAPI:
     _create_cycle_url = str(_api_url / "new")
     _start_cycle_url = str(_api_url / "start")
     _finish_cycle_url = str(_api_url / "finish")
+    _cycle_params_url = str(_api_url / "params")
+    _demand_factors_url = str(_api_url / "demand_factors")
 
     @classmethod
     def get_cycle(cls) -> Cycle:
@@ -54,3 +72,25 @@ class CycleAPI:
         """Finish current cycle."""
         response = httpx.get(cls._finish_cycle_url, headers=st.session_state.auth_header)
         response.raise_for_status()
+
+    @classmethod
+    def get_cycle_parameters(cls) -> CycleParams:
+        """Get current cycle parameters.
+
+        Returns:
+            CycleParams: current cycle parameters.
+        """
+        response = httpx.get(cls._cycle_params_url, headers=st.session_state.auth_header)
+        response.raise_for_status()
+        return CycleParams.parse_obj(response.json())
+
+    @classmethod
+    def get_demand_factors(cls) -> list[DemandFactor]:
+        """Get current market demand factors.
+
+        Returns:
+            list[DemandFactor]: current cycle demand factors.
+        """
+        response = httpx.get(cls._demand_factors_url, headers=st.session_state.auth_header)
+        response.raise_for_status()
+        return parse_obj_as(list[DemandFactor], response.json())

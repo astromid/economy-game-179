@@ -1,3 +1,4 @@
+import math
 from datetime import datetime
 
 from fastapi import Depends
@@ -76,12 +77,20 @@ class SupplyDAO:
         )
         await self.session.commit()
 
-    async def finish_supply(self, supply: Supply) -> None:
-        """Finish ongoing supply.
+    async def finish_supply(self, supply_id: int, velocity: float) -> None:
+        """Finish ongoing supply and update real delivered amount.
 
         Args:
-            supply (Supply): target Supply object.
+            supply_id (int): target supply_id.
+            velocity (float): supply velocity (items per sec).
         """
+        query = select(Supply).where(Supply.id == supply_id)
+        raw_supply = await self.session.exec(query)  # type: ignore
+        supply: Supply = raw_supply.one()
         supply.ts_finish = datetime.now()
+
+        supply_time_sec = (supply.ts_finish - supply.ts_start).total_seconds()
+        max_delivered_amount = math.floor(velocity * supply_time_sec)
+        supply.amount = min(supply.declared_amount, max_delivered_amount)
         self.session.add(supply)
         await self.session.commit()

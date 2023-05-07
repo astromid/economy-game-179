@@ -34,7 +34,7 @@ class BalanceAPI:
         return parse_obj_as(list[Balance], response.json())
 
     @classmethod
-    def get_all_balances(cls) -> list[Balance]:
+    def get_balances(cls) -> list[Balance]:
         """Get all users balances.
 
         Returns:

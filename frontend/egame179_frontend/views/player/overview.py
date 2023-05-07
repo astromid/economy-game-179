@@ -51,43 +51,46 @@ class PlayerDashboard(AppView):
     icon = "cash-stack"
     roles = (UserRoles.PLAYER.value,)
 
-    def __init__(self) -> None:
-        self.view_data: _ViewData | None = None
-
     def render(self) -> None:
         """Render view."""
-        self.view_data = self._cache_view_data(st.session_state.game)
-
-        st.markdown(f"## Сводный отчёт {self.view_data.name} Inc.")
-        col01, col02, _ = st.columns([1, 2, 5])
-        with col01:
-            st.metric(label="Цикл", value=self.view_data.cycle)
-        with col02:
-            st.metric(label="Баланс", value=self.view_data.balance, delta=self.view_data.balance_delta)
-
-        col11, col12 = st.columns([1, 1])
-        with col11:
-            # TODO: change to ECharts bar chart
-            st.bar_chart(
-                data={
-                    "cycle": list(range(1, self.view_data.cycle + 1)),
-                    "balance": self.view_data.balances,
-                },
-                x="cycle",
-                y="balance",
-            )
-        with col12:
-            st.write(self.view_data.cycle_params)
-
-        st.markdown("---")
-        st.markdown("### Транзакции по корпоративному счёту")
-        st.dataframe(self.view_data.transactions)
-
-    def _cache_view_data(self, state: PlayerState) -> _ViewData:
-        return _cache_view_data(
+        state: PlayerState = st.session_state.game
+        view_data = _cache_view_data(
             name=st.session_state.user.name,
             cycle=state.cycle.cycle,
             balances=state.balances,
             cycle_params=state.cycle_params,
             transactions=state.transactions,
         )
+
+        st.markdown(f"## Сводный отчёт {view_data.name} Inc.")
+        self._metrics_block(view_data)
+        self._overview_block(view_data)
+        st.markdown("---")
+        self._transactions_block(view_data)
+
+    def _metrics_block(self, view_data: _ViewData) -> None:
+        col1, col2, _ = st.columns([1, 2, 5])
+        with col1:
+            st.metric(label="Цикл", value=view_data.cycle)
+        with col2:
+            st.metric(label="Баланс", value=view_data.balance, delta=view_data.balance_delta)
+
+    def _overview_block(self, view_data: _ViewData) -> None:
+        col1, col2 = st.columns([1, 1])
+        with col1:
+            # TODO: change to ECharts bar chart
+            st.bar_chart(
+                data={"cycle": list(range(1, view_data.cycle + 1)), "balance": view_data.balances},
+                x="cycle",
+                y="balance",
+            )
+        with col2:
+            st.markdown("#### Параметры цикла")
+            st.write("Операционные расходы: ", view_data.cycle_params["alpha"])
+            st.write("Комиссия за операции на рынке: ", view_data.cycle_params["beta"])
+            st.write("Стоимость складского хранения: ", view_data.cycle_params["gamma"])
+            st.write("Время полной поставки: ", view_data.cycle_params["tau_s"])
+
+    def _transactions_block(self, view_data: _ViewData) -> None:
+        st.markdown("### Транзакции по корпоративному счёту")
+        st.dataframe(view_data.transactions)

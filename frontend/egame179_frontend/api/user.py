@@ -2,7 +2,8 @@
 from enum import Enum
 
 import httpx
-from pydantic import BaseModel
+import streamlit as st
+from pydantic import BaseModel, parse_obj_as
 
 from egame179_frontend.settings import settings
 
@@ -28,7 +29,8 @@ class AuthAPI:
     """Authentication API."""
 
     _token_url = str(settings.backend_url / "token")
-    _userinfo_url = str(settings.backend_url / "userinfo")
+    _user_url = str(settings.backend_url / "user")
+    _players_url = str(settings.backend_url / "players")
 
     @classmethod
     def get_auth_header(cls, login: str, password: str) -> dict[str, str] | None:
@@ -57,7 +59,18 @@ class AuthAPI:
         Returns:
             User | None: user info or None if auth header is incorrect.
         """
-        response = httpx.get(cls._userinfo_url, headers=auth_header)
+        response = httpx.get(cls._user_url, headers=auth_header)
         if response.status_code == httpx.codes.UNAUTHORIZED:
             return None
         return User.parse_obj(response.json())
+
+    @classmethod
+    def get_players(cls) -> list[User]:
+        """Get players info.
+
+        Returns:
+            list[User]: players info.
+        """
+        response = httpx.get(cls._players_url, headers=st.session_state.auth_header)
+        response.raise_for_status()
+        return parse_obj_as(list[User], response.json())

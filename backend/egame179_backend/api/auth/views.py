@@ -53,8 +53,8 @@ async def get_access_token(form_data: OAuth2PasswordRequestForm = Depends(), dao
     return Token(access_token=access_token, token_type="bearer")  # noqa: S106
 
 
-@router.get("/userinfo", response_model=UserInfo)
-async def get_user_info(user: User = Depends(get_current_user)) -> User:
+@router.get("/user", response_model=UserInfo)
+async def get_user(user: User = Depends(get_current_user)) -> User:
     """Get authorized user info.
 
     Args:
@@ -64,3 +64,16 @@ async def get_user_info(user: User = Depends(get_current_user)) -> User:
         User: UserInfo response model.
     """
     return user
+
+
+@router.get("/players", response_model=list[UserInfo])
+async def get_players(dao: UserDAO = Depends()) -> list[User]:
+    """Get authorized user info.
+
+    Args:
+        dao (UserDAO): user table data access object.
+
+    Returns:
+        list[User]: list of UserInfo response model.
+    """
+    return await dao.get_players()

@@ -15,9 +15,9 @@ class CycleParams(SQLModel, table=True):
     beta: float
     gamma: float
     tau_s: int
-    h: int
-    k: int
-    l: int
+    coeff_h: int
+    coeff_k: int
+    coeff_l: int
     demand_ring2: int
     demand_ring1: int
     demand_ring0: int

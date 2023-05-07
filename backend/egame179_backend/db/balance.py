@@ -34,7 +34,7 @@ class BalanceDAO:
         raw_balances = await self.session.exec(query)  # type: ignore
         return raw_balances.all()
 
-    async def get_all_balances(self) -> list[Balance]:
+    async def get_balances(self) -> list[Balance]:
         """Get all balances.
 
         Returns:
@@ -44,13 +44,17 @@ class BalanceDAO:
         raw_balances = await self.session.exec(query)  # type: ignore
         return raw_balances.all()
 
-    async def update_balance(self, balance: Balance, amount: float) -> None:
+    async def update_balance(self, cycle: int, user_id: int, amount: float) -> None:
         """Update user balance.
 
         Args:
-            balance (Balance): target Balance object
-            amount (float): amout of money.
+            cycle (int): target cycle.
+            user_id (int): target user.
+            amount (float): new amout of money.
         """
+        query = select(Balance).where(Balance.cycle == cycle, Balance.user_id == user_id)
+        raw_balance = await self.session.exec(query)  # type: ignore
+        balance = raw_balance.one()
         balance.amount = amount
         self.session.add(balance)
         await self.session.commit()
