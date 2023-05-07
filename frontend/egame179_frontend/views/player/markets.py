@@ -20,7 +20,7 @@ CHART_SIZE = MappingProxyType({"width": 800, "height": 350})
 
 @dataclass
 class _ViewData:
-    name: str
+    player_name: str
     cycle: int
     markets_graph: pe.charts.Graph
     buy_prices: pd.DataFrame
@@ -29,7 +29,7 @@ class _ViewData:
 
 @st.cache_data(max_entries=1)
 def _cache_view_data(
-    name: str,
+    player_name: str,
     cycle: int,
     _nx_graph: nx.Graph,
     prices: pd.DataFrame,
@@ -40,7 +40,7 @@ def _cache_view_data(
     buy_df = prices[[X_AXIS, "buy", C_AXIS]].rename(columns={"buy": Y_AXIS})
     sell_df = prices[[X_AXIS, "sell", C_AXIS]].rename(columns={"sell": Y_AXIS})
     return _ViewData(
-        name=name,
+        player_name=player_name,
         cycle=cycle,
         markets_graph=markets_graph(nx_graph=_nx_graph, unlocked_markets=unlocked_markets),
         buy_prices=buy_df,
@@ -61,14 +61,14 @@ class MarketsView(AppView):
         """Render view."""
         state: PlayerState = st.session_state.game
         view_data = _cache_view_data(
-            name=st.session_state.user.name,
+            player_name=st.session_state.user.name,
             cycle=state.cycle.cycle,
             _nx_graph=state.detailed_markets,
-            prices=state.prices,
+            prices=state.prices.copy(),
             unlocked_markets=state.unlocked_markets,
         )
 
-        st.markdown(f"## Аналитика по рынкам {view_data.name} Inc.")
+        st.markdown(f"## Аналитика по рынкам {view_data.player_name} Inc.")
         col01, col02 = st.columns([2, 3])
         with col01:
             st_pyecharts(view_data.markets_graph, height="600px")

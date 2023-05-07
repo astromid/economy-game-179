@@ -1,6 +1,7 @@
 [flake8]
 inline-quotes = double
 max-annotation-complexity = 4
+max-arguments = 8
 max-complexity = 6
 max-line-length = 120
 max-line-complexity = 20

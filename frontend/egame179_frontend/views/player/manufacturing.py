@@ -3,6 +3,7 @@ from itertools import chain
 from math import ceil
 from types import MappingProxyType
 
+import pandas as pd
 import streamlit as st
 from millify import millify
 from streamlit_echarts import st_pyecharts
@@ -16,69 +17,54 @@ MAX_METRICS_IN_ROW = 5
 X_AXIS = "cycle"
 Y_AXIS = "price"
 C_AXIS = "market"
-CHART_SIZE = MappingProxyType({"width": 1000, "height": 600})
-
-
-def manufacturing_view(state: PlayerState) -> None:
-    """Entry point for manufacturing view.
-
-    Args:
-        state (PlayerState): PlayerState object.
-    """
-    view_state = _cache_view_data(
-        cycle=state.cycle,
-        balance=state.player.balances[-1],
-        active_markets=state.player.active_markets,
-        markets_buy={market: m_state.buy for market, m_state in state.markets.items()},
-        thetas={market: pm_info.theta for market, pm_info in state.player.products.items()},
-    )
-    _render_view(view_state)
+CHART_SIZE = MappingProxyType({"width": 800, "height": 350})
 
 
 @dataclass
-class _BuyMarketStatus:
-    price: str
-    price_delta_pct: str | None
-    price_history: list[float]
-    theta: float
-
-
-@dataclass
-class _ViewState:
+class _ViewData:
+    player_name: str
     cycle: int
     balance: float
-    markets: dict[str, _BuyMarketStatus]
-    n_rows: int
+    unlocked_markets: list[int]
+    prices: dict[int, tuple[float, str, str | None]]
+    thetas: dict[int, float]
+    m_id2name: dict[int, str]
+    name2m_id: dict[str, int]
 
 
-@st.experimental_memo  # type: ignore
+@st.cache_data(max_entries=1)
 def _cache_view_data(
+    player_name: str,
     cycle: int,
     balance: float,
-    active_markets: list[str],
-    markets_buy: dict[str, list[float]],
-    thetas: dict[str, float],
-) -> _ViewState:
-    markets: dict[str, _BuyMarketStatus] = {}
-    for market, prices in markets_buy.items():
-        if market not in active_markets:
-            continue
-
-        price_delta_pct = None
-        if cycle > 1:
-            *_, price_prev, price = prices
-            price_delta_pct = (price - price_prev) / price_prev
-        markets[market] = _BuyMarketStatus(
-            price=millify(prices[-1], precision=3),
-            price_delta_pct=f"{price_delta_pct:.2%}" if price_delta_pct is not None else None,
-            price_history=prices,
-            theta=thetas[market],
+    unlocked_markets: list[int],
+    prices: pd.DataFrame,
+    thetas: dict[int, float],
+    m_id2name: dict[int, str],
+) -> _ViewData:
+    prices = prices.drop("sell", axis=1)
+    prices = prices[prices["cycle"] >= cycle - 1].sort_values(["market_id", "cycle"])
+    prices["buy_prev"] = prices.groupby("market_id")["buy"].shift(1)
+    prices["buy_delta_pct"] = (prices["buy"] - prices["buy_prev"]) / prices["buy_prev"]
+    prices = prices[prices["cycle"] == cycle].set_index("market_id")
+    prices_delta_dict = prices["buy_delta_pct"].to_dict()
+    prices_dict = {
+        m_id: (
+            price,
+            millify(price, precision=3),
+            None if pd.isna(prices_delta_dict[m_id]) else f"{prices_delta_dict[m_id]:.2%}",
         )
-    return _ViewState(
+        for m_id, price in prices["buy"].to_dict().items()
+    }
+    return _ViewData(
+        player_name=player_name,
         cycle=cycle,
         balance=balance,
-        markets=markets,
-        n_rows=ceil(len(markets) / MAX_METRICS_IN_ROW),
+        unlocked_markets=unlocked_markets,
+        prices=prices_dict,
+        thetas=thetas,
+        m_id2name=m_id2name,
+        name2m_id={market: m_id for m_id, market in m_id2name.items()},
     )
 
 
@@ -94,61 +80,81 @@ class ManufacturingView(AppView):
     def render(self) -> None:
         """Render view."""
         state: PlayerState = st.session_state.game
+        view_data = _cache_view_data(
+            player_name=st.session_state.user.name,
+            cycle=state.cycle.cycle,
+            balance=state.balances[-1],
+            unlocked_markets=state.unlocked_markets,
+            prices=state.prices,
+            thetas={product["market_id"]: product["theta"] for product in state.products},
+            m_id2name={node_id: node["name"] for node_id, node in state.markets.nodes.items()},
+        )
+
+        st.markdown(f"## Производство {view_data.player_name} Inc.")
+        st.metric(label="Баланс", value=millify(view_data.balance, precision=3))
+        _prices_block(prices=view_data.prices, m_id2name=view_data.m_id2name)
+        col1, col2 = st.columns([2, 3])
+        with col1:
+            _buy_form_block(
+                balance=view_data.balance,
+                unlocked_markets=view_data.unlocked_markets,
+                prices=view_data.prices,
+                thetas=view_data.thetas,
+                m_id2name=view_data.m_id2name,
+                name2m_id=view_data.name2m_id,
+            )
+        with col2:
+            _theta_radar_block(thetas=view_data.thetas, m_id2name=view_data.m_id2name)
 
 
-def _render_view(state: _ViewState) -> None:
-    st.markdown("## Производство")
-    _prices_block(
-        n_rows=state.n_rows,
-        markets=state.markets,
-    )
-    col1, col2 = st.columns([2, 3])
-    with col1:
-        _buy_form_block(markets=state.markets, balance=state.balance)
-    with col2:
-        _theta_radar_block(markets=state.markets)
-
-
-def _prices_block(n_rows: int, markets: dict[str, _BuyMarketStatus]) -> None:
-    st.markdown("### Закупочные цены")
+def _prices_block(prices: dict[int, tuple[float, str, str | None]], m_id2name: dict[int, str]) -> None:
+    n_rows = ceil(len(prices) / MAX_METRICS_IN_ROW)
+    st.markdown("#### Рыночные цены производства")
     columns = chain(*[st.columns(MAX_METRICS_IN_ROW) for _ in range(n_rows)])
-    for col, (market, market_status) in zip(columns, markets.items()):
+    for col, m_id in zip(columns, prices):
         with col:
-            st.metric(label=market, value=market_status.price, delta=market_status.price_delta_pct)
+            st.metric(label=m_id2name[m_id], value=prices[m_id][1], delta=prices[m_id][2])
 
 
-def _buy_form_block(markets: dict[str, _BuyMarketStatus], balance: float) -> None:
-    st.markdown("### Производство товаров")
-    chosen_market = st.selectbox("Целевой рынок", list(markets.keys()))
-    real_price = (1 - markets[chosen_market].theta) * markets[chosen_market].price_history[-1]
-    real_price = round(real_price, 2)
-    max_volume = int(balance // real_price)
-    volume: int = st.slider("Количество товаров", min_value=0, max_value=max_volume)  # type: ignore
+def _buy_form_block(
+    balance: float,
+    unlocked_markets: list[int],
+    prices: dict[int, tuple[float, str, str | None]],
+    thetas: dict[int, float],
+    m_id2name: dict[int, str],
+    name2m_id: dict[str, int],
+) -> None:
+    st.markdown("#### Производство товаров")
+    chosen_market = st.selectbox("Рынок [из доступных]", [m_id2name[m_id] for m_id in unlocked_markets])
+    if chosen_market is not None:
+        chosen_id = name2m_id[chosen_market]
+        real_price = (1 - thetas[chosen_id]) * prices[chosen_id][0]
+        max_amount = int(balance // real_price)
+        amount: int = st.slider("Количество товаров", min_value=0, max_value=max_amount, value=0)  # type: ignore
+        expense = amount * real_price
+        rest_balance = round(balance - expense, 2)
 
-    expense = volume * real_price
-    rest_balance = round(balance - expense, 2)
-
-    st.text(f"Цена закупки с учетом скидки: {real_price}")
-    st.text(f"Расходы: {volume} шт. x {real_price} = {expense}")
-    st.text(f"Остаток баланса: {rest_balance}")
-    if st.button("Произвести"):
-        _manufacturing(volume=volume, market=chosen_market)
+        st.text(f"Цена закупки с учетом скидки: {real_price}")
+        st.text(f"Расходы: {amount} шт. x {real_price} = {expense}")
+        st.text(f"Остаток баланса: {rest_balance}")
+        if st.button("Произвести"):
+            _manufacturing(amount=amount, market_id=chosen_id, market=chosen_market)
 
 
-def _manufacturing(volume: int, market: str) -> None:
+def _manufacturing(amount: int, market_id: int, market: str) -> None:
     status = False
-    if volume > 0:
+    if amount > 0:
         with st.spinner("Отправка на производство..."):
-            status = mock_manufacturing(volume=volume, market=market)
+            status = True
     if status:
-        st.success(f"{volume} шт. товаров {market} отправлены на склад.", icon="⚙")
+        st.success(f"{amount} шт. товаров {market} отправлены на склад.", icon="⚙")
     else:
         st.error("Ошибка отправки на производство.", icon="⚙")
 
 
-def _theta_radar_block(markets: dict[str, _BuyMarketStatus]) -> None:
-    st.markdown("### Текущая эффективность производства")
+def _theta_radar_block(thetas: dict[int, float], m_id2name: dict[int, str]) -> None:
+    st.markdown("#### Текущая эффективность производства")
     st_pyecharts(
-        radar_chart(thetas={market: market_status.theta for market, market_status in markets.items()}),
+        radar_chart(thetas={m_id2name[m_id]: theta for m_id, theta in thetas.items()}),
         height="500px",
     )
