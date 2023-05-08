@@ -53,14 +53,14 @@ class UnlockedMarketDAO:
     def __init__(self, session: AsyncSession = Depends(get_db_session)):
         self.session = session
 
-    async def get_user_unlocked_markets(self, user_id: int) -> list[UnlockedMarket]:
+    async def get_unlocked_markets(self, user_id: int | None) -> list[UnlockedMarket]:
         """Get unlocked markets for paticular user.
 
         Args:
-            user_id (int): user id.
+            user_id (int, optional): user id. If None, markets for all users return.
 
         Returns:
-            list[UnlockedMarket]: unlocked markets for the user.
+            list[UnlockedMarket]: unlocked markets.
         """
         query = select(UnlockedMarket).where(UnlockedMarket.user_id == user_id).order_by(UnlockedMarket.protected)
         raw_markets = await self.session.exec(query)  # type: ignore

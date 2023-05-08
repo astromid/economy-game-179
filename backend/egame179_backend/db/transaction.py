@@ -26,30 +26,22 @@ class TransactionDAO:
     def __init__(self, session: AsyncSession = Depends(get_db_session)):
         self.session = session
 
-    async def get_user_transactions(self, user_id: int) -> list[Transaction]:
-        """Get user transactions.
+    async def get(self, user_id: int | None) -> list[Transaction]:
+        """Get game transactions.
 
         Args:
-            user_id (int): user id.
+            user_id (int, optional): target user id. If None, all transactions return.
 
         Returns:
-            list[Transaction]: user transactions.
-        """
-        query = select(Transaction).where(Transaction.user_id == user_id).order_by(Transaction.ts)
-        raw_transactions = await self.session.exec(query)  # type: ignore
-        return raw_transactions.all()
-
-    async def get_all_transactions(self) -> list[Transaction]:
-        """Get all transactions.
-
-        Returns:
-            list[Balance]: all transactions.
+            list[Transaction]: game transactions.
         """
         query = select(Transaction).order_by(Transaction.ts)
+        if user_id is not None:
+            query = query.where(Transaction.user_id == user_id)
         raw_transactions = await self.session.exec(query)  # type: ignore
         return raw_transactions.all()
 
-    async def create_transaction(self, cycle: int, user_id: int, amount: float, description: str) -> None:
+    async def create(self, cycle: int, user_id: int, amount: float, description: str) -> None:
         """Create new transaction.
 
         Args:

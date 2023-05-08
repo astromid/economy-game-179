@@ -1,7 +1,6 @@
+import math
 from dataclasses import dataclass
 from itertools import chain
-from math import ceil
-from types import MappingProxyType
 
 import pandas as pd
 import streamlit as st
@@ -14,10 +13,6 @@ from egame179_frontend.views.registry import AppView, appview
 from egame179_frontend.visualization import radar_chart
 
 MAX_METRICS_IN_ROW = 5
-X_AXIS = "cycle"
-Y_AXIS = "price"
-C_AXIS = "market"
-CHART_SIZE = MappingProxyType({"width": 800, "height": 350})
 
 
 @dataclass
@@ -108,7 +103,7 @@ class ManufacturingView(AppView):
 
 
 def _prices_block(prices: dict[int, tuple[float, str, str | None]], m_id2name: dict[int, str]) -> None:
-    n_rows = ceil(len(prices) / MAX_METRICS_IN_ROW)
+    n_rows = math.ceil(len(prices) / MAX_METRICS_IN_ROW)
     st.markdown("#### Рыночные цены производства")
     columns = chain(*[st.columns(MAX_METRICS_IN_ROW) for _ in range(n_rows)])
     for col, m_id in zip(columns, prices):
@@ -134,10 +129,10 @@ def _buy_form_block(
         expense = amount * real_price
         rest_balance = round(balance - expense, 2)
 
-        st.text(f"Цена закупки с учетом скидки: {real_price}")
+        st.text(f"Цена производства с учетом скидки: {real_price}")
         st.text(f"Расходы: {amount} шт. x {real_price} = {expense}")
         st.text(f"Остаток баланса: {rest_balance}")
-        if st.button("Произвести"):
+        if st.button("Произвести и отправить на склад"):
             _manufacturing(amount=amount, market_id=chosen_id, market=chosen_market)
 
 

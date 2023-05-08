@@ -32,7 +32,7 @@ class PriceDAO:
         raw_prices = await self.session.exec(query)  # type: ignore
         return raw_prices.all()
 
-    async def set_new_price(self, cycle: int, market_id: int, buy: float, sell: float) -> None:
+    async def create_market_price(self, cycle: int, market_id: int, buy: float, sell: float) -> None:
         """Create market price for new cycle.
 
         Args:
@@ -43,3 +43,18 @@ class PriceDAO:
         """
         self.session.add(Price(cycle=cycle, market_id=market_id, buy=buy, sell=sell))
         await self.session.commit()
+
+    async def get_market_price(self, market_id: int, cycle: int) -> tuple[float, float]:
+        """Get buy & sell prices for target market_id on target cycle.
+
+        Args:
+            market_id (int): target market id.
+            cycle (int): target cycle.
+
+        Returns:
+            tuple[float, float]: buy & sell price.
+        """
+        query = select(Price).where(Price.market_id == market_id, Price.cycle == cycle)
+        raw_price = await self.session.exec(query)  # type: ignore
+        price = raw_price.one()
+        return price.buy, price.sell

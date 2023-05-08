@@ -29,7 +29,7 @@ class CycleParamsDAO:
     def __init__(self, session: AsyncSession = Depends(get_db_session)):
         self.session = session
 
-    async def get_cycle_parameters(self, cycle: int) -> CycleParams:
+    async def get(self, cycle: int) -> CycleParams:
         """Get parameters for target cycle.
 
         Args:

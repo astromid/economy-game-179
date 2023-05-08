@@ -5,6 +5,8 @@ from egame179_backend.api.auth.dependencies import get_current_user
 from egame179_backend.db.cycle import CycleDAO
 from egame179_backend.db.market import MarketDAO, UnlockedMarketDAO
 from egame179_backend.db.product import Product, ProductDAO
+from egame179_backend.db.price import PriceDAO
+from egame179_backend.db.transaction import TransactionDAO
 from egame179_backend.db.user import User
 
 router = APIRouter()
@@ -17,6 +19,13 @@ class MarketSharePlayer(BaseModel):
     user_id: int
     share: float | None = None
     position: int
+
+
+class ProductionBid(BaseModel):
+    """Production bid model."""
+
+    market_id: int
+    amount: int
 
 
 @router.get("/user")
@@ -96,3 +105,12 @@ async def get_market_shares(  # noqa: WPS210
             for pos, product in products_dict.items()
         ])
     return shares
+
+
+@router.post("/production")
+async def production(
+    bid: ProductionBid,
+    user: User = Depends(get_current_user),
+    dao: ProductDAO = Depends(),
+) -> None:
+    
