@@ -24,7 +24,26 @@ class ProductDAO:
     def __init__(self, session: AsyncSession = Depends(get_db_session)):
         self.session = session
 
-    async def get(self, user_id: int | None = None) -> list[Product]:
+    async def get(self, cycle: int, user_id: int, market_id: int) -> Product:
+        """Get target product.
+
+        Args:
+            cycle (int): target cycle.
+            user_id (int): target user id.
+            market_id (int): target market id.
+
+        Returns:
+            Product: target product.
+        """
+        query = select(Product).where(
+            Product.cycle == cycle,
+            Product.user_id == user_id,
+            Product.market_id == market_id,
+        )
+        raw_product = await self.session.exec(query)  # type: ignore
+        return raw_product.one()
+
+    async def get_all(self, user_id: int | None = None) -> list[Product]:
         """Get all products for particular user.
 
         Args:
@@ -79,16 +98,24 @@ class ProductDAO:
             market_id (int): target market id.
             delta (int): delta storage amount (add up to existing amount).
         """
-        query = select(Product).where(
-            Product.cycle == cycle,
-            Product.user_id == user_id,
-            Product.market_id == market_id,
-        )
-        raw_product = await self.session.exec(query)  # type: ignore
-        product: Product = raw_product.one()
+        product = await self.get(cycle=cycle, user_id=user_id, market_id=market_id)
         product.storage += delta
         self.session.add(product)
         await self.session.commit()
+
+    async def get_theta(self, cycle: int, user_id: int, market_id: int) -> float:
+        """Get current theta for user.
+
+        Args:
+            cycle (int): target cycle.
+            user_id (int): target user id.
+            market_id (int): target market id.
+
+        Returns:
+            float: target theta.
+        """
+        product = await self.get(cycle=cycle, user_id=user_id, market_id=market_id)
+        return product.theta
 
     async def update_theta(self, cycle: int, user_id: int, market_id: int, theta: float) -> None:
         """Update player theta.
@@ -99,13 +126,7 @@ class ProductDAO:
             market_id (int): target market id.
             theta (float): new product theta.
         """
-        query = select(Product).where(
-            Product.cycle == cycle,
-            Product.user_id == user_id,
-            Product.market_id == market_id,
-        )
-        raw_product = await self.session.exec(query)  # type: ignore
-        product: Product = raw_product.one()
+        product = await self.get(cycle=cycle, user_id=user_id, market_id=market_id)
         product.theta = theta
         self.session.add(product)
         await self.session.commit()

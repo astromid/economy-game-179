@@ -37,7 +37,7 @@ class CycleAPI:
 
     _api_url = settings.backend_url / "cycle"
 
-    _get_cycle_url = str(_api_url / "info")
+    _get_cycle_url = str(_api_url / "current")
     _create_cycle_url = str(_api_url / "new")
     _start_cycle_url = str(_api_url / "start")
     _finish_cycle_url = str(_api_url / "finish")

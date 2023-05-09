@@ -4,9 +4,11 @@ from itertools import chain
 
 import pandas as pd
 import streamlit as st
+from httpx import HTTPStatusError
 from millify import millify
 from streamlit_echarts import st_pyecharts
 
+from egame179_frontend.api.product import ProductAPI
 from egame179_frontend.api.user import UserRoles
 from egame179_frontend.state.state import PlayerState
 from egame179_frontend.views.registry import AppView, appview
@@ -86,8 +88,11 @@ class ManufacturingView(AppView):
         )
 
         st.markdown(f"## Производство {view_data.player_name} Inc.")
-        st.metric(label="Баланс", value=millify(view_data.balance, precision=3))
+        balance_col, _ = st.columns([1, 6])
+        with balance_col:
+            st.metric(label="Баланс", value=millify(view_data.balance, precision=3))
         _prices_block(prices=view_data.prices, m_id2name=view_data.m_id2name)
+
         col1, col2 = st.columns([2, 3])
         with col1:
             _buy_form_block(
@@ -120,31 +125,43 @@ def _buy_form_block(
     name2m_id: dict[str, int],
 ) -> None:
     st.markdown("#### Производство товаров")
-    chosen_market = st.selectbox("Рынок [из доступных]", [m_id2name[m_id] for m_id in unlocked_markets])
+    chosen_market = st.selectbox(
+        "Рынок [из доступных]",
+        options=[m_id2name[m_id] for m_id in unlocked_markets],
+        disabled=st.session_state.interim_block,
+    )
     if chosen_market is not None:
         chosen_id = name2m_id[chosen_market]
         real_price = (1 - thetas[chosen_id]) * prices[chosen_id][0]
-        max_amount = int(balance // real_price)
-        amount: int = st.slider("Количество товаров", min_value=0, max_value=max_amount, value=0)  # type: ignore
+        max_amount = max(0, int(balance // real_price))
+        amount: int = st.slider(
+            "Количество товаров",
+            min_value=0,
+            max_value=max_amount if max_amount > 0 else 1,
+            value=0,
+            disabled=st.session_state.interim_block or max_amount == 0,
+        )
+        if max_amount == 0:
+            amount = 0
+            st.warning("Баланса недостаточно для производства на данном рынке", icon="⚠️")
+
         expense = amount * real_price
         rest_balance = round(balance - expense, 2)
-
         st.text(f"Цена производства с учетом скидки: {real_price}")
         st.text(f"Расходы: {amount} шт. x {real_price} = {expense}")
         st.text(f"Остаток баланса: {rest_balance}")
-        if st.button("Произвести и отправить на склад"):
+        if st.button("Произвести и отправить на склад", disabled=st.session_state.interim_block or amount == 0):
             _manufacturing(amount=amount, market_id=chosen_id, market=chosen_market)
 
 
 def _manufacturing(amount: int, market_id: int, market: str) -> None:
-    status = False
-    if amount > 0:
-        with st.spinner("Отправка на производство..."):
-            status = True
-    if status:
-        st.success(f"{amount} шт. товаров {market} отправлены на склад.", icon="⚙")
+    try:
+        ProductAPI.buy(market_id=market_id, amount=amount)
+    except HTTPStatusError as exc:
+        st.error(f"Ошибка: {exc = }", icon="⚙")
     else:
-        st.error("Ошибка отправки на производство.", icon="⚙")
+        st.success(f"{amount} шт. товаров {market} отправлены на склад.", icon="⚙")
+        st.session_state.game.clear_after_buy()
 
 
 def _theta_radar_block(thetas: dict[int, float], m_id2name: dict[int, str]) -> None:

@@ -41,7 +41,7 @@ class PlayerState:  # noqa: WPS214
             dict[int, str]: mapping for players.
         """
         if self._players is None:
-            self._players = {user.id: user.name for user in AuthAPI.get_players()}  # noqa: WPS601
+            self._players = {user.id: user.name for user in AuthAPI.get_players()}
         return self._players
 
     @property
@@ -52,7 +52,7 @@ class PlayerState:  # noqa: WPS214
             nx.Graph: markets graph.
         """
         if self._markets is None:
-            self._markets = nx.Graph()  # noqa: WPS601
+            self._markets = nx.Graph()
             for market in MarketAPI.get_markets():
                 self._markets.add_node(market.id, name=market.name, ring=market.ring)
                 self._markets.add_edges_from([
@@ -74,7 +74,7 @@ class PlayerState:  # noqa: WPS214
             list[float]: balances ordered by cycle.
         """
         if self._balances is None:
-            self._balances = [bal.amount for bal in BalanceAPI.get_user_balances()]  # noqa: WPS601
+            self._balances = [bal.amount for bal in BalanceAPI.get_user_balances()]
         return self._balances
 
     @property
@@ -85,7 +85,7 @@ class PlayerState:  # noqa: WPS214
             dict[str, float | int]: alpha, beta, gamma & tau_s parameters.
         """
         if self._cycle_params is None:
-            self._cycle_params = CycleAPI.get_cycle_parameters().dict()  # noqa: WPS601
+            self._cycle_params = CycleAPI.get_cycle_parameters().dict()
         return self._cycle_params
 
     @property
@@ -96,7 +96,7 @@ class PlayerState:  # noqa: WPS214
             list[dict[str, Any]]: player transactions.
         """
         if self._transactions is None:
-            self._transactions = [tr.dict() for tr in TransactionAPI.get_user_transactions()]  # noqa: WPS601
+            self._transactions = [tr.dict() for tr in TransactionAPI.get_user_transactions()]
         return self._transactions
 
     @property
@@ -107,7 +107,7 @@ class PlayerState:  # noqa: WPS214
             list[int]: list of unlocked market ids.
         """
         if self._unlocked_markets is None:
-            self._unlocked_markets = [um.market_id for um in MarketAPI.get_user_unlocked_markets()]  # noqa: WPS601
+            self._unlocked_markets = [um.market_id for um in MarketAPI.get_user_unlocked_markets()]
         return self._unlocked_markets
 
     @property
@@ -118,25 +118,25 @@ class PlayerState:  # noqa: WPS214
             pd.DataFrame: pandas dataframe with columns (cycle, market_id, buy, sell)
         """
         if self._prices is None:
-            self._prices = pd.DataFrame([price.dict() for price in PriceAPI.get_market_prices()])  # noqa: WPS601
+            self._prices = pd.DataFrame([price.dict() for price in PriceAPI.get_market_prices()])
         return self._prices
 
     @property
     def demand_factors(self) -> dict[int, float]:
         if self._demand_factors is None:
-            self._demand_factors = {fc.market_id: fc.factor for fc in CycleAPI.get_demand_factors()}  # noqa: WPS601
+            self._demand_factors = {fc.market_id: fc.factor for fc in CycleAPI.get_demand_factors()}
         return self._demand_factors
 
     @property
     def products(self) -> list[dict[str, Any]]:
         if self._products is None:
-            self._products = [product.dict() for product in ProductAPI.get_user_products()]  # noqa: WPS601
+            self._products = [product.dict() for product in ProductAPI.get_user_products()]
         return self._products
 
     @property
     def shares(self) -> dict[int, list[tuple[str, float | None]]]:
         if self._shares is None:
-            self._shares = defaultdict(list)  # noqa: WPS601
+            self._shares = defaultdict(list)
             for share in ProductAPI.get_shares():
                 player = self.players[share.user_id]
                 self._shares[share.market_id].append((player, share.share))
@@ -157,12 +157,21 @@ class PlayerState:  # noqa: WPS214
                 node["sell"] = last_prices.loc[node_id, "sell"]
                 node["demand_factor"] = self.demand_factors[node_id]
                 node["storage"] = storages[node_id]
-                # default values
+                # default top shares values
                 node["top1"] = "None"
                 node["top2"] = "None"
                 market_shares = self.shares[node_id]
                 for idx, share in enumerate(market_shares[:2], start=1):
                     player, percent = share
-                    node[f"top{idx}"] = f"{player}: {percent:.2%}" if percent is not None else f"{player}: ??%"
-            self._detailed_markets = graph  # noqa: WPS601
+                    percent_repr = f"{percent:.2%}" if percent is not None else "??%"
+                    node[f"top{idx}"] = f"{player}: {percent_repr}"
+            self._detailed_markets = graph
         return self._detailed_markets
+
+    def clear_after_buy(self) -> None:
+        self._balances = None
+        self._products = None
+        self._transactions = None
+
+    def clear_after_supply(self) -> None:
+        self._products = None

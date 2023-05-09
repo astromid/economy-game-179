@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Security
+from fastapi import APIRouter, Depends, HTTPException, Security
 from pydantic import BaseModel
 
 from egame179_backend import engine
@@ -41,7 +41,7 @@ async def get_user_products(user: User = Depends(get_current_user), dao: Product
     Returns:
         list[Product]: products history for user.
     """
-    return await dao.get(user.id)
+    return await dao.get_all(user.id)
 
 
 @router.get("/all", dependencies=[Security(get_current_user, scopes=["root"])])
@@ -54,7 +54,7 @@ async def get_all_products(dao: ProductDAO = Depends()) -> list[Product]:
     Returns:
         list[Products]: products history for all users.
     """
-    return await dao.get()
+    return await dao.get_all()
 
 
 @router.get("/shares")
@@ -78,7 +78,7 @@ async def get_market_shares(  # noqa: WPS210
         list[MarketSharePlayer]: market shares visible for player.
     """
     current_cycle = await cycle_dao.get_current()
-    products = await dao.get()
+    products = await dao.get_all()
     markets = await market_dao.get()
     unlocked_markets = await unlocked_market_dao.get(user.id)
 
@@ -130,13 +130,15 @@ async def production(
         balance_dao (BalanceDAO): balances table DAO.
         transaction_dao (TransactionDAO): transactions table DAO.
     """
+    if bid.amount <= 0:
+        raise HTTPException(status_code=400, detail=f"Incorrect {bid.amount = }")
     current_cycle = await cycle_dao.get_current()
     buy_price, _ = await price_dao.get_market_price(market_id=bid.market_id, cycle=current_cycle.cycle)
-    bid_price = bid.amount * buy_price
+    theta = await dao.get_theta(cycle=current_cycle.cycle, user_id=user.id, market_id=bid.market_id)
     transaction_success = await engine.make_transaction(
         cycle=current_cycle.cycle,
         user_id=user.id,
-        amount=-bid_price,
+        amount=bid.amount * (theta - 1) * buy_price,  # -amount * (1 - theta)
         description=f"Buy {bid.amount} items (market_id = {bid.market_id})",
         overdraft=False,
         balance_dao=balance_dao,

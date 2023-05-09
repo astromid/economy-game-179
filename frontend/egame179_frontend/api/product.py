@@ -34,6 +34,7 @@ class ProductAPI:
     _user_products_url = str(_api_url / "user")
     _all_products_url = str(_api_url / "all")
     _shares_url = str(_api_url / "shares")
+    _buy_url = str(_api_url / "buy")
 
     @classmethod
     def get_user_products(cls) -> list[Product]:
@@ -67,3 +68,15 @@ class ProductAPI:
         response = httpx.get(cls._shares_url, headers=st.session_state.auth_header)
         response.raise_for_status()
         return parse_obj_as(list[MarketShare], response.json())
+
+    @classmethod
+    def buy(cls, market_id: int, amount: int) -> None:
+        """Buy items on target market.
+
+        Args:
+            market_id (int): target market id.
+            amount (int): number of items.
+        """
+        bid = {"market_id": market_id, "amount": amount}
+        response = httpx.post(cls._buy_url, json=bid, headers=st.session_state.auth_header)
+        response.raise_for_status()

@@ -5,7 +5,7 @@ max-arguments = 8
 max-complexity = 6
 max-line-length = 120
 max-line-complexity = 20
-max-local-variables = 10
+max-local-variables = 12
 max-module-members = 10
 extend-ignore = E203
 docstring_style=google
@@ -37,6 +37,8 @@ ignore =
   WPS404,
   ; Found nested class
   WPS431,
+  ; Found shadowed class attribute
+  WPS601,
 
 per-file-ignores =
   ; all tests
