@@ -36,7 +36,7 @@ class MarketDAO:
     def __init__(self, session: AsyncSession = Depends(get_db_session)):
         self.session = session
 
-    async def get(self) -> list[Market]:
+    async def get_all(self) -> list[Market]:
         """Get markets.
 
         Returns:
@@ -53,7 +53,7 @@ class UnlockedMarketDAO:
     def __init__(self, session: AsyncSession = Depends(get_db_session)):
         self.session = session
 
-    async def get(self, user_id: int | None = None) -> list[UnlockedMarket]:
+    async def get_all(self, user_id: int | None = None) -> list[UnlockedMarket]:
         """Get unlocked markets for paticular user.
 
         Args:

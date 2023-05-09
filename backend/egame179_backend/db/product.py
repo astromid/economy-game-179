@@ -58,75 +58,11 @@ class ProductDAO:
         raw_products = await self.session.exec(query)  # type: ignore
         return raw_products.all()
 
-    async def create(  # noqa: WPS211
-        self,
-        cycle: int,
-        user_id: int,
-        market_id: int,
-        storage: int,
-        theta: float,
-        share: float,
-    ) -> None:
-        """Create new product record.
+    async def add(self, product: Product) -> None:
+        """Create or update product records.
 
         Args:
-            cycle (int): target cycle.
-            user_id (int): target user id.
-            market_id (int): target market id.
-            storage (int): storages.
-            theta (float): manufacturing theta.
-            share (float): market share.
+            product (Product): product record object.
         """
-        self.session.add(
-            Product(
-                cycle=cycle,
-                user_id=user_id,
-                market_id=market_id,
-                storage=storage,
-                theta=theta,
-                share=share,
-            ),
-        )
-        await self.session.commit()
-
-    async def update_storage(self, cycle: int, user_id: int, market_id: int, delta: int) -> None:
-        """Update player storage.
-
-        Args:
-            cycle (int): target cycle.
-            user_id (int): target user id.
-            market_id (int): target market id.
-            delta (int): delta storage amount (add up to existing amount).
-        """
-        product = await self.get(cycle=cycle, user_id=user_id, market_id=market_id)
-        product.storage += delta
-        self.session.add(product)
-        await self.session.commit()
-
-    async def get_theta(self, cycle: int, user_id: int, market_id: int) -> float:
-        """Get current theta for user.
-
-        Args:
-            cycle (int): target cycle.
-            user_id (int): target user id.
-            market_id (int): target market id.
-
-        Returns:
-            float: target theta.
-        """
-        product = await self.get(cycle=cycle, user_id=user_id, market_id=market_id)
-        return product.theta
-
-    async def update_theta(self, cycle: int, user_id: int, market_id: int, theta: float) -> None:
-        """Update player theta.
-
-        Args:
-            cycle (int): target cycle.
-            user_id (int): target user id.
-            market_id (int): target market id.
-            theta (float): new product theta.
-        """
-        product = await self.get(cycle=cycle, user_id=user_id, market_id=market_id)
-        product.theta = theta
         self.session.add(product)
         await self.session.commit()

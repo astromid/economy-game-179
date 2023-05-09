@@ -2,8 +2,7 @@ import math
 
 from fastapi import HTTPException
 
-from egame179_backend.db.balance import BalanceDAO
-from egame179_backend.db.transaction import TransactionDAO
+from egame179_backend.db import BalanceDAO, SupplyDAO, TransactionDAO
 
 
 async def make_transaction(
@@ -12,6 +11,7 @@ async def make_transaction(
     amount: float,
     description: str,
     overdraft: bool,
+    inflow: bool,
     balance_dao: BalanceDAO,
     transaction_dao: TransactionDAO,
 ) -> bool:
@@ -23,6 +23,7 @@ async def make_transaction(
         amount (float): transaction amount.
         description (str): transaction description.
         overdraft (bool): do not check balance.
+        inflow (bool): inflow or outflow transaction.
         balance_dao (BalanceDAO): balances data access object.
         transaction_dao (TransactionDAO): transactions data access object.
 
@@ -32,16 +33,75 @@ async def make_transaction(
     Returns:
         bool: transaction success.
     """
-    if amount < 0 and not overdraft:
-        balance = await balance_dao.get_on_cycle(cycle=cycle, user_id=user_id)
-        if balance.amount < -amount:
+    balance = await balance_dao.get(cycle=cycle, user_id=user_id)
+    if inflow:
+        balance.amount += amount
+    else:
+        if amount > balance.amount and not overdraft:
             raise HTTPException(status_code=400, detail="Not enough money to make a transaction")
+        balance.amount -= amount
     await transaction_dao.create(cycle=cycle, user_id=user_id, amount=amount, description=description)
-    await balance_dao.update(cycle=cycle, user_id=user_id, delta=amount)
+    await balance_dao.add(balance)
+    return True
+
+
+async def make_supply(
+    cycle: int,
+    user_id: int,
+    market_id: int,
+    amount: int,
+    storage: int,
+    beta: float,
+    balance_dao: BalanceDAO,
+    transaction_dao: TransactionDAO,
+    supply_dao: SupplyDAO,
+) -> bool:
+    """Start new supply and take operation fee.
+
+    Args:
+        cycle (int): supply cycle.
+        user_id (int): supply user id.
+        market_id (int): supply market id.
+        amount (int): declared amount of items.
+        storage (int): number of items in storage.
+        beta (float): current fee.
+        balance_dao (BalanceDAO): balances data access object.
+        transaction_dao (TransactionDAO): transactions data access object.
+        supply_dao (SupplyDAO): supplies data access object.
+
+    Raises:
+        HTTPException: not enough items to start a supply.
+
+    Returns:
+        bool: supply start success.
+    """
+    if storage < amount:
+        raise HTTPException(status_code=400, detail="No sufficient items on a storage")
+    await make_transaction(
+        cycle=cycle,
+        user_id=user_id,
+        amount=beta,
+        description="Fee for market operations",
+        inflow=False,
+        overdraft=True,
+        balance_dao=balance_dao,
+        transaction_dao=transaction_dao,
+    )
+    await supply_dao.create(cycle=cycle, user_id=user_id, market_id=market_id, declared_amount=amount)
     return True
 
 
 def production_cost(theta: float, price: float, number: int) -> float:
+    """Cost of production.
+
+    Args:
+        theta (float): player current theta.
+        price (float): current market price.
+        number (int): amount of items.
+
+    Returns:
+        float: production cost.
+    """
     return (1 - theta) * price * number
 
 

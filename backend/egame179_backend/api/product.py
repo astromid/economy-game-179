@@ -3,12 +3,8 @@ from pydantic import BaseModel
 
 from egame179_backend import engine
 from egame179_backend.api.auth.dependencies import get_current_user
-from egame179_backend.db.balance import BalanceDAO
-from egame179_backend.db.cycle import CycleDAO
-from egame179_backend.db.market import MarketDAO, UnlockedMarketDAO
-from egame179_backend.db.price import PriceDAO
+from egame179_backend.db import BalanceDAO, CycleDAO, MarketDAO, PriceDAO, TransactionDAO, UnlockedMarketDAO
 from egame179_backend.db.product import Product, ProductDAO
-from egame179_backend.db.transaction import TransactionDAO
 from egame179_backend.db.user import User
 
 router = APIRouter()
@@ -79,8 +75,8 @@ async def get_market_shares(  # noqa: WPS210
     """
     current_cycle = await cycle_dao.get_current()
     products = await dao.get_all()
-    markets = await market_dao.get()
-    unlocked_markets = await unlocked_market_dao.get(user.id)
+    markets = await market_dao.get_all()
+    unlocked_markets = await unlocked_market_dao.get_all(user.id)
 
     products = [product for product in products if (product.cycle == current_cycle.cycle and product.share > 0)]
     owned_markets = [umarket.market_id for umarket in unlocked_markets]
@@ -129,20 +125,25 @@ async def production(
         price_dao (PriceDAO): prices table DAO.
         balance_dao (BalanceDAO): balances table DAO.
         transaction_dao (TransactionDAO): transactions table DAO.
+
+    Raises:
+        HTTPException: amount <= 0
     """
     if bid.amount <= 0:
         raise HTTPException(status_code=400, detail=f"Incorrect {bid.amount = }")
     current_cycle = await cycle_dao.get_current()
-    buy_price, _ = await price_dao.get_market_price(market_id=bid.market_id, cycle=current_cycle.cycle)
-    theta = await dao.get_theta(cycle=current_cycle.cycle, user_id=user.id, market_id=bid.market_id)
+    market_price = await price_dao.get(market_id=bid.market_id, cycle=current_cycle.cycle)
+    product = await dao.get(cycle=current_cycle.cycle, user_id=user.id, market_id=bid.market_id)
     transaction_success = await engine.make_transaction(
         cycle=current_cycle.cycle,
         user_id=user.id,
-        amount=bid.amount * (theta - 1) * buy_price,  # -amount * (1 - theta)
+        amount=engine.production_cost(theta=product.theta, price=market_price.buy, number=bid.amount),
         description=f"Buy {bid.amount} items (market_id = {bid.market_id})",
+        inflow=False,
         overdraft=False,
         balance_dao=balance_dao,
         transaction_dao=transaction_dao,
     )
     if transaction_success:
-        await dao.update_storage(cycle=current_cycle.cycle, user_id=user.id, market_id=bid.market_id, delta=bid.amount)
+        product.storage += bid.amount
+        await dao.add(product)

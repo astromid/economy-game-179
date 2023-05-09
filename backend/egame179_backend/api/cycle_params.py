@@ -3,9 +3,8 @@ import math
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
-from egame179_backend.db.cycle import CycleDAO
+from egame179_backend.db import CycleDAO, MarketDAO
 from egame179_backend.db.cycle_params import CycleParams, CycleParamsDAO
-from egame179_backend.db.market import MarketDAO
 
 router = APIRouter()
 
@@ -63,7 +62,7 @@ async def get_demand_factors(
     current_cycle = await cycle_dao.get_current()
     cycle_params = await dao.get(current_cycle.cycle)
     initial_cycle_params = await dao.get(cycle=1)
-    markets = await market_dao.get()
+    markets = await market_dao.get_all()
 
     demand_factors = []
     for market in markets:

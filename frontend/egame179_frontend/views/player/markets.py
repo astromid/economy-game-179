@@ -8,7 +8,7 @@ import streamlit as st
 from streamlit_echarts import st_pyecharts
 
 from egame179_frontend.api.user import UserRoles
-from egame179_frontend.state.state import PlayerState
+from egame179_frontend.state import PlayerState
 from egame179_frontend.views.registry import AppView, appview
 from egame179_frontend.visualization import markets_graph, stocks_chart
 

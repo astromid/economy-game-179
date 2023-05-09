@@ -1,8 +1,9 @@
 [flake8]
 inline-quotes = double
 max-annotation-complexity = 4
-max-arguments = 8
+max-arguments = 10
 max-complexity = 6
+max-imports = 14
 max-line-length = 120
 max-line-complexity = 20
 max-local-variables = 12
@@ -37,6 +38,8 @@ ignore =
   WPS404,
   ; Found nested class
   WPS431,
+  ; Found magic number
+  WPS432,
   ; Found shadowed class attribute
   WPS601,
 

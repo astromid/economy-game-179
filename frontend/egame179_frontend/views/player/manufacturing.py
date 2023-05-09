@@ -8,9 +8,9 @@ from httpx import HTTPStatusError
 from millify import millify
 from streamlit_echarts import st_pyecharts
 
-from egame179_frontend.api.product import ProductAPI
+from egame179_frontend.api import ProductAPI
 from egame179_frontend.api.user import UserRoles
-from egame179_frontend.state.state import PlayerState
+from egame179_frontend.state import PlayerState
 from egame179_frontend.views.registry import AppView, appview
 from egame179_frontend.visualization import radar_chart
 
@@ -25,6 +25,7 @@ class _ViewData:
     unlocked_markets: list[int]
     prices: dict[int, tuple[float, str, str | None]]
     thetas: dict[int, float]
+    products: pd.DataFrame
     m_id2name: dict[int, str]
     name2m_id: dict[str, int]
 
@@ -37,6 +38,7 @@ def _cache_view_data(
     unlocked_markets: list[int],
     prices: pd.DataFrame,
     thetas: dict[int, float],
+    products: pd.DataFrame,
     m_id2name: dict[int, str],
 ) -> _ViewData:
     prices = prices.drop("sell", axis=1)
@@ -53,6 +55,7 @@ def _cache_view_data(
         )
         for m_id, price in prices["buy"].to_dict().items()
     }
+    products["market"] = products["market_id"].map(m_id2name)
     return _ViewData(
         player_name=player_name,
         cycle=cycle,
@@ -60,6 +63,7 @@ def _cache_view_data(
         unlocked_markets=unlocked_markets,
         prices=prices_dict,
         thetas=thetas,
+        products=products,
         m_id2name=m_id2name,
         name2m_id={market: m_id for m_id, market in m_id2name.items()},
     )
@@ -83,7 +87,8 @@ class ManufacturingView(AppView):
             balance=state.balances[-1],
             unlocked_markets=state.unlocked_markets,
             prices=state.prices,
-            thetas={product["market_id"]: product["theta"] for product in state.products},
+            thetas=state.thetas,
+            products=pd.DataFrame(state.products),
             m_id2name={node_id: node["name"] for node_id, node in state.markets.nodes.items()},
         )
 
@@ -105,6 +110,9 @@ class ManufacturingView(AppView):
             )
         with col2:
             _theta_radar_block(thetas=view_data.thetas, m_id2name=view_data.m_id2name)
+        st.markdown("---")
+        st.markdown("### Записи о производстве")
+        st.dataframe(view_data.products)
 
 
 def _prices_block(prices: dict[int, tuple[float, str, str | None]], m_id2name: dict[int, str]) -> None:

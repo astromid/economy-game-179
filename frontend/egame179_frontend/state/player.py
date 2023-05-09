@@ -6,13 +6,8 @@ from typing import Any
 import networkx as nx
 import pandas as pd
 
-from egame179_frontend.api.balance import BalanceAPI
-from egame179_frontend.api.cycle import Cycle, CycleAPI
-from egame179_frontend.api.market import MarketAPI
-from egame179_frontend.api.price import PriceAPI
-from egame179_frontend.api.product import ProductAPI
-from egame179_frontend.api.transaction import TransactionAPI
-from egame179_frontend.api.user import AuthAPI
+from egame179_frontend import api
+from egame179_frontend.api.cycle import Cycle
 
 
 @dataclass
@@ -30,8 +25,11 @@ class PlayerState:  # noqa: WPS214
     _prices: pd.DataFrame | None = None
     _demand_factors: dict[int, float] | None = None
     _products: list[dict[str, Any]] | None = None
+    _thetas: dict[int, float] | None = None
+    _storage: dict[int, int] | None = None
     _shares: dict[int, list[tuple[str, float | None]]] | None = None
     _detailed_markets: nx.Graph | None = None
+    _supplies: list[dict[str, Any]] | None = None
 
     @property
     def players(self) -> dict[int, str]:
@@ -41,7 +39,7 @@ class PlayerState:  # noqa: WPS214
             dict[int, str]: mapping for players.
         """
         if self._players is None:
-            self._players = {user.id: user.name for user in AuthAPI.get_players()}
+            self._players = {user.id: user.name for user in api.AuthAPI.get_players()}
         return self._players
 
     @property
@@ -53,7 +51,7 @@ class PlayerState:  # noqa: WPS214
         """
         if self._markets is None:
             self._markets = nx.Graph()
-            for market in MarketAPI.get_markets():
+            for market in api.MarketAPI.get_markets():
                 self._markets.add_node(market.id, name=market.name, ring=market.ring)
                 self._markets.add_edges_from([
                     (market.id, market.link1),
@@ -74,7 +72,7 @@ class PlayerState:  # noqa: WPS214
             list[float]: balances ordered by cycle.
         """
         if self._balances is None:
-            self._balances = [bal.amount for bal in BalanceAPI.get_user_balances()]
+            self._balances = [bal.amount for bal in api.BalanceAPI.get_user_balances()]
         return self._balances
 
     @property
@@ -85,7 +83,7 @@ class PlayerState:  # noqa: WPS214
             dict[str, float | int]: alpha, beta, gamma & tau_s parameters.
         """
         if self._cycle_params is None:
-            self._cycle_params = CycleAPI.get_cycle_parameters().dict()
+            self._cycle_params = api.CycleAPI.get_cycle_parameters().dict()
         return self._cycle_params
 
     @property
@@ -96,7 +94,7 @@ class PlayerState:  # noqa: WPS214
             list[dict[str, Any]]: player transactions.
         """
         if self._transactions is None:
-            self._transactions = [tr.dict() for tr in TransactionAPI.get_user_transactions()]
+            self._transactions = [tr.dict() for tr in api.TransactionAPI.get_user_transactions()]
         return self._transactions
 
     @property
@@ -107,7 +105,7 @@ class PlayerState:  # noqa: WPS214
             list[int]: list of unlocked market ids.
         """
         if self._unlocked_markets is None:
-            self._unlocked_markets = [um.market_id for um in MarketAPI.get_user_unlocked_markets()]
+            self._unlocked_markets = [um.market_id for um in api.MarketAPI.get_user_unlocked_markets()]
         return self._unlocked_markets
 
     @property
@@ -118,45 +116,90 @@ class PlayerState:  # noqa: WPS214
             pd.DataFrame: pandas dataframe with columns (cycle, market_id, buy, sell)
         """
         if self._prices is None:
-            self._prices = pd.DataFrame([price.dict() for price in PriceAPI.get_market_prices()])
+            self._prices = pd.DataFrame([price.dict() for price in api.PriceAPI.get_market_prices()])
         return self._prices
 
     @property
     def demand_factors(self) -> dict[int, float]:
+        """Demand factors for all markets.
+
+        Returns:
+            dict[int, float]: dict {market_id: demand_factor}.
+        """
         if self._demand_factors is None:
-            self._demand_factors = {fc.market_id: fc.factor for fc in CycleAPI.get_demand_factors()}
+            self._demand_factors = {fc.market_id: fc.factor for fc in api.CycleAPI.get_demand_factors()}
         return self._demand_factors
 
     @property
     def products(self) -> list[dict[str, Any]]:
+        """All user products.
+
+        Returns:
+            list[dict[str, Any]]: list of dicts with product info.
+        """
         if self._products is None:
-            self._products = [product.dict() for product in ProductAPI.get_user_products()]
+            self._products = [product.dict() for product in api.ProductAPI.get_user_products()]
         return self._products
 
     @property
+    def thetas(self) -> dict[int, float]:
+        """Current theta.
+
+        Returns:
+            dict[int, float]: {market_id: theta}
+        """
+        if self._thetas is None:
+            self._thetas = {
+                product["market_id"]: product["theta"]
+                for product in self.products
+                if product["cycle"] == self.cycle.cycle
+            }
+        return self._thetas
+
+    @property
+    def storage(self) -> dict[int, int]:
+        """Current storage.
+
+        Returns:
+            dict[int, int]: {market_id: storage}
+        """
+        if self._storage is None:
+            self._storage = {
+                product["market_id"]: product["storage"]
+                for product in self.products
+                if product["cycle"] == self.cycle.cycle
+            }
+        return self._storage
+
+    @property
     def shares(self) -> dict[int, list[tuple[str, float | None]]]:
+        """Market shares, visible for player.
+
+        Returns:
+            dict[int, list[tuple[str, float | None]]]: {market_id: [(user_name, share %)]}.
+        """
         if self._shares is None:
             self._shares = defaultdict(list)
-            for share in ProductAPI.get_shares():
+            for share in api.ProductAPI.get_shares():
                 player = self.players[share.user_id]
                 self._shares[share.market_id].append((player, share.share))
         return self._shares
 
     @property
     def detailed_markets(self) -> nx.Graph:
+        """Markets graph with additional info.
+
+        Returns:
+            nx.Graph: networkx graph with node attributes.
+        """
         if self._detailed_markets is None:
             graph = deepcopy(self.markets)
             last_prices = self.prices[self.prices["cycle"] == self.cycle.cycle].set_index("market_id")
-            storages: dict[int, int] = {
-                product["market_id"]: product["storage"]
-                for product in self.products
-                if (product["cycle"] == self.cycle.cycle and product["user_id"] == self.user_id)
-            }
             for node_id, node in graph.nodes.items():
                 node["buy"] = last_prices.loc[node_id, "buy"]
                 node["sell"] = last_prices.loc[node_id, "sell"]
                 node["demand_factor"] = self.demand_factors[node_id]
-                node["storage"] = storages[node_id]
+                node["storage"] = self.storage[node_id]
                 # default top shares values
                 node["top1"] = "None"
                 node["top2"] = "None"
@@ -168,10 +211,26 @@ class PlayerState:  # noqa: WPS214
             self._detailed_markets = graph
         return self._detailed_markets
 
+    @property
+    def supplies(self) -> list[dict[str, Any]]:
+        """All user supplies on current cycle.
+
+        Returns:
+            list[dict[str, Any]]: list of dicts with supply info.
+        """
+        if self._supplies is None:
+            self._supplies = [supply.dict() for supply in api.SupplyAPI.get_user_supplies()]
+        return self._supplies
+
     def clear_after_buy(self) -> None:
+        """Clean invalid caches after buy operation."""
         self._balances = None
         self._products = None
+        self._storage = None
         self._transactions = None
 
     def clear_after_supply(self) -> None:
+        """Clean invalid caches after supply operation."""
         self._products = None
+        self._storage = None
+        self._supplies = None

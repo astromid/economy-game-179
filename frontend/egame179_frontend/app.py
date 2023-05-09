@@ -6,7 +6,7 @@ import httpx
 import streamlit as st
 from streamlit_option_menu import option_menu
 
-from egame179_frontend.state.state import clean_cached_state, init_game_state, init_session_state
+from egame179_frontend.state import clean_cached_state, init_game_state, init_session_state
 from egame179_frontend.style import load_css
 from egame179_frontend.views.login import login_form
 from egame179_frontend.views.registry import AppView

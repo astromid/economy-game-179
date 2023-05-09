@@ -1,7 +1,7 @@
 import streamlit as st
 
 from egame179_frontend.api.user import UserRoles
-from egame179_frontend.state.state import clean_cached_state
+from egame179_frontend.state import clean_cached_state
 from egame179_frontend.views.registry import AppView, appview
 
 

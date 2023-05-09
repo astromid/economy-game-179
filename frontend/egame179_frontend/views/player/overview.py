@@ -6,7 +6,7 @@ import streamlit as st
 from millify import millify
 
 from egame179_frontend.api.user import UserRoles
-from egame179_frontend.state.player import PlayerState
+from egame179_frontend.state import PlayerState
 from egame179_frontend.views.registry import AppView, appview
 
 

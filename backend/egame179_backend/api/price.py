@@ -15,4 +15,4 @@ async def get_prices(dao: PriceDAO = Depends()) -> list[Price]:
     Returns:
         list[Prices]: list of market prices.
     """
-    return await dao.get()
+    return await dao.get_all()
