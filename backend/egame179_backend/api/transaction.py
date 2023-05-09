@@ -21,4 +21,4 @@ async def get_user_transactions(
     Returns:
         list[Transaction]: transactions history for user.
     """
-    return await dao.get_user_transactions(user.id)
+    return await dao.get(user.id)

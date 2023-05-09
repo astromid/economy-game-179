@@ -24,30 +24,22 @@ class ProductDAO:
     def __init__(self, session: AsyncSession = Depends(get_db_session)):
         self.session = session
 
-    async def get_user_products(self, user_id: int) -> list[Product]:
+    async def get(self, user_id: int | None = None) -> list[Product]:
         """Get all products for particular user.
 
         Args:
-            user_id (int): target user id.
+            user_id (int, optional): target user id. If None, return products for all users.
 
         Returns:
             list[Product]: product records.
         """
-        query = select(Product).where(Product.user_id == user_id).order_by(Product.cycle)
+        query = select(Product).order_by(Product.cycle)
+        if user_id is not None:
+            query = query.where(Product.user_id == user_id)
         raw_products = await self.session.exec(query)  # type: ignore
         return raw_products.all()
 
-    async def get_products(self) -> list[Product]:
-        """Get all products for all users.
-
-        Returns:
-            list[Product]: products.
-        """
-        query = select(Product)
-        raw_products = await self.session.exec(query)  # type: ignore
-        return raw_products.all()
-
-    async def create_product(  # noqa: WPS211
+    async def create(  # noqa: WPS211
         self,
         cycle: int,
         user_id: int,
@@ -78,14 +70,14 @@ class ProductDAO:
         )
         await self.session.commit()
 
-    async def update_storage(self, cycle: int, user_id: int, market_id: int, storage: int) -> None:
+    async def update_storage(self, cycle: int, user_id: int, market_id: int, delta: int) -> None:
         """Update player storage.
 
         Args:
             cycle (int): target cycle.
             user_id (int): target user id.
             market_id (int): target market id.
-            storage (int): new storage amount.
+            delta (int): delta storage amount (add up to existing amount).
         """
         query = select(Product).where(
             Product.cycle == cycle,
@@ -94,6 +86,26 @@ class ProductDAO:
         )
         raw_product = await self.session.exec(query)  # type: ignore
         product: Product = raw_product.one()
-        product.storage = storage
+        product.storage += delta
+        self.session.add(product)
+        await self.session.commit()
+
+    async def update_theta(self, cycle: int, user_id: int, market_id: int, theta: float) -> None:
+        """Update player theta.
+
+        Args:
+            cycle (int): target cycle.
+            user_id (int): target user id.
+            market_id (int): target market id.
+            theta (float): new product theta.
+        """
+        query = select(Product).where(
+            Product.cycle == cycle,
+            Product.user_id == user_id,
+            Product.market_id == market_id,
+        )
+        raw_product = await self.session.exec(query)  # type: ignore
+        product: Product = raw_product.one()
+        product.theta = theta
         self.session.add(product)
         await self.session.commit()

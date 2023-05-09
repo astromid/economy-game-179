@@ -37,8 +37,8 @@ async def get_cycle_params(dao: CycleParamsDAO = Depends(), cycle_dao: CycleDAO 
     Returns:
         CycleParams: CycleParamsPlayer responce model.
     """
-    current_cycle = await cycle_dao.get_cycle()
-    return await dao.get_cycle_parameters(current_cycle.cycle)
+    current_cycle = await cycle_dao.get_current()
+    return await dao.get(current_cycle.cycle)
 
 
 @router.get("/demand_factors")
@@ -60,10 +60,10 @@ async def get_demand_factors(
     Returns:
         list[DemandFactors]: demand factors for each market.
     """
-    current_cycle = await cycle_dao.get_cycle()
-    cycle_params = await dao.get_cycle_parameters(current_cycle.cycle)
-    initial_cycle_params = await dao.get_cycle_parameters(cycle=1)
-    markets = await market_dao.get_markets()
+    current_cycle = await cycle_dao.get_current()
+    cycle_params = await dao.get(current_cycle.cycle)
+    initial_cycle_params = await dao.get(cycle=1)
+    markets = await market_dao.get()
 
     demand_factors = []
     for market in markets:

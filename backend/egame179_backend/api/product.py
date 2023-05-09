@@ -1,11 +1,13 @@
 from fastapi import APIRouter, Depends, Security
 from pydantic import BaseModel
 
+from egame179_backend import engine
 from egame179_backend.api.auth.dependencies import get_current_user
+from egame179_backend.db.balance import BalanceDAO
 from egame179_backend.db.cycle import CycleDAO
 from egame179_backend.db.market import MarketDAO, UnlockedMarketDAO
-from egame179_backend.db.product import Product, ProductDAO
 from egame179_backend.db.price import PriceDAO
+from egame179_backend.db.product import Product, ProductDAO
 from egame179_backend.db.transaction import TransactionDAO
 from egame179_backend.db.user import User
 
@@ -39,7 +41,7 @@ async def get_user_products(user: User = Depends(get_current_user), dao: Product
     Returns:
         list[Product]: products history for user.
     """
-    return await dao.get_user_products(user.id)
+    return await dao.get(user.id)
 
 
 @router.get("/all", dependencies=[Security(get_current_user, scopes=["root"])])
@@ -52,7 +54,7 @@ async def get_all_products(dao: ProductDAO = Depends()) -> list[Product]:
     Returns:
         list[Products]: products history for all users.
     """
-    return await dao.get_products()
+    return await dao.get()
 
 
 @router.get("/shares")
@@ -75,10 +77,10 @@ async def get_market_shares(  # noqa: WPS210
     Returns:
         list[MarketSharePlayer]: market shares visible for player.
     """
-    current_cycle = await cycle_dao.get_cycle()
-    products = await dao.get_products()
-    markets = await market_dao.get_markets()
-    unlocked_markets = await unlocked_market_dao.get_user_unlocked_markets(user.id)
+    current_cycle = await cycle_dao.get_current()
+    products = await dao.get()
+    markets = await market_dao.get()
+    unlocked_markets = await unlocked_market_dao.get(user.id)
 
     products = [product for product in products if (product.cycle == current_cycle.cycle and product.share > 0)]
     owned_markets = [umarket.market_id for umarket in unlocked_markets]
@@ -107,10 +109,38 @@ async def get_market_shares(  # noqa: WPS210
     return shares
 
 
-@router.post("/production")
+@router.post("/buy")
 async def production(
     bid: ProductionBid,
     user: User = Depends(get_current_user),
     dao: ProductDAO = Depends(),
+    cycle_dao: CycleDAO = Depends(),
+    price_dao: PriceDAO = Depends(),
+    balance_dao: BalanceDAO = Depends(),
+    transaction_dao: TransactionDAO = Depends(),
 ) -> None:
-    
+    """Buy products route.
+
+    Args:
+        bid (ProductionBid): buy bid.
+        user (User): auth user.
+        dao (ProductDAO): products table data access object.
+        cycle_dao (CycleDAO): cycle table data access object.
+        price_dao (PriceDAO): prices table DAO.
+        balance_dao (BalanceDAO): balances table DAO.
+        transaction_dao (TransactionDAO): transactions table DAO.
+    """
+    current_cycle = await cycle_dao.get_current()
+    buy_price, _ = await price_dao.get_market_price(market_id=bid.market_id, cycle=current_cycle.cycle)
+    bid_price = bid.amount * buy_price
+    transaction_success = await engine.make_transaction(
+        cycle=current_cycle.cycle,
+        user_id=user.id,
+        amount=-bid_price,
+        description=f"Buy {bid.amount} items (market_id = {bid.market_id})",
+        overdraft=False,
+        balance_dao=balance_dao,
+        transaction_dao=transaction_dao,
+    )
+    if transaction_success:
+        await dao.update_storage(cycle=current_cycle.cycle, user_id=user.id, market_id=bid.market_id, delta=bid.amount)

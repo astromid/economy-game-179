@@ -3,6 +3,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
+from icecream import ic
 from jose import jwt
 
 from egame179_backend.api.auth.dependencies import ALGORITHM, get_current_user
@@ -50,6 +51,7 @@ async def get_access_token(form_data: OAuth2PasswordRequestForm = Depends(), dao
             headers={"WWW-Authenticate": "Bearer"},
         )
     access_token = create_access_token({"sub": user.name, "scopes": [user.role]})
+    ic(f"{user = } auth success")
     return Token(access_token=access_token, token_type="bearer")  # noqa: S106
 
 

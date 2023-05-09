@@ -29,35 +29,23 @@ class SupplyDAO:
     def __init__(self, session: AsyncSession = Depends(get_db_session)):
         self.session = session
 
-    async def get_user_supplies(self, user_id: int, cycle: int) -> list[Supply]:
+    async def get(self, cycle: int, user_id: int | None = None) -> list[Supply]:
         """Get all supplies for particular user.
 
         Args:
-            user_id (int): target user id.
             cycle (int): target cycle.
+            user_id (int, optional): target user id. If None, all user records return.
 
         Returns:
             list[Supply]: user supplies.
         """
-        query = select(Supply).where(Supply.user_id == user_id, Supply.cycle == cycle)
-        query = query.order_by(Supply.ts_start)
-        raw_supplies = await self.session.exec(query)  # type: ignore
-        return raw_supplies.all()
-
-    async def get_supplies(self, cycle: int) -> list[Supply]:
-        """Get all supplies for all users.
-
-        Args:
-            cycle (int): target cycle.
-
-        Returns:
-            list[Supply]: supplies.
-        """
         query = select(Supply).where(Supply.cycle == cycle).order_by(Supply.ts_start)
+        if user_id is not None:
+            query = query.where(Supply.user_id == user_id)
         raw_supplies = await self.session.exec(query)  # type: ignore
         return raw_supplies.all()
 
-    async def create_supply(self, cycle: int, user_id: int, market_id: int, declared_amount: int) -> None:
+    async def create(self, cycle: int, user_id: int, market_id: int, declared_amount: int) -> None:
         """Create new supply.
 
         Args:
@@ -77,20 +65,19 @@ class SupplyDAO:
         )
         await self.session.commit()
 
-    async def finish_supply(self, supply_id: int, velocity: float) -> None:
-        """Finish ongoing supply and update real delivered amount.
+    async def finish_ongoing(self, velocity: float) -> None:
+        """Finish all ongoing supplies and update real delivered amount.
 
         Args:
-            supply_id (int): target supply_id.
             velocity (float): supply velocity (items per sec).
         """
-        query = select(Supply).where(Supply.id == supply_id)
-        raw_supply = await self.session.exec(query)  # type: ignore
-        supply: Supply = raw_supply.one()
-        supply.ts_finish = datetime.now()
-
-        supply_time_sec = (supply.ts_finish - supply.ts_start).total_seconds()
-        max_delivered_amount = math.floor(velocity * supply_time_sec)
-        supply.amount = min(supply.declared_amount, max_delivered_amount)
-        self.session.add(supply)
+        ts_finish = datetime.now()
+        query = select(Supply).where(Supply.amount == 0)
+        raw_supplies = await self.session.exec(query)  # type: ignore
+        for supply in raw_supplies.all():
+            delivery_time = (ts_finish - supply.ts_start).total_seconds()
+            max_delivered_amount = math.floor(velocity * delivery_time)
+            supply.amount = min(supply.declared_amount, max_delivered_amount)
+            supply.ts_finish = ts_finish
+            self.session.add(supply)
         await self.session.commit()

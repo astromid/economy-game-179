@@ -6,7 +6,7 @@ router = APIRouter()
 
 
 @router.get("/all")
-async def get_all_prices(dao: PriceDAO = Depends()) -> list[Price]:
+async def get_prices(dao: PriceDAO = Depends()) -> list[Price]:
     """Get all markets prices.
 
     Args:
@@ -15,4 +15,4 @@ async def get_all_prices(dao: PriceDAO = Depends()) -> list[Price]:
     Returns:
         list[Prices]: list of market prices.
     """
-    return await dao.get_prices()
+    return await dao.get()

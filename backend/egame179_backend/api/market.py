@@ -8,7 +8,7 @@ router = APIRouter()
 
 
 @router.get("/all")
-async def get_all_markets(dao: MarketDAO = Depends()) -> list[Market]:
+async def get_markets(dao: MarketDAO = Depends()) -> list[Market]:
     """Get all markets graph nodes.
 
     Args:
@@ -17,7 +17,7 @@ async def get_all_markets(dao: MarketDAO = Depends()) -> list[Market]:
     Returns:
         list[Markets]: list of markets nodes.
     """
-    return await dao.get_markets()
+    return await dao.get()
 
 
 @router.get("/unlocked/user")
@@ -34,7 +34,7 @@ async def get_user_unlocked_markets(
     Returns:
         list[UnlockedMarkets]: list of markets nodes.
     """
-    return await dao.get_user_unlocked_markets(user.id)
+    return await dao.get(user.id)
 
 
 @router.get("/unlocked/all", dependencies=[Security(get_current_user, scopes=["root"])])
@@ -47,4 +47,4 @@ async def get_unlocked_markets(dao: UnlockedMarketDAO = Depends()) -> list[Unloc
     Returns:
         list[UnlockedMarkets]: list of markets nodes.
     """
-    return await dao.get_all_unlocked_markets()
+    return await dao.get()

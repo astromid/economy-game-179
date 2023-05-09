@@ -36,7 +36,7 @@ class MarketDAO:
     def __init__(self, session: AsyncSession = Depends(get_db_session)):
         self.session = session
 
-    async def get_markets(self) -> list[Market]:
+    async def get(self) -> list[Market]:
         """Get markets.
 
         Returns:
@@ -53,7 +53,7 @@ class UnlockedMarketDAO:
     def __init__(self, session: AsyncSession = Depends(get_db_session)):
         self.session = session
 
-    async def get_unlocked_markets(self, user_id: int | None) -> list[UnlockedMarket]:
+    async def get(self, user_id: int | None = None) -> list[UnlockedMarket]:
         """Get unlocked markets for paticular user.
 
         Args:
@@ -62,40 +62,36 @@ class UnlockedMarketDAO:
         Returns:
             list[UnlockedMarket]: unlocked markets.
         """
-        query = select(UnlockedMarket).where(UnlockedMarket.user_id == user_id).order_by(UnlockedMarket.protected)
+        query = select(UnlockedMarket).order_by(UnlockedMarket.protected)
+        if user_id is not None:
+            query = query.where(UnlockedMarket.user_id == user_id)
         raw_markets = await self.session.exec(query)  # type: ignore
         return raw_markets.all()
 
-    async def get_all_unlocked_markets(self) -> list[UnlockedMarket]:
-        """Get all unlocked markets.
-
-        Returns:
-            list[UnlockedMarket]: unlocked markets for all users.
-        """
-        query = select(UnlockedMarket)
-        raw_markets = await self.session.exec(query)  # type: ignore
-        return raw_markets.all()
-
-    async def unlock_market_for_user(self, user_id: int, market_id: int) -> None:
+    async def unlock(self, user_id: int, market_id: int) -> None:
         """Unlock particular market for particular user.
 
         Args:
-            user_id (int): target user id
-            market_id (int): target market id
+            user_id (int): target user id.
+            market_id (int): target market id.
         """
         self.session.add(UnlockedMarket(user_id=user_id, market_id=market_id, protected=False))
         await self.session.commit()
 
-    async def lock_market_for_user(self, user_id: int, market_id: int) -> None:
+    async def lock(self, user_id: int, market_id: int) -> None:
         """Remove unlock record about particular market for particular user.
 
         Args:
-            user_id (int): target user id
-            market_id (int): target market id
+            user_id (int): target user id.
+            market_id (int): target market id.
         """
-        query = select(UnlockedMarket).where(UnlockedMarket.user_id == user_id, UnlockedMarket.market_id == market_id)
+        query = select(UnlockedMarket).where(
+            UnlockedMarket.user_id == user_id,
+            UnlockedMarket.market_id == market_id,
+            not UnlockedMarket.protected,
+        )
         raw_record = await self.session.exec(query)  # type: ignore
         record = raw_record.one_or_none()
-        if record is not None and not record.protected:
+        if record is not None:
             await self.session.delete(record)
             await self.session.commit()

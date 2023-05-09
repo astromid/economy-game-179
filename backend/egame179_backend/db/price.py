@@ -22,7 +22,7 @@ class PriceDAO:
     def __init__(self, session: AsyncSession = Depends(get_db_session)):
         self.session = session
 
-    async def get_prices(self) -> list[Price]:
+    async def get(self) -> list[Price]:
         """Get all prices for all markets.
 
         Returns:
@@ -32,7 +32,7 @@ class PriceDAO:
         raw_prices = await self.session.exec(query)  # type: ignore
         return raw_prices.all()
 
-    async def create_market_price(self, cycle: int, market_id: int, buy: float, sell: float) -> None:
+    async def create(self, cycle: int, market_id: int, buy: float, sell: float) -> None:
         """Create market price for new cycle.
 
         Args:

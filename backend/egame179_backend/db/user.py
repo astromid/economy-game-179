@@ -43,7 +43,7 @@ class UserDAO:
                 return user
         return None
 
-    async def get_user_by_name(self, name: str) -> User | None:
+    async def get_by_name(self, name: str) -> User | None:
         """Get user info by name.
 
         Args:

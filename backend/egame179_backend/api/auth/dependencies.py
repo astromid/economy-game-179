@@ -65,7 +65,7 @@ async def get_current_user(  # noqa: WPS238, C901
     # check valid username
     username: str | None = payload.get("sub")
     if username is not None:
-        user = await user_dao.get_user_by_name(username)  # check user in database
+        user = await user_dao.get_by_name(username)  # check user in database
     if user is None:
         raise credentials_exception
     return user
