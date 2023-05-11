@@ -74,12 +74,11 @@ class PlayerDashboard(AppView):
             st.metric(label="Цикл", value=view_data.cycle)
         with col2:
             st.metric(label="Баланс", value=view_data.balance, delta=view_data.balance_delta)
-        if st.session_state.interim_block:
-            st.warning("Цикл ещё не запущен. Активные элементы управления заблокированы.", icon="⚠️")
 
     def _overview_block(self, view_data: _ViewData) -> None:
         col1, col2 = st.columns([1, 1])
         with col1:
+            st.markdown("#### Динамика баланса")
             # TODO: change to ECharts bar chart
             st.bar_chart(
                 data={"cycle": list(range(1, view_data.cycle + 1)), "balance": view_data.balances},

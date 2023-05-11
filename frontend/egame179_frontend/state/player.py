@@ -29,7 +29,6 @@ class PlayerState:  # noqa: WPS214
     _storage: dict[int, int] | None = None
     _shares: dict[int, list[tuple[str, float | None]]] | None = None
     _detailed_markets: nx.Graph | None = None
-    _supplies: list[dict[str, Any]] | None = None
 
     @property
     def players(self) -> dict[int, str]:
@@ -127,7 +126,7 @@ class PlayerState:  # noqa: WPS214
             dict[int, float]: dict {market_id: demand_factor}.
         """
         if self._demand_factors is None:
-            self._demand_factors = {fc.market_id: fc.factor for fc in api.CycleAPI.get_demand_factors()}
+            self._demand_factors = {df.market_id: df.factor for df in api.CycleAPI.get_demand_factors()}
         return self._demand_factors
 
     @property
@@ -218,9 +217,8 @@ class PlayerState:  # noqa: WPS214
         Returns:
             list[dict[str, Any]]: list of dicts with supply info.
         """
-        if self._supplies is None:
-            self._supplies = [supply.dict() for supply in api.SupplyAPI.get_user_supplies()]
-        return self._supplies
+        # we do not cache supplies, because they are changing in real time
+        return [supply.dict() for supply in api.SupplyAPI.get_user_supplies()]
 
     def clear_after_buy(self) -> None:
         """Clean invalid caches after buy operation."""
@@ -233,4 +231,3 @@ class PlayerState:  # noqa: WPS214
         """Clean invalid caches after supply operation."""
         self._products = None
         self._storage = None
-        self._supplies = None

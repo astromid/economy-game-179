@@ -3,7 +3,7 @@ from passlib.context import CryptContext
 from sqlmodel import Field, SQLModel, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from egame179_backend.db import get_db_session
+from egame179_backend.db.session import get_db_session
 
 
 class User(SQLModel, table=True):

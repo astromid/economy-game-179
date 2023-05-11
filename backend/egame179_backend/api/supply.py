@@ -1,9 +1,12 @@
+import math
+from datetime import datetime
+
 from fastapi import APIRouter, Depends, HTTPException, Security
 from pydantic import BaseModel
 
 from egame179_backend import engine
 from egame179_backend.api.auth.dependencies import get_current_user
-from egame179_backend.db import BalanceDAO, CycleDAO, CycleParamsDAO, ProductDAO, TransactionDAO
+from egame179_backend.db import BalanceDAO, CycleDAO, CycleParamsDAO, MarketDAO, ProductDAO, TransactionDAO
 from egame179_backend.db.supply import Supply, SupplyDAO
 from egame179_backend.db.user import User
 
@@ -22,6 +25,8 @@ async def get_user_supplies(
     user: User = Depends(get_current_user),
     dao: SupplyDAO = Depends(),
     cycle_dao: CycleDAO = Depends(),
+    cycle_params_dao: CycleParamsDAO = Depends(),
+    market_dao: MarketDAO = Depends(),
 ) -> list[Supply]:
     """Get current supplies for user.
 
@@ -29,27 +34,69 @@ async def get_user_supplies(
         user (User): authenticated user data.
         dao (SupplyDAO): supplies table data access object.
         cycle_dao (CycleDAO): cycle table data access object.
+        cycle_params_dao (CycleParamsDAO): cycle params table data access object.
+        market_dao (MarketDAO): market table data access object.
 
     Returns:
         list[Supply]: current supplies for user.
     """
+    current_ts = datetime.now()
     current_cycle = await cycle_dao.get_current()
-    return await dao.get(cycle=current_cycle.cycle, user_id=user.id)
+    current_cycle_params = await cycle_params_dao.get(current_cycle.cycle)
+    markets = await market_dao.get_all()
+
+    m_id2ring = {market.id: market.ring for market in markets}
+    ring2demand = {
+        0: current_cycle_params.demand_ring0,
+        1: current_cycle_params.demand_ring1,
+        2: current_cycle_params.demand_ring2,
+    }
+    supplies = await dao.get(cycle=current_cycle.cycle, user_id=user.id)
+    for supply in supplies:
+        velocity = ring2demand[m_id2ring[supply.market_id]] / current_cycle_params.tau_s
+        delivery_time = (current_ts - supply.ts_start).total_seconds()
+        delivered_amount = math.floor(velocity * delivery_time)
+        supply.amount = min(supply.declared_amount, delivered_amount)
+    return supplies
 
 
 @router.get("/all", dependencies=[Security(get_current_user, scopes=["root"])])
-async def get_all_supplies(dao: SupplyDAO = Depends(), cycle_dao: CycleDAO = Depends()) -> list[Supply]:
+async def get_all_supplies(
+    dao: SupplyDAO = Depends(),
+    cycle_dao: CycleDAO = Depends(),
+    cycle_params_dao: CycleParamsDAO = Depends(),
+    market_dao: MarketDAO = Depends(),
+) -> list[Supply]:
     """Get products history for all users.
 
     Args:
         dao (SupplyDAO): supplies table data access object.
         cycle_dao (CycleDAO): cycle table data access object.
+        cycle_params_dao (CycleParamsDAO): cycle params table data access object.
+        market_dao (MarketDAO): market table data access object.
 
     Returns:
         list[Supply]: current supplies for all users.
     """
+    # TODO: refactor to avoid code duplication
+    current_ts = datetime.now()
     current_cycle = await cycle_dao.get_current()
-    return await dao.get(cycle=current_cycle.cycle)
+    current_cycle_params = await cycle_params_dao.get(current_cycle.cycle)
+    markets = await market_dao.get_all()
+
+    m_id2ring = {market.id: market.ring for market in markets}
+    ring2demand = {
+        0: current_cycle_params.demand_ring0,
+        1: current_cycle_params.demand_ring1,
+        2: current_cycle_params.demand_ring2,
+    }
+    supplies = await dao.get(cycle=current_cycle.cycle)
+    for supply in supplies:
+        velocity = ring2demand[m_id2ring[supply.market_id]] / current_cycle_params.tau_s
+        delivery_time = (current_ts - supply.ts_start).total_seconds()
+        delivered_amount = math.floor(velocity * delivery_time)
+        supply.amount = min(supply.declared_amount, delivered_amount)
+    return supplies
 
 
 @router.post("/make")

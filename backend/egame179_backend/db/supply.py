@@ -5,7 +5,7 @@ from fastapi import Depends
 from sqlmodel import Field, SQLModel, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from egame179_backend.db import get_db_session
+from egame179_backend.db.session import get_db_session
 
 
 class Supply(SQLModel, table=True):
@@ -65,18 +65,18 @@ class SupplyDAO:
         )
         await self.session.commit()
 
-    async def finish_ongoing(self, velocity: float) -> None:
+    async def finish_ongoing(self, velocities: dict[int, float]) -> None:
         """Finish all ongoing supplies and update real delivered amount.
 
         Args:
-            velocity (float): supply velocity (items per sec).
+            velocities (dict[int, float]): supply velocity (items per sec) for each market.
         """
         ts_finish = datetime.now()
         query = select(Supply).where(Supply.amount == 0)
         raw_supplies = await self.session.exec(query)  # type: ignore
         for supply in raw_supplies.all():
             delivery_time = (ts_finish - supply.ts_start).total_seconds()
-            max_delivered_amount = math.floor(velocity * delivery_time)
+            max_delivered_amount = math.floor(velocities[supply.market_id] * delivery_time)
             supply.amount = min(supply.declared_amount, max_delivered_amount)
             supply.ts_finish = ts_finish
             self.session.add(supply)

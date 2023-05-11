@@ -34,12 +34,11 @@ async def make_transaction(
         bool: transaction success.
     """
     balance = await balance_dao.get(cycle=cycle, user_id=user_id)
-    if inflow:
-        balance.amount += amount
-    else:
-        if amount > balance.amount and not overdraft:
+    if not inflow:
+        if not overdraft and balance.amount < amount:
             raise HTTPException(status_code=400, detail="Not enough money to make a transaction")
-        balance.amount -= amount
+        amount = -amount
+    balance.amount += amount
     await transaction_dao.create(cycle=cycle, user_id=user_id, amount=amount, description=description)
     await balance_dao.add(balance)
     return True

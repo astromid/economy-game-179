@@ -4,7 +4,7 @@ from fastapi import Depends
 from sqlmodel import Field, SQLModel, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from egame179_backend.db import get_db_session
+from egame179_backend.db.session import get_db_session
 
 
 class Transaction(SQLModel, table=True):
@@ -50,11 +50,13 @@ class TransactionDAO:
             amount (float): amout of money.
             description (str): description.
         """
-        self.session.add(Transaction(
-            ts=datetime.now(),
-            cycle=cycle,
-            user_id=user_id,
-            amount=amount,
-            description=description,
-        ))
+        self.session.add(
+            Transaction(
+                ts=datetime.now(),
+                cycle=cycle,
+                user_id=user_id,
+                amount=amount,
+                description=description,
+            ),
+        )
         await self.session.commit()

@@ -97,8 +97,8 @@ class SuppliesView(AppView):
         with balance_col:
             st.metric(label="Баланс", value=millify(view_data.balance, precision=3))
         _prices_block(prices=view_data.prices, m_id2name=view_data.m_id2name)
-        st.markdown("---")
         _storage_block(storage=view_data.storage, m_id2name=view_data.m_id2name, gamma=view_data.gamma)
+        st.markdown("---")
         col1, col2 = st.columns([2, 3])
         with col1:
             _supply_form_block(
@@ -108,7 +108,7 @@ class SuppliesView(AppView):
                 beta=view_data.beta,
             )
         with col2:
-            _supplies_block()
+            _supplies_block(supplies=view_data.supplies, m_id2name=view_data.m_id2name)
 
 
 def _prices_block(prices: dict[int, tuple[float, str, str | None]], m_id2name: dict[int, str]) -> None:
@@ -168,5 +168,15 @@ def _make_supply(amount: int, market_id: int, market: str) -> None:
         st.session_state.game.clear_after_supply()
 
 
-def _supplies_block() -> None:
+def _supplies_block(supplies: list[dict[str, Any]], m_id2name: dict[int, str]) -> None:
     st.write("#### Активные поставки")
+    for supply in supplies:
+        amount = supply["amount"]
+        declared_amount = supply["declared_amount"]
+        percent = amount / declared_amount
+        market = m_id2name[supply["market_id"]]
+        ts_start = supply["ts_start"].time().strftime("%H:%M:%S")
+        text = f"Поставка {declared_amount} шт. {market} [начата {ts_start}, готово {amount}/{declared_amount}]"
+        st.progress(percent, text)
+    if not supplies:
+        st.info("Нет активных поставок.")

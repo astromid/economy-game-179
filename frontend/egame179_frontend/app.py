@@ -6,6 +6,7 @@ import httpx
 import streamlit as st
 from streamlit_option_menu import option_menu
 
+from egame179_frontend.api.user import UserRoles
 from egame179_frontend.state import clean_cached_state, init_game_state, init_session_state
 from egame179_frontend.style import load_css
 from egame179_frontend.views.login import login_form
@@ -38,6 +39,8 @@ def app() -> None:
 def header() -> None:
     """UI header."""
     st.markdown("### Система корпоративного управления CP v.2023/05.77")
+    if st.session_state.user.role == UserRoles.PLAYER.value and st.session_state.interim_block:
+        st.warning("Цикл ещё не запущен. Активные элементы управления заблокированы.", icon="⚠️")
     st.markdown("---")
 
 
@@ -47,7 +50,6 @@ def under_menu_block() -> None:
     st.markdown("---")
     st.markdown(f"*User: {st.session_state.user.name}*")
     st.markdown(f"*Last update: {datetime.now().isoformat()}*")
-    st.markdown(f"*Cycle interim: {st.session_state.interim_block}*")
 
 
 def http_exception_handler(exc: httpx.HTTPStatusError) -> None:
