@@ -16,6 +16,7 @@ class CycleParamsPlayer(BaseModel):
     beta: float
     gamma: float
     tau_s: int
+    overdraft_rate: float
 
 
 class DemandFactor(BaseModel):

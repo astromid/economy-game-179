@@ -9,6 +9,7 @@ from egame179_backend.api.market import router as market_router
 from egame179_backend.api.monitoring import router as monitoring_router
 from egame179_backend.api.price import router as price_router
 from egame179_backend.api.product import router as product_router
+from egame179_backend.api.stocks import router as stocks_router
 from egame179_backend.api.supply import router as supply_router
 from egame179_backend.api.transaction import router as transaction_router
 
@@ -21,5 +22,6 @@ api_router.include_router(market_router, prefix="/market", tags=["market"])
 api_router.include_router(monitoring_router)
 api_router.include_router(price_router, prefix="/price", tags=["price"])
 api_router.include_router(product_router, prefix="/product", tags=["product"])
+api_router.include_router(stocks_router, prefix="/stocks", tags=["stocks"])
 api_router.include_router(supply_router, prefix="/supply", tags=["supply"])
 api_router.include_router(transaction_router, prefix="/transaction", tags=["transaction"])

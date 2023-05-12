@@ -46,5 +46,6 @@ def init_game_state() -> None:
         st.session_state.game.cycle = server_cycle
         # clear cached state (except new cycle & constant markets graph)
         for field in fields(st.session_state.game):
-            if field.name not in {"cycle", "_players", "_markets"}:
+            # TODO: refactor this to avoid hardcoded fields
+            if field.name not in {"cycle", "_players", "_npcs", "_markets"}:
                 setattr(st.session_state.game, field.name, None)

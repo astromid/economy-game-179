@@ -91,6 +91,7 @@ class PlayerDashboard(AppView):
             st.write("Комиссия за операции на рынке: ", view_data.cycle_params["beta"])
             st.write("Стоимость складского хранения: ", view_data.cycle_params["gamma"])
             st.write("Время полной поставки: ", view_data.cycle_params["tau_s"])
+            st.write("Кредитная ставка за овердрафт: ", view_data.cycle_params["overdraft_rate"])
 
     def _transactions_block(self, view_data: _ViewData) -> None:
         st.markdown("### Транзакции по корпоративному счёту")

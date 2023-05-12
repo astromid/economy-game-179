@@ -17,6 +17,7 @@ class PlayerState:  # noqa: WPS214
     user_id: int
     cycle: Cycle
     _players: dict[int, str] | None = None
+    _npc_ids: list[int] | None = None
     _markets: nx.Graph | None = None
     _balances: list[float] | None = None
     _cycle_params: dict[str, float | int] | None = None
@@ -29,6 +30,7 @@ class PlayerState:  # noqa: WPS214
     _storage: dict[int, int] | None = None
     _shares: dict[int, list[tuple[str, float | None]]] | None = None
     _detailed_markets: nx.Graph | None = None
+    _stocks: pd.DataFrame | None = None
 
     @property
     def players(self) -> dict[int, str]:
@@ -40,6 +42,17 @@ class PlayerState:  # noqa: WPS214
         if self._players is None:
             self._players = {user.id: user.name for user in api.AuthAPI.get_players()}
         return self._players
+
+    @property
+    def npc_ids(self) -> list[int]:
+        """NPC player ids.
+
+        Returns:
+            list[int]: NPC user ids.
+        """
+        if self._npc_ids is None:
+            self._npc_ids = api.AuthAPI.get_npc_ids()
+        return self._npc_ids
 
     @property
     def markets(self) -> nx.Graph:
@@ -76,10 +89,10 @@ class PlayerState:  # noqa: WPS214
 
     @property
     def cycle_params(self) -> dict[str, float | int]:
-        """Cycle parameters (alpha, beta, gamma, tau_s).
+        """Cycle parameters (alpha, beta, gamma, tau_s, overdraft rate).
 
         Returns:
-            dict[str, float | int]: alpha, beta, gamma & tau_s parameters.
+            dict[str, float | int]: alpha, beta, gamma, tau_s & overdraft rate parameters.
         """
         if self._cycle_params is None:
             self._cycle_params = api.CycleAPI.get_cycle_parameters().dict()
@@ -219,6 +232,19 @@ class PlayerState:  # noqa: WPS214
         """
         # we do not cache supplies, because they are changing in real time
         return [supply.dict() for supply in api.SupplyAPI.get_user_supplies()]
+
+    @property
+    def stocks(self) -> pd.DataFrame:
+        """Stocks prices for all companies.
+
+        Returns:
+            pd.DataFrame: pandas dataframe with columns (cycle, company, price)
+        """
+        if self._stocks is None:
+            self._stocks = pd.DataFrame([stock.dict() for stock in api.StocksAPI.get_stocks()])
+            self._stocks["company"] = self._stocks["user_id"].map(self.players)
+            self._stocks.rename(columns={"price_noise": "price"}, inplace=True)
+        return self._stocks
 
     def clear_after_buy(self) -> None:
         """Clean invalid caches after buy operation."""

@@ -2,6 +2,7 @@
 from egame179_frontend.views.player.manufacturing import ManufacturingView
 from egame179_frontend.views.player.markets import MarketsView
 from egame179_frontend.views.player.overview import PlayerDashboard
+from egame179_frontend.views.player.stocks import StocksView
 from egame179_frontend.views.player.supplies import SuppliesView
 
 __all__ = [
@@ -9,4 +10,5 @@ __all__ = [
     "ManufacturingView",
     "MarketsView",
     "SuppliesView",
+    "StocksView",
 ]

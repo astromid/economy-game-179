@@ -18,6 +18,7 @@ class CycleParams(SQLModel, table=True):
     coeff_h: int
     coeff_k: int
     coeff_l: int
+    overdraft_rate: float
     demand_ring2: int
     demand_ring1: int
     demand_ring0: int

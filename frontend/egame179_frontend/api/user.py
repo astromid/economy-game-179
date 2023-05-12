@@ -31,6 +31,7 @@ class AuthAPI:
     _token_url = str(settings.backend_url / "token")
     _user_url = str(settings.backend_url / "user")
     _players_url = str(settings.backend_url / "players")
+    _npc_ids_url = str(settings.backend_url / "npc_ids")
 
     @classmethod
     def get_auth_header(cls, login: str, password: str) -> dict[str, str] | None:
@@ -74,3 +75,14 @@ class AuthAPI:
         response = httpx.get(cls._players_url, headers=st.session_state.auth_header)
         response.raise_for_status()
         return parse_obj_as(list[User], response.json())
+
+    @classmethod
+    def get_npc_ids(cls) -> list[int]:
+        """Get NPC player ids.
+
+        Returns:
+            list[int]: NPC user ids.
+        """
+        response = httpx.get(cls._npc_ids_url, headers=st.session_state.auth_header)
+        response.raise_for_status()
+        return parse_obj_as(list[int], response.json())

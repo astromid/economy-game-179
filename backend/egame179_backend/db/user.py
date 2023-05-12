@@ -1,6 +1,6 @@
 from fastapi import Depends
 from passlib.context import CryptContext
-from sqlmodel import Field, SQLModel, select
+from sqlmodel import Field, SQLModel, or_, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from egame179_backend.db.session import get_db_session
@@ -62,6 +62,16 @@ class UserDAO:
         Returns:
             list[User]: player users.
         """
-        query = select(User).where(User.role == "player")
+        query = select(User).where(or_(User.role == "player", User.role == "npc"))  # type: ignore
         raw_users = await self.session.exec(query)  # type: ignore
         return raw_users.all()
+
+    async def get_npc_ids(self) -> list[int]:
+        """Get NPC player ids.
+
+        Returns:
+            list[int]: NPC player ids.
+        """
+        query = select(User).where(User.role == "npc")  # type: ignore
+        raw_users = await self.session.exec(query)  # type: ignore
+        return [user.id for user in raw_users.all()]
