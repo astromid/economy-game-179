@@ -51,9 +51,10 @@ async def get_user_supplies(
         cycle_params=current_cycle_params,
     )
     for supply in supplies:
-        delivery_time = (current_ts - supply.ts_start).total_seconds()
-        delivered_amount = math.floor(velocities[supply.market_id] * delivery_time)
-        supply.amount = min(supply.declared_amount, delivered_amount)
+        if supply.amount == 0:
+            delivery_time = (current_ts - supply.ts_start).total_seconds()
+            delivered_amount = math.floor(velocities[supply.market_id] * delivery_time)
+            supply.amount = min(supply.declared_amount, delivered_amount)
     return supplies
 
 

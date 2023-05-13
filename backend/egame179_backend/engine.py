@@ -321,23 +321,26 @@ async def create_cycle(
     ic(market_shares)
 
     # 3. Unlock markets by top1/top2 share
-    unlocked_markets = await unlocked_market_dao.get_all()
-    unlocked_markets = [um for um in unlocked_markets if not um.protected]
     sorted_shares = {m_id: sorted(market_shares[m_id], key=lambda x: x[1], reverse=True) for m_id in market_shares}
     top_shares = {m_id: [share[0] for share in sorted_shares[m_id][:2]] for m_id in sorted_shares}
 
     ic(sorted_shares)
     ic(top_shares)
 
-    # lock lost markets
+    # step1: lock all unprotected markets
+    unlocked_markets = await unlocked_market_dao.get_all()
     for um in unlocked_markets:
-        if um.user_id not in top_shares[um.market_id]:
-            await unlocked_market_dao.lock(user_id=um.user_id, market_id=um.market_id)
-    # unlock new markets
+        await unlocked_market_dao.lock(user_id=um.user_id, market_id=um.market_id)
+
+    # step2: unlock top-shared markets and their links
     m_id2market = {market.id: market for market in markets}
     for m_id, top_users in top_shares.items():
-        for user in top_users:
-            await unlocked_market_dao.unlock(user_id=user, market_id=m_id)
+        for user_id in top_users:
+            market = m_id2market[m_id]
+            to_unlock = {m_id, market.link1, market.link2, market.link3, market.link4, market.link5}
+            for um_id in to_unlock:
+                if um_id is not None:
+                    await unlocked_market_dao.unlock(user_id=user_id, market_id=um_id)
 
 
 def get_velocities(m_id2ring: dict[int, int], cycle_params: CycleParams) -> dict[int, float]:

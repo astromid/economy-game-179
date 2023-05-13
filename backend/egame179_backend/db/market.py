@@ -75,8 +75,15 @@ class UnlockedMarketDAO:
             user_id (int): target user id.
             market_id (int): target market id.
         """
-        self.session.add(UnlockedMarket(user_id=user_id, market_id=market_id, protected=False))
-        await self.session.commit()
+        query = select(UnlockedMarket).where(
+            UnlockedMarket.user_id == user_id,
+            UnlockedMarket.market_id == market_id,
+        )
+        raw_record = await self.session.exec(query)  # type: ignore
+        record = raw_record.one_or_none()
+        if record is None:
+            self.session.add(UnlockedMarket(user_id=user_id, market_id=market_id, protected=False))
+            await self.session.commit()
 
     async def lock(self, user_id: int, market_id: int) -> None:
         """Remove unlock record about particular market for particular user.
