@@ -65,13 +65,13 @@ class SupplyDAO:
         )
         await self.session.commit()
 
-    async def finish_ongoing(self, velocities: dict[int, float]) -> None:
+    async def finish_ongoing(self, ts_finish: datetime, velocities: dict[int, float]) -> None:
         """Finish all ongoing supplies and update real delivered amount.
 
         Args:
+            ts_finish (datetime): cycle finish time.
             velocities (dict[int, float]): supply velocity (items per sec) for each market.
         """
-        ts_finish = datetime.now()
         query = select(Supply).where(Supply.amount == 0)
         raw_supplies = await self.session.exec(query)  # type: ignore
         for supply in raw_supplies.all():
@@ -79,5 +79,13 @@ class SupplyDAO:
             max_delivered_amount = math.floor(velocities[supply.market_id] * delivery_time)
             supply.amount = min(supply.declared_amount, max_delivered_amount)
             supply.ts_finish = ts_finish
-            self.session.add(supply)
+            await self.add(supply)
+
+    async def add(self, supply: Supply) -> None:
+        """Create or update supply.
+
+        Args:
+            supply (Supply): target supply record.
+        """
+        self.session.add(supply)
         await self.session.commit()

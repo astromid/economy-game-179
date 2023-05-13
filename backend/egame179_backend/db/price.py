@@ -36,13 +36,18 @@ class PriceDAO:
         raw_price = await self.session.exec(query)  # type: ignore
         return raw_price.one()
 
-    async def get_all(self) -> list[Price]:
+    async def get_all(self, cycle: int | None = None) -> list[Price]:
         """Get all prices for all markets.
+
+        Args:
+            cycle (int, optional): target cycle. If None, all cycles return.
 
         Returns:
             list[Price]: market prices.
         """
         query = select(Price).order_by(Price.cycle)
+        if cycle is not None:
+            query = query.where(Price.cycle == cycle)
         raw_prices = await self.session.exec(query)  # type: ignore
         return raw_prices.all()
 

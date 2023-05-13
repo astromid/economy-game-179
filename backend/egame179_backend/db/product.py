@@ -43,18 +43,21 @@ class ProductDAO:
         raw_product = await self.session.exec(query)  # type: ignore
         return raw_product.one()
 
-    async def get_all(self, user_id: int | None = None) -> list[Product]:
-        """Get all products for particular user.
+    async def get_all(self, cycle: int | None = None, user_id: int | None = None) -> list[Product]:
+        """Get all products.
 
         Args:
+            cycle (int, optional): target cycle. If None, return products for all cycles.
             user_id (int, optional): target user id. If None, return products for all users.
 
         Returns:
             list[Product]: product records.
         """
-        query = select(Product).order_by(Product.cycle)
+        query = select(Product)
+        if cycle is not None:
+            query = query.where(Product.cycle == cycle)
         if user_id is not None:
-            query = query.where(Product.user_id == user_id)
+            query = query.where(Product.user_id == user_id).order_by(Product.cycle)
         raw_products = await self.session.exec(query)  # type: ignore
         return raw_products.all()
 

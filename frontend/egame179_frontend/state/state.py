@@ -31,7 +31,6 @@ def init_game_state() -> None:
     """Initialize game state after user auth."""
     server_cycle = CycleAPI.get_cycle()  # get cycle info from server and check sync
     st.session_state.interim_block = (server_cycle.ts_start is None) or (server_cycle.ts_finish is not None)
-
     user: User = st.session_state.user
     if st.session_state.game is None:  # first run for this user, we need to create empty game states
         match user.role:

@@ -175,8 +175,9 @@ def _supplies_block(supplies: list[dict[str, Any]], m_id2name: dict[int, str]) -
         declared_amount = supply["declared_amount"]
         percent = amount / declared_amount
         market = m_id2name[supply["market_id"]]
+        status = "в процессе" if supply["ts_finish"] is None else "закончена"
         ts_start = supply["ts_start"].time().strftime("%H:%M:%S")
-        text = f"Поставка {declared_amount} шт. {market} [начата {ts_start}, готово {amount}/{declared_amount}]"
+        text = f"Поставка {declared_amount} шт. {market} [начата {ts_start}, {status}: {amount}/{declared_amount}]"
         st.progress(percent, text)
     if not supplies:
         st.info("Нет активных поставок.")

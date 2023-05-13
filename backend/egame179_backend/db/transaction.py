@@ -18,6 +18,8 @@ class Transaction(SQLModel, table=True):
     user_id: int
     amount: float
     description: str
+    items: int | None = None
+    market_id: int | None = None
 
 
 class TransactionDAO:
@@ -41,7 +43,15 @@ class TransactionDAO:
         raw_transactions = await self.session.exec(query)  # type: ignore
         return raw_transactions.all()
 
-    async def create(self, cycle: int, user_id: int, amount: float, description: str) -> None:
+    async def create(
+        self,
+        cycle: int,
+        user_id: int,
+        amount: float,
+        description: str,
+        items: int | None = None,
+        market_id: int | None = None,
+    ) -> None:
         """Create new transaction.
 
         Args:
@@ -57,6 +67,8 @@ class TransactionDAO:
                 user_id=user_id,
                 amount=amount,
                 description=description,
+                items=items,
+                market_id=market_id,
             ),
         )
         await self.session.commit()

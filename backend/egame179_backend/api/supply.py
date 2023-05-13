@@ -44,18 +44,15 @@ async def get_user_supplies(
     current_cycle = await cycle_dao.get_current()
     current_cycle_params = await cycle_params_dao.get(current_cycle.cycle)
     markets = await market_dao.get_all()
-
-    m_id2ring = {market.id: market.ring for market in markets}
-    ring2demand = {
-        0: current_cycle_params.demand_ring0,
-        1: current_cycle_params.demand_ring1,
-        2: current_cycle_params.demand_ring2,
-    }
     supplies = await dao.get(cycle=current_cycle.cycle, user_id=user.id)
+
+    velocities = engine.get_velocities(
+        m_id2ring={market.id: market.ring for market in markets},
+        cycle_params=current_cycle_params,
+    )
     for supply in supplies:
-        velocity = ring2demand[m_id2ring[supply.market_id]] / current_cycle_params.tau_s
         delivery_time = (current_ts - supply.ts_start).total_seconds()
-        delivered_amount = math.floor(velocity * delivery_time)
+        delivered_amount = math.floor(velocities[supply.market_id] * delivery_time)
         supply.amount = min(supply.declared_amount, delivered_amount)
     return supplies
 
@@ -83,19 +80,17 @@ async def get_all_supplies(
     current_cycle = await cycle_dao.get_current()
     current_cycle_params = await cycle_params_dao.get(current_cycle.cycle)
     markets = await market_dao.get_all()
-
-    m_id2ring = {market.id: market.ring for market in markets}
-    ring2demand = {
-        0: current_cycle_params.demand_ring0,
-        1: current_cycle_params.demand_ring1,
-        2: current_cycle_params.demand_ring2,
-    }
     supplies = await dao.get(cycle=current_cycle.cycle)
+
+    velocities = engine.get_velocities(
+        m_id2ring={market.id: market.ring for market in markets},
+        cycle_params=current_cycle_params,
+    )
     for supply in supplies:
-        velocity = ring2demand[m_id2ring[supply.market_id]] / current_cycle_params.tau_s
-        delivery_time = (current_ts - supply.ts_start).total_seconds()
-        delivered_amount = math.floor(velocity * delivery_time)
-        supply.amount = min(supply.declared_amount, delivered_amount)
+        if supply.amount == 0:
+            delivery_time = (current_ts - supply.ts_start).total_seconds()
+            delivered_amount = math.floor(velocities[supply.market_id] * delivery_time)
+            supply.amount = min(supply.declared_amount, delivered_amount)
     return supplies
 
 

@@ -37,7 +37,7 @@ async def get_user_products(user: User = Depends(get_current_user), dao: Product
     Returns:
         list[Product]: products history for user.
     """
-    return await dao.get_all(user.id)
+    return await dao.get_all(user_id=user.id)
 
 
 @router.get("/all", dependencies=[Security(get_current_user, scopes=["root"])])
@@ -138,7 +138,9 @@ async def production(
         cycle=current_cycle.cycle,
         user_id=user.id,
         amount=engine.production_cost(theta=product.theta, price=market_price.buy, number=bid.amount),
-        description=f"Buy {bid.amount} items (market_id = {bid.market_id})",
+        description=f"Buy {bid.amount} items (market {bid.market_id}, price {market_price.buy})",
+        items=bid.amount,
+        market_id=bid.market_id,
         inflow=False,
         overdraft=False,
         balance_dao=balance_dao,

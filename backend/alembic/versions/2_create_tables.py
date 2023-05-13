@@ -165,6 +165,8 @@ def create_transactions(cycle: int, amount: float, player_ids: list[int]) -> Non
         sa.Column("user_id", sa.Integer, sa.ForeignKey("users.id")),
         sa.Column("amount", sa.Float, nullable=False),
         sa.Column("description", sa.Text, nullable=False),
+        sa.Column("items", sa.Integer),
+        sa.Column("market_id", sa.Integer, sa.ForeignKey("markets.id")),
     )
     if transactions_table is not None:
         transactions = [

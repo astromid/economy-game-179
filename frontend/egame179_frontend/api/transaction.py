@@ -16,6 +16,8 @@ class Transaction(BaseModel):
     user_id: int
     amount: float
     description: str
+    items: int | None = None
+    market_id: int | None = None
 
 
 class TransactionAPI:
