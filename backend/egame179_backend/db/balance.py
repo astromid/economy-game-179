@@ -35,7 +35,7 @@ class BalanceDAO:
         raw_balance = await self.session.exec(query)  # type: ignore
         return raw_balance.one()
 
-    async def get_all(self, user_id: int | None = None) -> list[Balance]:
+    async def get_all(self, user_id: int | None = None, cycle: int | None = None) -> list[Balance]:
         """Get user balances.
 
         Args:
@@ -44,9 +44,11 @@ class BalanceDAO:
         Returns:
             list[Balance]: users balances.
         """
-        query = select(Balance).order_by(Balance.cycle)
+        query = select(Balance)
+        if cycle is not None:
+            query = query.where(Balance.cycle == cycle)
         if user_id is not None:
-            query = query.where(Balance.user_id == user_id)
+            query = query.where(Balance.user_id == user_id).order_by(Balance.cycle)
         raw_balances = await self.session.exec(query)  # type: ignore
         return raw_balances.all()
 

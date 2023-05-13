@@ -1,7 +1,16 @@
 from fastapi import APIRouter, Depends, Security
 
 from egame179_backend.api.auth.dependencies import get_current_user
-from egame179_backend.db import BalanceDAO, CycleParamsDAO, MarketDAO, PriceDAO, ProductDAO, SupplyDAO, TransactionDAO
+from egame179_backend.db import (
+    BalanceDAO,
+    CycleParamsDAO,
+    MarketDAO,
+    PriceDAO,
+    ProductDAO,
+    SupplyDAO,
+    TransactionDAO,
+    UnlockedMarketDAO,
+)
 from egame179_backend.db.cycle import Cycle, CycleDAO
 from egame179_backend.engine import create_cycle, finish_cycle
 
@@ -28,6 +37,9 @@ async def create(
     price_dao: PriceDAO = Depends(),
     transaction_dao: TransactionDAO = Depends(),
     market_dao: MarketDAO = Depends(),
+    product_dao: ProductDAO = Depends(),
+    balance_dao: BalanceDAO = Depends(),
+    unlocked_market_dao: UnlockedMarketDAO = Depends(),
 ) -> None:
     """Create new cycle.
 
@@ -42,6 +54,9 @@ async def create(
         cycle_params_dao=cycle_params_dao,
         price_dao=price_dao,
         transaction_dao=transaction_dao,
+        product_dao=product_dao,
+        balance_dao=balance_dao,
+        unlocked_market_dao=unlocked_market_dao,
     )
 
 

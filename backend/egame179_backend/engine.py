@@ -1,8 +1,8 @@
 import math
 from collections import defaultdict
 
-from fastapi import HTTPException
 import pandas as pd
+from fastapi import HTTPException
 
 from egame179_backend.db import (
     BalanceDAO,
@@ -14,8 +14,10 @@ from egame179_backend.db import (
     TransactionDAO,
     UnlockedMarketDAO,
 )
+from egame179_backend.db.balance import Balance
 from egame179_backend.db.cycle import Cycle
 from egame179_backend.db.cycle_params import CycleParams
+from egame179_backend.db.product import Product
 
 STOCK_SIGMA = 0.05
 
@@ -237,9 +239,18 @@ async def create_cycle(
     price_dao: PriceDAO,
     transaction_dao: TransactionDAO,
     market_dao: MarketDAO,
+    product_dao: ProductDAO,
+    balance_dao: BalanceDAO,
+    unlocked_market_dao: UnlockedMarketDAO,
 ) -> None:
     markets = await market_dao.get_all()
     cycle_params = await cycle_params_dao.get(cycle - 1)
+
+    # 0. Create new balances
+    balances = await balance_dao.get_all(cycle=cycle - 1)
+    for balance in balances:
+        await balance_dao.add(Balance(cycle=cycle, user_id=balance.user_id, amount=balance.amount))
+
     # 1. Calculate new prices
     prices = await price_dao.get_all(cycle=cycle - 1)
     market2price = {price.market_id: price for price in prices}
@@ -248,16 +259,16 @@ async def create_cycle(
         m_id2ring={market.id: market.ring for market in markets},
         cycle_params=cycle_params,
     )
-    # take prev & prev-prev transactions
-    transactions_df = pd.DataFrame([tr.dict() for tr in transactions if tr.cycle >= cycle - 2])
-    transactions_df = transactions_df.dropna(subset=["market_id", "items"])
-
+    # take transactions from last 3 cycles
+    transactions_df = pd.DataFrame([tr.dict() for tr in transactions if tr.cycle >= cycle - 3])
+    transactions_df = transactions_df.dropna(subset=["market_id", "items"]).astype({"market_id": int, "items": int})
+    # buy for last 3 cycles, sell only for last cycle
     buy_df = transactions_df[transactions_df["amount"] < 0]
-    sell_df = transactions_df[transactions_df["amount"] > 0]
+    sell_df = transactions_df[(transactions_df["amount"] > 0) & (transactions_df["cycle"] == cycle - 1)]
 
     buy_market = buy_df[buy_df["cycle"] == cycle - 1].groupby("market_id")["items"].sum().to_dict()
     buy_market_prev = buy_df[buy_df["cycle"] == cycle - 2].groupby("market_id")["items"].sum().to_dict()
-    sell_market = sell_df[sell_df["cycle"] == cycle - 1].groupby("market_id")["items"].sum().to_dict()
+    sell_market = sell_df.groupby("market_id")["items"].sum().to_dict()
 
     for market in markets:
         price = market2price[market.id]
@@ -279,6 +290,54 @@ async def create_cycle(
             buy=new_buy_price,
             sell=new_sell_price,
         )
+
+    # 2. Update products (theta, storage, market share)
+    products = await product_dao.get_all(cycle=cycle - 1)
+    buy_cycle_sum_df = buy_df.groupby(["user_id", "market_id", "cycle"])["items"].sum().reset_index()
+    buy_mean = buy_cycle_sum_df.groupby(["user_id", "market_id"])["items"].mean().to_dict()
+    # ! check validity of using amount vs. real_amount
+    sell_by_user = sell_df.groupby(["user_id", "market_id"])["items"].sum().to_dict()
+
+    from icecream import ic
+    ic(buy_cycle_sum_df)
+    ic(buy_mean)
+    ic(sell_by_user)
+
+    market_shares: dict[int, list[tuple[int, float]]] = defaultdict(list)
+    for product in products:
+        share = sell_by_user.get((product.user_id, product.market_id), 0) / sell_market.get(product.market_id, 1)
+        market_shares[product.market_id].append((product.user_id, share))
+        await product_dao.add(Product(
+            cycle=cycle,
+            user_id=product.user_id,
+            market_id=product.market_id,
+            storage=product.storage,
+            theta=theta_next(buy_mean.get((product.user_id, product.market_id), 0), k=cycle_params.coeff_k),
+            share=share,
+        ))
+    ic(market_shares)
+
+    market_shares = {m_id: [share for share in shares if share[1] > 0] for m_id, shares in market_shares.items()}
+    ic(market_shares)
+
+    # 3. Unlock markets by top1/top2 share
+    unlocked_markets = await unlocked_market_dao.get_all()
+    unlocked_markets = [um for um in unlocked_markets if not um.protected]
+    sorted_shares = {m_id: sorted(market_shares[m_id], key=lambda x: x[1], reverse=True) for m_id in market_shares}
+    top_shares = {m_id: [share[0] for share in sorted_shares[m_id][:2]] for m_id in sorted_shares}
+
+    ic(sorted_shares)
+    ic(top_shares)
+
+    # lock lost markets
+    for um in unlocked_markets:
+        if um.user_id not in top_shares[um.market_id]:
+            await unlocked_market_dao.lock(user_id=um.user_id, market_id=um.market_id)
+    # unlock new markets
+    m_id2market = {market.id: market for market in markets}
+    for m_id, top_users in top_shares.items():
+        for user in top_users:
+            await unlocked_market_dao.unlock(user_id=user, market_id=m_id)
 
 
 def get_velocities(m_id2ring: dict[int, int], cycle_params: CycleParams) -> dict[int, float]:
@@ -312,8 +371,9 @@ def sell_price_next(n_mt: int, d_mt: int, l: int, s_mt: float) -> float:  # noqa
     return coef * s_mt
 
 
-def theta_next(n_imt: list[int], k: int) -> float:  # noqa: WPS111
-    n_mean = sum(n_imt) / len(n_imt)
+def theta_next(n_mean: float, k: int) -> float:  # noqa: WPS111
+    if n_mean == 0:
+        return 0
     return _sigmoid(2 * n_mean / k - 3) / 3
 
 

@@ -30,7 +30,7 @@ def _cache_view_data(
     transactions: list[dict[str, Any]],
 ) -> _ViewData:
     balance_delta = millify(balances[-1] - balances[-2], precision=3) if cycle > 1 else None
-    transactions_df = pd.DataFrame(transactions).drop("user_id", axis=1).sort_values("ts", ascending=False)
+    transactions_df = pd.DataFrame(reversed(transactions)).drop("user_id", axis=1)
     return _ViewData(
         name=name,
         cycle=cycle,

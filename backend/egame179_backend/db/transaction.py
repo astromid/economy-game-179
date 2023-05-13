@@ -37,7 +37,7 @@ class TransactionDAO:
         Returns:
             list[Transaction]: game transactions.
         """
-        query = select(Transaction).order_by(Transaction.ts)
+        query = select(Transaction).order_by(Transaction.id)
         if user_id is not None:
             query = query.where(Transaction.user_id == user_id)
         raw_transactions = await self.session.exec(query)  # type: ignore
