@@ -77,3 +77,7 @@ def _cycle_controls(state: _ViewData) -> None:
             on_click=CycleAPI.finish_cycle,
             disabled=(state.ts_start is None) or (state.ts_finish is not None),
         )
+    if st.button("! Реинициализация игры !"):
+        import subprocess
+        result = subprocess.run(["./_reinit_db.sh"], stdout=subprocess.PIPE, text=True)
+        st.write("stdout:", result.stdout)

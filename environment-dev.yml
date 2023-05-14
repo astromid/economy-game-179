@@ -34,13 +34,10 @@ dependencies:
 - yarl
 # dev packages
 - icecream
-- ipywidgets
-- jupyterlab
 - mypy
 - mypy_extensions
 - pandas-stubs
 - pdbpp
-- pretty_errors
 - pytest
 - pytest-asyncio
 - pytest-cov
