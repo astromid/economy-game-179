@@ -22,6 +22,8 @@ ignore =
   D106,
   ; Missing docstring in __init__
   D107,
+  ; Found overused expression
+  WPS204,
   ; Found `f` string
   WPS305,
   ; Found class without a base class

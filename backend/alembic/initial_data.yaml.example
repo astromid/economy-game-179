@@ -1,30 +1,34 @@
-initial_cycle: 1
-initial_player_balance: 1
+initial_balance: 1
 initial_stocks_price: 1
-initial_theta: 1
 users:
-  - {type: "admin", name: "root", login: "", password: ""}
-  - {type: "player", name: "PlayerCorp1", login: "", password: ""}
+  - {id: 0, role: "root", name: "root", login: "", password: ""}
+  - {id: 1, role: "player", name: "PlayerCorp1", login: "", password: ""}
   - { ... }
-markets:
-  - {id: 0, name: "", ring: 2, link1: 1, link2: 2, link3: 3, link4: null, link5: null}
-  - {id: 1, name: "", ring: 2, link1: 0, link2: 2, link3: 3, link4: null, link5: null}
-  - {id: 2, name: "", ring: 2, link1: 0, link2: 1, link3: 3, link4: null, link5: null}
-  - {id: 3, name: "", ring: 2, link1: 0, link2: 1, link3: 2, link4: null, link5: null}
+npcs:
+  - {user: 2, ring: 0}
   - { ... }
-initial_market_prices:
-  - {market_id: 0, buy: 0.0, sell: 0.0}
-  - {market_id: 1, buy: 0.0, sell: 0.0}
-  - {market_id: 2, buy: 0.0, sell: 0.0}
-  - {market_id: 3, buy: 0.0, sell: 0.0}
-  - { ... }
-cycle_params:
+cycles:
+  total: 10
   alpha: 1.0
   alpha_multiplier: 1.0
-  beta: 1.0
-  gamma: 1.0
-  tau_sec: 0
-  demand:
-    ring2: [...]
-    ring1: [...]
-    ring0: [...]
+  constants:
+    beta: 1.0
+    gamma: 1.0
+    tau_sec: 1
+    coeff_h: 1
+    coeff_k: 1
+    coeff_l: 1
+    overdraft_rate: 1.0
+markets:
+  - {id: 0, name: "", ring: 2, home_user: 0}
+  - { ... }
+market_connections:
+  - {source: 0, target: 1}
+  - { ... }
+market_prices:
+  - {cycle: 1, market_id: 0, buy: 0.0, sell: 0.0}
+  - { ... }
+world_demand:
+  0: [ ... ]
+  1: [ ... ]
+  2: [ ... ]
