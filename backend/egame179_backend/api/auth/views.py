@@ -77,16 +77,3 @@ async def get_players(dao: UserDAO = Depends()) -> list[User]:
         list[User]: list of UserInfo response model.
     """
     return await dao.get_players()
-
-
-@router.get("/npc_ids")
-async def get_npc_ids(dao: UserDAO = Depends()) -> list[int]:
-    """Get NPC player ids.
-
-    Args:
-        dao (UserDAO): user table data access object.
-
-    Returns:
-        list[int]: list of NPC user ids.
-    """
-    return await dao.get_npc_ids()

@@ -13,21 +13,16 @@ class Market(SQLModel, table=True):
     id: int = Field(primary_key=True)
     name: str
     ring: int
-    link1: int
-    link2: int
-    link3: int
-    link4: int | None
-    link5: int | None
+    home_user: int | None
 
 
-class UnlockedMarket(SQLModel, table=True):
-    """Unlocked markets table."""
+class MarketConnection(SQLModel, table=True):
+    """Market connections table."""
 
-    __tablename__ = "unlocked_markets"  # type: ignore
+    __tablename__ = "market_connections"  # type: ignore
 
-    user_id: int = Field(primary_key=True)
-    market_id: int = Field(primary_key=True)
-    protected: bool
+    source: int
+    target: int
 
 
 class MarketDAO:
@@ -36,7 +31,7 @@ class MarketDAO:
     def __init__(self, session: AsyncSession = Depends(get_db_session)):
         self.session = session
 
-    async def get_all(self) -> list[Market]:
+    async def select(self) -> list[Market]:
         """Get markets.
 
         Returns:

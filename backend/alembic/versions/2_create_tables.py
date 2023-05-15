@@ -34,6 +34,7 @@ def upgrade() -> None:
     create_npcs(initial_data["npcs"])
     create_cycles(**initial_data["cycles"])
     create_markets(initial_data["markets"])
+    create_market_connections(initial_data["market_connections"])
     create_market_prices(initial_data["market_prices"])
     create_world_demand(initial_data["world_demand"], initial_data["cycles"]["total"])
     create_transactions(initial_data["initial_balance"], users)
@@ -341,6 +342,7 @@ def downgrade() -> None:
         "transactions",
         "world_demand",
         "market_prices",
+        "market_connections",
         "markets",
         "cycles",
         "sync_status",

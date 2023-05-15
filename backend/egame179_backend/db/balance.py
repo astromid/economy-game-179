@@ -1,5 +1,5 @@
 from fastapi import Depends
-from sqlmodel import Field, SQLModel, select
+from sqlmodel import SQLModel, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from egame179_backend.db.session import get_db_session
@@ -10,9 +10,9 @@ class Balance(SQLModel, table=True):
 
     __tablename__ = "balances"  # type: ignore
 
-    cycle: int = Field(primary_key=True)
-    user_id: int = Field(primary_key=True)
-    amount: float
+    cycle: int
+    user: int
+    balance: float
 
 
 class BalanceDAO:
@@ -21,34 +21,35 @@ class BalanceDAO:
     def __init__(self, session: AsyncSession = Depends(get_db_session)):
         self.session = session
 
-    async def get(self, cycle: int, user_id: int) -> Balance:
+    async def get(self, user: int, cycle: int) -> Balance:
         """Get user balance on particular cycle.
 
         Args:
+            user (int): target user id.
             cycle (int): target cycle.
-            user_id (int): target user id.
 
         Returns:
             Balance: target balance.
         """
-        query = select(Balance).where(Balance.user_id == user_id, Balance.cycle == cycle)
+        query = select(Balance).where(Balance.user == user, Balance.cycle == cycle)
         raw_balance = await self.session.exec(query)  # type: ignore
         return raw_balance.one()
 
-    async def get_all(self, user_id: int | None = None, cycle: int | None = None) -> list[Balance]:
+    async def select(self, user: int | None = None, cycle: int | None = None) -> list[Balance]:
         """Get user balances.
 
         Args:
-            user_id (int, optional): target user id. If None, all user balances return.
+            user (int, optional): target user id. If None, all user balances return.
+            cycle (int): target cycle. If None, all cycles return.
 
         Returns:
             list[Balance]: users balances.
         """
-        query = select(Balance)
+        query = select(Balance).order_by(Balance.cycle)
+        if user is not None:
+            query = query.where(Balance.user == user)
         if cycle is not None:
             query = query.where(Balance.cycle == cycle)
-        if user_id is not None:
-            query = query.where(Balance.user_id == user_id).order_by(Balance.cycle)
         raw_balances = await self.session.exec(query)  # type: ignore
         return raw_balances.all()
 
@@ -61,15 +62,6 @@ class BalanceDAO:
         Returns:
             list[Balance]: overdrafted balances.
         """
-        query = select(Balance).where(Balance.cycle == cycle, Balance.amount < 0)
+        query = select(Balance).where(Balance.cycle == cycle, Balance.balance < 0)
         raw_balances = await self.session.exec(query)  # type: ignore
         return raw_balances.all()
-
-    async def add(self, balance: Balance) -> None:
-        """Create or update balance.
-
-        Args:
-            balance (Balance): target balance record.
-        """
-        self.session.add(balance)
-        await self.session.commit()
