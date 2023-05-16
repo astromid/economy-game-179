@@ -15,11 +15,9 @@ class Transaction(SQLModel, table=True):
     id: int = Field(default=None, primary_key=True)
     ts: datetime
     cycle: int
-    user_id: int
+    user: int
     amount: float
     description: str
-    items: int | None = None
-    market_id: int | None = None
 
 
 class TransactionDAO:
@@ -28,47 +26,29 @@ class TransactionDAO:
     def __init__(self, session: AsyncSession = Depends(get_db_session)):
         self.session = session
 
-    async def get(self, user_id: int | None) -> list[Transaction]:
+    async def select(self, user: int | None = None) -> list[Transaction]:
         """Get game transactions.
 
         Args:
-            user_id (int, optional): target user id. If None, all transactions return.
+            user (int, optional): target user id. If None, all transactions return.
 
         Returns:
             list[Transaction]: game transactions.
         """
         query = select(Transaction).order_by(Transaction.id)
-        if user_id is not None:
-            query = query.where(Transaction.user_id == user_id)
+        if user is not None:
+            query = query.where(Transaction.user == user)
         raw_transactions = await self.session.exec(query)  # type: ignore
         return raw_transactions.all()
 
-    async def create(
-        self,
-        cycle: int,
-        user_id: int,
-        amount: float,
-        description: str,
-        items: int | None = None,
-        market_id: int | None = None,
-    ) -> None:
+    async def create(self, cycle: int, user: int, amount: float, description: str) -> None:
         """Create new transaction.
 
         Args:
             cycle (int): transaction cycle.
-            user_id (int): target user id.
+            user (int): transaction user id.
             amount (float): amout of money.
-            description (str): description.
+            description (str): trasnaction description.
         """
-        self.session.add(
-            Transaction(
-                ts=datetime.now(),
-                cycle=cycle,
-                user_id=user_id,
-                amount=amount,
-                description=description,
-                items=items,
-                market_id=market_id,
-            ),
-        )
+        self.session.add(Transaction(ts=datetime.now(), cycle=cycle, user=user, amount=amount, description=description))
         await self.session.commit()

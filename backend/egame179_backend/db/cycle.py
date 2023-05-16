@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from fastapi import Depends
-from sqlmodel import Field, SQLModel, or_, select
+from sqlmodel import SQLModel, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from egame179_backend.db.session import get_db_session
@@ -12,7 +12,7 @@ class Cycle(SQLModel, table=True):
 
     __tablename__ = "cycles"  # type: ignore
 
-    id: int = Field(default=None, primary_key=True)
+    id: int
     ts_start: datetime | None = None
     ts_finish: datetime | None = None
     alpha: float
@@ -31,17 +31,6 @@ class CycleDAO:
     def __init__(self, session: AsyncSession = Depends(get_db_session)):
         self.session = session
 
-    async def get_current(self) -> Cycle:
-        """Get current cycle.
-
-        Returns:
-            Cycle: current cycle info.
-        """
-        query = select(Cycle).where(or_(Cycle.ts_start == None, Cycle.ts_finish == None))  # type: ignore  # noqa: E711
-        query = query.order_by(Cycle.id).limit(1)
-        raw_cycle = await self.session.exec(query)  # type: ignore
-        return raw_cycle.one()
-
     async def get(self, cycle: int) -> Cycle:
         """Get parameters for target cycle.
 
@@ -52,6 +41,17 @@ class CycleDAO:
             Cycle: target cycle.
         """
         query = select(Cycle).where(Cycle.id == cycle)
+        raw_cycle = await self.session.exec(query)  # type: ignore
+        return raw_cycle.one()
+
+    async def get_current(self) -> Cycle:
+        """Get current cycle.
+
+        Returns:
+            Cycle: current cycle info.
+        """
+        query = select(Cycle).where(Cycle.ts_finish == None)  # noqa: E711
+        query = query.order_by(Cycle.id).limit(1)
         raw_cycle = await self.session.exec(query)  # type: ignore
         return raw_cycle.one()
 

@@ -54,7 +54,7 @@ class BalanceDAO:
         return raw_balances.all()
 
     async def get_overdrafted(self, cycle: int) -> list[Balance]:
-        """Get overdrafted balances.
+        """Get overdrafted balances on target cycle.
 
         Args:
             cycle (int): target cycle.
