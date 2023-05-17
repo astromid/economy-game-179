@@ -31,19 +31,6 @@ class CycleDAO:
     def __init__(self, session: AsyncSession = Depends(get_db_session)):
         self.session = session
 
-    async def get(self, cycle: int) -> Cycle:
-        """Get parameters for target cycle.
-
-        Args:
-            cycle (int): target cycle.
-
-        Returns:
-            Cycle: target cycle.
-        """
-        query = select(Cycle).where(Cycle.id == cycle)
-        raw_cycle = await self.session.exec(query)  # type: ignore
-        return raw_cycle.one()
-
     async def get_current(self) -> Cycle:
         """Get current cycle.
 
@@ -62,9 +49,14 @@ class CycleDAO:
         self.session.add(cycle)
         await self.session.commit()
 
-    async def finish(self) -> None:
-        """Finish current cycle."""
+    async def finish(self) -> Cycle:
+        """Finish current cycle.
+
+        Returns:
+            Cycle: finished cycle.
+        """
         cycle = await self.get_current()
         cycle.ts_finish = datetime.now()
         self.session.add(cycle)
         await self.session.commit()
+        return cycle

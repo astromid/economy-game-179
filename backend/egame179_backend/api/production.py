@@ -2,8 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException, Security
 from pydantic import BaseModel
 
 from egame179_backend.api.auth.dependencies import get_current_user
-from egame179_backend.db import BalanceDAO, CycleDAO, MarketDAO, MarketPriceDAO, ThetaDAO, TransactionDAO
+from egame179_backend.db import BalanceDAO, CycleDAO, MarketDAO, MarketPriceDAO, TransactionDAO
 from egame179_backend.db.production import Production, ProductionDAO
+from egame179_backend.db.theta import Theta, ThetaDAO
 from egame179_backend.db.user import User
 from egame179_backend.engine.math import production_cost
 from egame179_backend.engine.utility import check_balance, get_market_names
@@ -32,10 +33,27 @@ async def get_user_production(
     Returns:
         list[Production]: production history for user.
     """
-    return await dao.select(user.id)
+    return await dao.select(user=user.id)
 
 
-@router.get("/list/all", dependencies=[Security(get_current_user, scopes=["root"])])
+@router.get("/thetas/user")
+async def get_user_thetas(
+    user: User = Depends(get_current_user),
+    dao: ThetaDAO = Depends(),
+) -> list[Theta]:
+    """Get thetas for user.
+
+    Args:
+        user (User): authenticated user data.
+        dao (ThetaDAO): thetas table data access object.
+
+    Returns:
+        list[Theta]: thetas history for user.
+    """
+    return await dao.select(user=user.id)
+
+
+@router.get("/list", dependencies=[Security(get_current_user, scopes=["root"])])
 async def get_production(dao: ProductionDAO = Depends()) -> list[Production]:
     """Get production history for all users.
 
@@ -44,6 +62,19 @@ async def get_production(dao: ProductionDAO = Depends()) -> list[Production]:
 
     Returns:
         list[Production]: production history for all users.
+    """
+    return await dao.select()
+
+
+@router.get("/thetas", dependencies=[Security(get_current_user, scopes=["root"])])
+async def get_thetas(dao: ThetaDAO = Depends()) -> list[Theta]:
+    """Get thetas for all users.
+
+    Args:
+        dao (ThetaDAO): thetas table data access object.
+
+    Returns:
+        list[Thetas]: thetas history for all users.
     """
     return await dao.select()
 

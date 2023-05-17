@@ -64,7 +64,7 @@ async def get_user_unlocked_markets(
         list[int]: list of unlocked markets node ids.
     """
     current_cycle = await cycle_dao.get_current()
-    shares = await dao.select_shares(user=user.id, cycle=current_cycle.id)
+    shares = await dao.select_shares(cycle=current_cycle.id, user=user.id)
     return [share.market for share in shares if share.unlocked]
 
 
@@ -93,29 +93,28 @@ async def get_user_market_shares(
 
     visible_shares = []
     for market in markets:
-        sorted_shares = sorted(market_shares[market.id], key=lambda shr: shr.share, reverse=True)
-        pos_shares = {pos: shr for pos, shr in enumerate(sorted_shares, start=1)}
-        top2_users = [shr.user for pos, shr in pos_shares.items() if pos <= 2]
+        pos_shares = {shr.position: (shr.user, shr.share) for shr in market_shares[market.id]}
+        top2_users = [user for pos, (user, _) in pos_shares.items() if pos <= 2]
         if user.id not in top2_users:
             # filter information for non-owned markets (user not in top-2)
             visible_shares.extend(
                 [
-                    MarketSharePlayer(user=shr.user, market=shr.market, share=None, position=pos)
-                    for pos, shr in pos_shares.items()
+                    MarketSharePlayer(user=user, market=market.id, share=None, position=pos)
+                    for pos, (user, _) in pos_shares.items()
                     if pos <= 2
                 ],
             )
         else:
             visible_shares.extend(
                 [
-                    MarketSharePlayer(user=shr.user, market=shr.market, share=shr.share, position=pos)
-                    for pos, shr in enumerate(sorted_shares, start=1)
+                    MarketSharePlayer(user=user, market=market.id, share=shr, position=pos)
+                    for pos, (user, shr) in pos_shares.items()
                 ],
             )
     return visible_shares
 
 
-@router.get("/shares/all", dependencies=[Security(get_current_user, scopes=["root"])])
+@router.get("/shares", dependencies=[Security(get_current_user, scopes=["root"])])
 async def get_market_shares(dao: MarketDAO = Depends(), cycle_dao: CycleDAO = Depends()) -> list[MarketShare]:
     """Get all market shares for previous cycle.
 

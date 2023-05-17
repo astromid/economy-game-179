@@ -4,11 +4,11 @@ from fastapi import APIRouter, Depends, HTTPException, Security
 from pydantic import BaseModel
 
 from egame179_backend.api.auth.dependencies import get_current_user
-from egame179_backend.db import CycleDAO, MarketDAO, TransactionDAO, WarehouseDAO, WorldDemandDAO
+from egame179_backend.db import BulletinDAO, CycleDAO, MarketDAO, TransactionDAO, UserDAO, WarehouseDAO, WorldDemandDAO
 from egame179_backend.db.supply import Supply, SupplyDAO
 from egame179_backend.db.user import User
-from egame179_backend.engine.math import delivered_items
-from egame179_backend.engine.utility import check_storage, get_supply_velocities
+from egame179_backend.engine.math import bulletin_quantity, delivered_items
+from egame179_backend.engine.utility import check_storage, get_market_names, get_supply_velocities
 
 router = APIRouter()
 
@@ -89,13 +89,16 @@ async def get_all_supplies(
 
 
 @router.post("/new")
-async def make_supply(
+async def make_supply(  # noqa: WPS217
     bid: SupplyBid,
     user: User = Depends(get_current_user),
     dao: SupplyDAO = Depends(),
     cycle_dao: CycleDAO = Depends(),
     transaction_dao: TransactionDAO = Depends(),
     wh_dao: WarehouseDAO = Depends(),
+    bulletin_dao: BulletinDAO = Depends(),
+    market_dao: MarketDAO = Depends(),
+    user_dao: UserDAO = Depends(),
 ) -> None:
     """Make supply route.
 
@@ -106,6 +109,9 @@ async def make_supply(
         cycle_dao (CycleDAO): cycle table data access object.
         transaction_dao (TransactionDAO): transactions table DAO.
         wh_dao (WarehouseDAO): warehouses table DAO.
+        bulletin_dao (BulletinDAO): bulletins table DAO.
+        market_dao (MarketDAO): markets table DAO.
+        user_dao (UserDAO): users table DAO.
 
     Raises:
         HTTPException: quantity <= 0.
@@ -114,6 +120,8 @@ async def make_supply(
     if bid.quantity <= 0:
         raise HTTPException(status_code=400, detail=f"Incorrect {bid.quantity = }")
     cycle = await cycle_dao.get_current()
+    market_names = await get_market_names(market_dao)
+    user_names = await user_dao.get_names()
     if not await check_storage(cycle=cycle.id, user=user.id, market=bid.market, quantity=bid.quantity, wh_dao=wh_dao):
         raise HTTPException(status_code=400, detail="Not enough items in warehouse for supply")
     await transaction_dao.create(
@@ -123,3 +131,9 @@ async def make_supply(
         description="Fee for market operations (supply)",
     )
     await dao.create(cycle=cycle.id, user=user.id, market=bid.market, quantity=bid.quantity)
+    await bulletin_dao.create(
+        cycle=cycle.id,
+        user=user_names[user.id],
+        market=market_names[bid.market],
+        quantity=bulletin_quantity(bid.quantity),
+    )

@@ -76,40 +76,34 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer, autoincrement=True, primary_key=True),
         sa.Column("ts", sa.DateTime, nullable=False),
         sa.Column("cycle", sa.Integer, sa.ForeignKey("cycles.id"), nullable=False),
-        sa.Column("user", sa.Integer, sa.ForeignKey("users.id")),
-        sa.Column("market", sa.Integer, sa.ForeignKey("markets.id")),
         sa.Column("text", sa.Text, nullable=False),
     )
     balances_view_sql = """
         CREATE VIEW balances AS
         SELECT
-            t.cycle,
-            t.user,
-            SUM(t.amount) OVER (PARTITION BY t.user ORDER BY t.cycle, t.user) AS balance
-        FROM transactions t
-        GROUP BY cycle, user
+            ts.cycle,
+            ts.user,
+            SUM(ts.delta) OVER (PARTITION BY ts.user ORDER BY ts.cycle) AS balance
+        FROM (
+            SELECT t.cycle, t.user, SUM(t.amount) AS delta
+            FROM transactions t
+            GROUP BY t.cycle, t.user
+        ) AS ts
     """
     warehouses_view_sql = """
         CREATE VIEW warehouses AS
-        SELECT
-            w.cycle,
-            w.user,
-            w.market,
-            SUM(w.quantity) OVER (PARTITION BY w.user, w.market ORDER BY w.cycle, w.user, w.market) AS quantity
+        SELECT w.cycle, w.user, w.market, SUM(w.delta) OVER (PARTITION BY w.user, w.market ORDER BY w.cycle) AS quantity
         FROM (
-            SELECT ps.cycle, ps.user, ps.market, SUM(ps.quantity) AS quantity
-            FROM (
-                SELECT p.cycle, p.user, p.market, SUM(p.quantity) AS quantity
-                FROM production_log p
-                GROUP BY p.cycle, p.user, p.market
-                UNION ALL
-                SELECT s.cycle, s.user, s.market, -SUM(COALESCE(s.delivered, s.quantity)) AS quantity
-                FROM supplies s
-                GROUP BY s.cycle, s.user, s.market
-            ) AS ps
+            SELECT ps.cycle, ps.user, ps.market, SUM(ps.quantity) AS delta
+                FROM (
+                    SELECT p.cycle, p.user, p.market, p.quantity AS quantity
+                    FROM production p
+                    UNION ALL
+                    SELECT s.cycle, s.user, s.market, -COALESCE(s.delivered, s.quantity) AS quantity
+                    FROM supplies s
+                ) AS ps
             GROUP BY ps.cycle, ps.user, ps.market
         ) AS w
-        ORDER BY w.cycle, w.user, w.market
     """
     op.execute(balances_view_sql)
     op.execute(warehouses_view_sql)
@@ -165,8 +159,7 @@ def create_npcs(npcs: list[dict[str, int]]) -> None:
 
 def create_cycles(
     total: int,
-    alpha: float,
-    alpha_multiplier: float,
+    fees: dict[str, tuple[float, float]],
     constants: dict[str, int | float],
 ) -> None:
     # game cycles table
@@ -185,13 +178,13 @@ def create_cycles(
         sa.Column("overdraft_rate", sa.Float, nullable=False),
     )
     if cycles_table is not None:
-        cycles = [
+        cycles: list[dict[str, int | float]] = [
             {
-                "id": cycle,
-                "alpha": round(alpha * alpha_multiplier ** (cycle - 1), 3),
+                "id": cycle + 1,
+                **{fee: round(init_fee * mult ** cycle, 2) for fee, (init_fee, mult) in fees.items()},
                 **constants,
             }
-            for cycle in range(1, total + 1)
+            for cycle in range(total)
         ]
         op.bulk_insert(cycles_table, cycles)
     else:
@@ -251,6 +244,7 @@ def create_market_shares(
         sa.Column("user", sa.Integer, sa.ForeignKey("users.id")),
         sa.Column("market", sa.Integer, sa.ForeignKey("markets.id")),
         sa.Column("share", sa.Float, nullable=False),
+        sa.Column("position", sa.Integer, nullable=False),
         sa.Column("unlocked", sa.Boolean, nullable=False),
         sa.PrimaryKeyConstraint("cycle", "user", "market"),
     )
@@ -261,6 +255,7 @@ def create_market_shares(
                 "user": user["id"],
                 "market": market["id"],
                 "share": 0,
+                "position": 0,
                 "unlocked": market["home_user"] == user["id"],
             }
             for user, market in itertools.product(users, markets)
@@ -344,7 +339,6 @@ def create_stocks(initial_price: float, users: list[dict[str, int | str]]) -> No
         "stocks",
         sa.Column("cycle", sa.Integer, sa.ForeignKey("cycles.id")),
         sa.Column("user", sa.Integer, sa.ForeignKey("users.id")),
-        sa.Column("rel_income", sa.Float, nullable=False),
         sa.Column("price", sa.Float, nullable=False),
         sa.PrimaryKeyConstraint("cycle", "user"),
     )
@@ -353,7 +347,6 @@ def create_stocks(initial_price: float, users: list[dict[str, int | str]]) -> No
             {
                 "cycle": 1,
                 "user": user["id"],
-                "rel_income": 1,
                 "price": initial_price,
             }
             for user in users

@@ -33,9 +33,9 @@ class ProductionDAO:
             user (int, optional): target user id. If None, all log records return.
 
         Returns:
-            list[Production]: production log.
+            list[Production]: production log (excluding axuiliary zeros).
         """
-        query = select(Production).order_by(Production.id)
+        query = select(Production).where(Production.quantity > 0).order_by(Production.id)
         if user is not None:
             query = query.where(Production.user == user)
         raw_production = await self.session.exec(query)  # type: ignore

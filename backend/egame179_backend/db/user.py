@@ -65,3 +65,13 @@ class UserDAO:
         query = select(User).where(or_(User.role == "player", User.role == "npc"))  # type: ignore
         raw_users = await self.session.exec(query)  # type: ignore
         return {user.id: user.name for user in raw_users.all()}
+
+    async def get_players(self) -> list[int]:
+        """Get player user ids.
+
+        Returns:
+            list[int]: player user ids.
+        """
+        query = select(User).where(User.role == "player")  # type: ignore
+        raw_users = await self.session.exec(query)  # type: ignore
+        return [user.id for user in raw_users.all()]

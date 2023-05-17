@@ -21,47 +21,37 @@ class BalanceDAO:
     def __init__(self, session: AsyncSession = Depends(get_db_session)):
         self.session = session
 
-    async def get(self, user: int, cycle: int) -> float:
+    async def get(self, cycle: int, user: int) -> float:
         """Get user balance on particular cycle.
 
         Args:
-            user (int): target user id.
             cycle (int): target cycle.
+            user (int): target user id.
 
         Returns:
             float: target balance.
         """
-        query = select(Balance).where(Balance.user == user, Balance.cycle == cycle)
+        query = select(Balance).where(Balance.cycle == cycle, Balance.user == user)
         raw_balance = await self.session.exec(query)  # type: ignore
         return raw_balance.one().balance
 
-    async def select(self, user: int | None = None, cycle: int | None = None) -> list[Balance]:
+    async def select(self, cycle: int | None = None, user: int | None = None, overdrafted=False) -> list[Balance]:
         """Get user balances.
 
         Args:
-            user (int, optional): target user id. If None, all user balances return.
             cycle (int): target cycle. If None, all cycles return.
+            user (int, optional): target user id. If None, all user balances return.
+            overdrafted (bool, optional): if True, only overdrafted balances return.
 
         Returns:
             list[Balance]: users balances.
         """
-        query = select(Balance).order_by(Balance.cycle)
-        if user is not None:
-            query = query.where(Balance.user == user)
+        query = select(Balance)
         if cycle is not None:
             query = query.where(Balance.cycle == cycle)
-        raw_balances = await self.session.exec(query)  # type: ignore
-        return raw_balances.all()
-
-    async def get_overdrafted(self, cycle: int) -> list[Balance]:
-        """Get overdrafted balances on target cycle.
-
-        Args:
-            cycle (int): target cycle.
-
-        Returns:
-            list[Balance]: overdrafted balances.
-        """
-        query = select(Balance).where(Balance.cycle == cycle, Balance.balance < 0)
+        if user is not None:
+            query = query.where(Balance.user == user)
+        if overdrafted:
+            query = query.where(Balance.balance < 0)
         raw_balances = await self.session.exec(query)  # type: ignore
         return raw_balances.all()

@@ -14,7 +14,7 @@ class StockPrice(BaseModel):
     price: float
 
 
-@router.get("/list/all", response_model=list[StockPrice])
+@router.get("/list", response_model=list[StockPrice])
 async def get_stocks(dao: StockDAO = Depends()) -> list[Stock]:
     """Get stocks.
 

@@ -5,7 +5,6 @@ from sqlmodel import Field, SQLModel, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from egame179_backend.db.session import get_db_session
-from egame179_backend.engine.math import delivered_items
 
 
 class Supply(SQLModel, table=True):
@@ -29,12 +28,13 @@ class SupplyDAO:
     def __init__(self, session: AsyncSession = Depends(get_db_session)):
         self.session = session
 
-    async def select(self, cycle: int, user: int | None = None) -> list[Supply]:
+    async def select(self, cycle: int, user: int | None = None, ongoing=False) -> list[Supply]:
         """Get all supplies on a target cycle.
 
         Args:
             cycle (int): target cycle.
             user (int, optional): target user id. If None, all user records return.
+            ongoing (bool, optional): if True, only ongoing supplies return.
 
         Returns:
             list[Supply]: supplies.
@@ -42,6 +42,8 @@ class SupplyDAO:
         query = select(Supply).where(Supply.cycle == cycle).order_by(Supply.id)
         if user is not None:
             query = query.where(Supply.user == user)
+        if ongoing:
+            query = query.where(Supply.delivered == 0)
         raw_supplies = await self.session.exec(query)  # type: ignore
         return raw_supplies.all()
 
@@ -57,23 +59,11 @@ class SupplyDAO:
         self.session.add(Supply(ts_start=datetime.now(), cycle=cycle, user=user, market=market, quantity=quantity))
         await self.session.commit()
 
-    async def finish(self, ts_finish: datetime, velocities: dict[int, float]) -> None:
-        """Finish all ongoing supplies and update real delivered amount.
+    async def update(self, supplies: list[Supply]) -> None:
+        """Update supplies.
 
         Args:
-            ts_finish (datetime): cycle finish time.
-            velocities (dict[int, float]): supply velocity (items per sec) for each market.
+            supplies (list[Supply]): supplies to update.
         """
-        query = select(Supply).where(Supply.delivered == 0)
-        raw_supplies = await self.session.exec(query)  # type: ignore
-        supplies: list[Supply] = raw_supplies.all()
-        for supply in supplies:
-            supply.delivered = delivered_items(
-                ts_start=supply.ts_start,
-                ts_finish=ts_finish,
-                velocity=velocities[supply.market],
-                quantity=supply.quantity,
-            )
-            supply.ts_finish = ts_finish
         self.session.add_all(supplies)
         await self.session.commit()

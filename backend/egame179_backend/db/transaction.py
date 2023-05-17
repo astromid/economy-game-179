@@ -52,3 +52,12 @@ class TransactionDAO:
         """
         self.session.add(Transaction(ts=datetime.now(), cycle=cycle, user=user, amount=amount, description=description))
         await self.session.commit()
+
+    async def add(self, transactions: list[Transaction]) -> None:
+        """Add transactions.
+
+        Args:
+            transactions (list[Transaction]): transactions to update.
+        """
+        self.session.add_all(transactions)
+        await self.session.commit()

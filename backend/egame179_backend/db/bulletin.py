@@ -1,3 +1,4 @@
+import random
 from datetime import datetime
 
 from fastapi import Depends
@@ -5,6 +6,11 @@ from sqlmodel import Field, SQLModel, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from egame179_backend.db.session import get_db_session
+
+BULLETIN_TEMPLATES = (
+    "TEMPLATE #0 {market} {user} {quantity}.",
+    "TEMPLATE #1 {market} {user} {quantity}.",
+)
 
 
 class Bulletin(SQLModel, table=True):
@@ -15,8 +21,6 @@ class Bulletin(SQLModel, table=True):
     id: int = Field(default=None, primary_key=True)
     ts: datetime
     cycle: int
-    user: int
-    market: int
     text: str
 
 
@@ -39,14 +43,16 @@ class BulletinDAO:
         raw_bulletins = await self.session.exec(query)  # type: ignore
         return raw_bulletins.all()
 
-    async def create(self, cycle: int, user: int, market: int, text: str) -> None:
+    async def create(self, cycle: int, user: str, market: str, quantity: int) -> None:
         """Create new information bulletin.
 
         Args:
             cycle (int): bulletin cycle.
-            user (int): bulletin user id.
-            market (int): bulletin market id.
-            text (str): bulletin text.
+            user (str): bulletin user name.
+            market (str): bulletin market.
+            quantity (int): bulletin quantity (noised).
         """
-        self.session.add(Bulletin(ts=datetime.now(), cycle=cycle, user=user, market=market, text=text))
+        template = random.choice(BULLETIN_TEMPLATES)  # noqa: S311
+        text = template.format(market=market, user=user, quantity=quantity)
+        self.session.add(Bulletin(ts=datetime.now(), cycle=cycle, text=text))
         await self.session.commit()

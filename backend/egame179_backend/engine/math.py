@@ -1,5 +1,9 @@
 import math
+import random
 from datetime import datetime
+
+BULLETIN_SIGMA = 0.1
+STOCKS_SIGMA = 0.05
 
 
 def production_cost(theta: float, price: float, quantity: int) -> float:  # noqa: D103
@@ -29,3 +33,16 @@ def delivered_items(ts_start: datetime, ts_finish: datetime, velocity: float, qu
     delivery_time = (ts_finish - ts_start).total_seconds()
     max_items = math.floor(velocity * delivery_time)
     return min(quantity, max_items)
+
+
+def sold_items(delivered: int, demand: int, total: int) -> int:  # noqa: D103
+    rel_amount = min(1, demand / total)
+    return math.floor(rel_amount * delivered)
+
+
+def bulletin_quantity(quantity: int) -> int:  # noqa: D103
+    return math.floor(quantity * (1 + random.normalvariate(0, BULLETIN_SIGMA)))
+
+
+def stocks_price(prev_price: float, rel_income: float) -> float:  # noqa: D103
+    return prev_price * rel_income * (1 + random.normalvariate(0, STOCKS_SIGMA))

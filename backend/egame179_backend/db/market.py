@@ -37,6 +37,7 @@ class MarketShare(SQLModel, table=True):
     user: int
     market: int
     share: float
+    position: int
     unlocked: bool
 
 
@@ -79,36 +80,36 @@ class MarketDAO:
 
     async def select_shares(
         self,
-        user: int | None = None,
         cycle: int | None = None,
+        user: int | None = None,
         nonzero: bool = False,
     ) -> list[MarketShare]:
         """Get market shares.
 
         Args:
-            user (int, optional): target user id. If None, return shares for all users.
             cycle (int, optional): target cycle. If None, return shares for all cycles.
-            nonzero (bool): select only nonzero shares. Defaults to False.
+            user (int, optional): target user id. If None, return shares for all users.
+            nonzero (bool): select only nonzero positions. Defaults to False.
 
         Returns:
             list[MarketShare]: markets shares.
         """
         query = select(MarketShare)
-        if user is not None:
-            query = query.where(MarketShare.user == user)
         if cycle is not None:
             query = query.where(MarketShare.cycle == cycle)
+        if user is not None:
+            query = query.where(MarketShare.user == user)
         if nonzero:
-            query = query.where(MarketShare.share > 0)
+            query = query.where(MarketShare.position > 0)
         raw_shares = await self.session.exec(query)  # type: ignore
         return raw_shares.all()
 
-    async def create_shares(self, users: list[int], cycle: int, unlocked: set[tuple[int, int]]) -> None:
+    async def create_shares(self, cycle: int, users: list[int], unlocked: set[tuple[int, int]]) -> None:
         """Create share records for new cycle.
 
         Args:
-            users (list[int]): player ids.
             cycle (int): target cycle.
+            users (list[int]): player ids.
             unlocked (set[tuple[int, int]]): set of unlocked markets (user id, market_id).
         """
         markets = await self.select_markets()
@@ -118,6 +119,7 @@ class MarketDAO:
                 user=user,
                 market=market.id,
                 share=0,
+                position=0,
                 unlocked=(user, market.id) in unlocked or (market.home_user == user),
             )
             for user, market in itertools.product(users, markets)
