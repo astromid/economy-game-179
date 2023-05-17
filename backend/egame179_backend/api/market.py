@@ -1,14 +1,28 @@
+import math
+from collections import defaultdict
+
 from fastapi import APIRouter, Depends, Security
+from pydantic import BaseModel
 
 from egame179_backend.api.auth.dependencies import get_current_user
-from egame179_backend.db.market import Market, MarketDAO, UnlockedMarket, UnlockedMarketDAO
+from egame179_backend.db import CycleDAO, WorldDemandDAO
+from egame179_backend.db.market import Market, MarketConnection, MarketDAO, MarketShare
 from egame179_backend.db.user import User
 
 router = APIRouter()
 
 
-@router.get("/all")
-async def get_markets(dao: MarketDAO = Depends()) -> list[Market]:
+class MarketSharePlayer(BaseModel):
+    """Market share with player visible info."""
+
+    user: int
+    market: int
+    share: float | None = None
+    position: int
+
+
+@router.get("/nodes")
+async def get_market_nodes(dao: MarketDAO = Depends()) -> list[Market]:
     """Get all markets graph nodes.
 
     Args:
@@ -17,34 +31,130 @@ async def get_markets(dao: MarketDAO = Depends()) -> list[Market]:
     Returns:
         list[Markets]: list of markets nodes.
     """
-    return await dao.get_all()
+    return await dao.select_markets()
 
 
-@router.get("/unlocked/user")
+@router.get("/edges")
+async def get_market_edges(dao: MarketDAO = Depends()) -> list[MarketConnection]:
+    """Get all markets graph edges.
+
+    Args:
+        dao (MarketDAO): markets table data access object.
+
+    Returns:
+        list[MarketsConnection]: list of market edges.
+    """
+    return await dao.select_connections()
+
+
+@router.get("/unlocked")
 async def get_user_unlocked_markets(
-    dao: UnlockedMarketDAO = Depends(),
+    dao: MarketDAO = Depends(),
+    cycle_dao: CycleDAO = Depends(),
     user: User = Depends(get_current_user),
-) -> list[UnlockedMarket]:
+) -> list[int]:
     """Get unlocked markets for current user.
 
     Args:
-        dao (UnlockedMarketDAO): unlocked markets table data access object.
+        dao (MarketDAO): markets table data access object.
+        cycle_dao (CycleDAO): cycles table data access object.
         user (User): current user.
 
     Returns:
-        list[UnlockedMarkets]: list of markets nodes.
+        list[int]: list of unlocked markets node ids.
     """
-    return await dao.get_all(user.id)
+    current_cycle = await cycle_dao.get_current()
+    shares = await dao.select_shares(user=user.id, cycle=current_cycle.id)
+    return [share.market for share in shares if share.unlocked]
 
 
-@router.get("/unlocked/all", dependencies=[Security(get_current_user, scopes=["root"])])
-async def get_unlocked_markets(dao: UnlockedMarketDAO = Depends()) -> list[UnlockedMarket]:
-    """Get unlocked markets for all users.
+@router.get("/shares/user")
+async def get_user_market_shares(
+    user: User = Depends(get_current_user),
+    dao: MarketDAO = Depends(),
+    cycle_dao: CycleDAO = Depends(),
+) -> list[MarketSharePlayer]:
+    """Get player visible market shares.
 
     Args:
-        dao (UnlockedMarketDAO): unlocked markets table data access object.
+        user (User): authenticated user data.
+        dao (MarketDAO): markets table data access object.
+        cycle_dao (CycleDAO): cycle table data access object.
 
     Returns:
-        list[UnlockedMarkets]: list of markets nodes.
+        list[MarketSharePlayer]: market shares visible for player.
     """
-    return await dao.get_all()
+    current_cycle = await cycle_dao.get_current()
+    markets = await dao.select_markets()
+    prev_shares = await dao.select_shares(cycle=current_cycle.id - 1, nonzero=True)
+    market_shares: dict[int, list[MarketShare]] = defaultdict(list)
+    for share in prev_shares:
+        market_shares[share.market].append(share)
+
+    visible_shares = []
+    for market in markets:
+        sorted_shares = sorted(market_shares[market.id], key=lambda shr: shr.share, reverse=True)
+        pos_shares = {pos: shr for pos, shr in enumerate(sorted_shares, start=1)}
+        top2_users = [shr.user for pos, shr in pos_shares.items() if pos <= 2]
+        if user.id not in top2_users:
+            # filter information for non-owned markets (user not in top-2)
+            visible_shares.extend(
+                [
+                    MarketSharePlayer(user=shr.user, market=shr.market, share=None, position=pos)
+                    for pos, shr in pos_shares.items()
+                    if pos <= 2
+                ],
+            )
+        else:
+            visible_shares.extend(
+                [
+                    MarketSharePlayer(user=shr.user, market=shr.market, share=shr.share, position=pos)
+                    for pos, shr in enumerate(sorted_shares, start=1)
+                ],
+            )
+    return visible_shares
+
+
+@router.get("/shares/all", dependencies=[Security(get_current_user, scopes=["root"])])
+async def get_market_shares(dao: MarketDAO = Depends(), cycle_dao: CycleDAO = Depends()) -> list[MarketShare]:
+    """Get all market shares for previous cycle.
+
+    Args:
+        dao (MarketDAO): markets table data access object.
+        cycle_dao (CycleDAO): cycle table data access object.
+
+    Returns:
+        list[MarketShare]: shares for all users.
+    """
+    current_cycle = await cycle_dao.get_current()
+    return await dao.select_shares(cycle=current_cycle.id - 1, nonzero=True)
+
+
+@router.get("/demand_factors")
+async def get_demand_factors(
+    dao: WorldDemandDAO = Depends(),
+    cycle_dao: CycleDAO = Depends(),
+    market_dao: MarketDAO = Depends(),
+) -> dict[int, float]:
+    """Get current market demand factors.
+
+    Args:
+        dao (WorldDemandDAO): world demand table data access object.
+        cycle_dao (CycleDAO): cycle table data access object.
+        market_dao (MarketDAO): market table data access object.
+
+    Returns:
+        dict[int, float]: demand factors for each market.
+    """
+    current_cycle = await cycle_dao.get_current()
+    markets = await market_dao.select_markets()
+    current_demand = await dao.select(cycle=current_cycle.id)
+    initial_demand = await dao.select(cycle=1)
+    factors: dict[int, float] = {}
+    for market in markets:
+        rel_d = current_demand[market.ring] / initial_demand[market.ring]
+        if rel_d >= 1:
+            factors[market.id] = math.log(rel_d) + 1
+        else:
+            factors[market.id] = math.sqrt(rel_d)
+    return factors

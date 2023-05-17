@@ -21,7 +21,7 @@ class BalanceDAO:
     def __init__(self, session: AsyncSession = Depends(get_db_session)):
         self.session = session
 
-    async def get(self, user: int, cycle: int) -> Balance:
+    async def get(self, user: int, cycle: int) -> float:
         """Get user balance on particular cycle.
 
         Args:
@@ -29,11 +29,11 @@ class BalanceDAO:
             cycle (int): target cycle.
 
         Returns:
-            Balance: target balance.
+            float: target balance.
         """
         query = select(Balance).where(Balance.user == user, Balance.cycle == cycle)
         raw_balance = await self.session.exec(query)  # type: ignore
-        return raw_balance.one()
+        return raw_balance.one().balance
 
     async def select(self, user: int | None = None, cycle: int | None = None) -> list[Balance]:
         """Get user balances.

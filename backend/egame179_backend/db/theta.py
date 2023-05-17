@@ -22,6 +22,21 @@ class ThetaDAO:
     def __init__(self, session: AsyncSession = Depends(get_db_session)):
         self.session = session
 
+    async def get(self, user: int, cycle: int, market: int) -> float:
+        """Get production theta.
+
+        Args:
+            user (int): target user id.
+            cycle (int): target cycle.
+            market (int): target market.
+
+        Returns:
+            float: theta parameter.
+        """
+        query = select(Theta).where(Theta.user == user, Theta.cycle == cycle, Theta.market == market)
+        raw_theta = await self.session.exec(query)  # type: ignore
+        return raw_theta.one().theta
+
     async def select(self, user: int | None = None, cycle: int | None = None) -> list[Theta]:
         """Get all thetas.
 

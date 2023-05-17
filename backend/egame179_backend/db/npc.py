@@ -20,7 +20,7 @@ class NpcDAO:
     def __init__(self, session: AsyncSession = Depends(get_db_session)):
         self.session = session
 
-    async def select(self) -> list[Npc]:
+    async def select(self) -> dict[int, int]:
         """Get NPCs info.
 
         Returns:
@@ -28,4 +28,4 @@ class NpcDAO:
         """
         query = select(Npc)
         raw_npcs = await self.session.exec(query)  # type: ignore
-        return raw_npcs.all()
+        return {npc.user: npc.ring for npc in raw_npcs.all()}

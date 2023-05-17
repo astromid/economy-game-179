@@ -17,7 +17,7 @@ class Production(SQLModel, table=True):
     cycle: int
     user: int
     market: int
-    amount: int
+    quantity: int
 
 
 class ProductionDAO:
@@ -26,7 +26,7 @@ class ProductionDAO:
     def __init__(self, session: AsyncSession = Depends(get_db_session)):
         self.session = session
 
-    async def select(self, user: int | None) -> list[Production]:
+    async def select(self, user: int | None = None) -> list[Production]:
         """Get production log.
 
         Args:
@@ -41,14 +41,14 @@ class ProductionDAO:
         raw_production = await self.session.exec(query)  # type: ignore
         return raw_production.all()
 
-    async def create(self, cycle: int, user: int, market: int, amount: int) -> None:
+    async def create(self, cycle: int, user: int, market: int, quantity: int) -> None:
         """Create new production log record.
 
         Args:
             cycle (int): production cycle.
             user (int): target user id.
             market (int): production market id.
-            amount (int): number of items.
+            quantity (int): number of items.
         """
-        self.session.add(Production(ts=datetime.now(), cycle=cycle, user=user, market=market, amount=amount))
+        self.session.add(Production(ts=datetime.now(), cycle=cycle, user=user, market=market, quantity=quantity))
         await self.session.commit()

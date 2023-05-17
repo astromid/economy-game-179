@@ -56,6 +56,16 @@ class MarketDAO:
         raw_markets = await self.session.exec(query)  # type: ignore
         return raw_markets.all()
 
+    async def select_connections(self) -> list[MarketConnection]:
+        """Get market graph edges.
+
+        Returns:
+            list[MarketConnections]: graph edges.
+        """
+        query = select(MarketConnection)
+        raw_connections = await self.session.exec(query)  # type: ignore
+        return raw_connections.all()
+
     async def get_graph(self) -> nx.Graph:
         """Get market graph.
 
@@ -63,18 +73,22 @@ class MarketDAO:
             nx.Graph: networkx Graph.
         """
         graph = nx.Graph()
-
-        query = select(MarketConnection)
-        raw_connections = await self.session.exec(query)  # type: ignore
-        graph.add_edges_from([(edge.source, edge.target) for edge in raw_connections.all()])
+        edges = await self.select_connections()
+        graph.add_edges_from([(edge.source, edge.target) for edge in edges])
         return graph
 
-    async def select_shares(self, user: int | None = None, cycle: int | None = None) -> list[MarketShare]:
+    async def select_shares(
+        self,
+        user: int | None = None,
+        cycle: int | None = None,
+        nonzero: bool = False,
+    ) -> list[MarketShare]:
         """Get market shares.
 
         Args:
             user (int, optional): target user id. If None, return shares for all users.
             cycle (int, optional): target cycle. If None, return shares for all cycles.
+            nonzero (bool): select only nonzero shares. Defaults to False.
 
         Returns:
             list[MarketShare]: markets shares.
@@ -84,6 +98,8 @@ class MarketDAO:
             query = query.where(MarketShare.user == user)
         if cycle is not None:
             query = query.where(MarketShare.cycle == cycle)
+        if nonzero:
+            query = query.where(MarketShare.share > 0)
         raw_shares = await self.session.exec(query)  # type: ignore
         return raw_shares.all()
 

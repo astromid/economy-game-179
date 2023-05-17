@@ -6,15 +6,15 @@ from egame179_backend.db.stocks import Stock, StockDAO
 router = APIRouter()
 
 
-class StockNoise(BaseModel):
-    """Stock model with only noised price."""
+class StockPrice(BaseModel):
+    """Stock model with only price."""
 
     cycle: int
-    user_id: int
-    price_noise: float
+    user: int
+    price: float
 
 
-@router.get("/all", response_model=list[StockNoise])
+@router.get("/list/all", response_model=list[StockPrice])
 async def get_stocks(dao: StockDAO = Depends()) -> list[Stock]:
     """Get stocks.
 
@@ -24,4 +24,4 @@ async def get_stocks(dao: StockDAO = Depends()) -> list[Stock]:
     Returns:
         list[Stock]: stocks history.
     """
-    return await dao.get()
+    return await dao.select()

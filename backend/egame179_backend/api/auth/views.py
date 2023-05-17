@@ -7,6 +7,7 @@ from jose import jwt
 
 from egame179_backend.api.auth.dependencies import ALGORITHM, get_current_user
 from egame179_backend.api.auth.schema import Token, UserInfo
+from egame179_backend.db import NpcDAO
 from egame179_backend.db.user import User, UserDAO
 from egame179_backend.settings import settings
 
@@ -66,14 +67,27 @@ async def get_user(user: User = Depends(get_current_user)) -> User:
     return user
 
 
-@router.get("/players", response_model=list[UserInfo])
-async def get_players(dao: UserDAO = Depends()) -> list[User]:
-    """Get players info.
+@router.get("/names")
+async def get_names(dao: UserDAO = Depends()) -> dict[int, str]:
+    """Get player names (including NPCs).
 
     Args:
         dao (UserDAO): user table data access object.
 
     Returns:
-        list[User]: list of UserInfo response model.
+        dict[int, str]: {user: name}.
     """
-    return await dao.get_players()
+    return await dao.get_names()
+
+
+@router.get("/npcs")
+async def get_npcs(dao: NpcDAO = Depends()) -> dict[int, int]:
+    """Get NPCs info.
+
+    Args:
+        dao (NpcDAO): NPCs table data access object.
+
+    Returns:
+        dict[int, str]: {npc: ring}.
+    """
+    return await dao.select()

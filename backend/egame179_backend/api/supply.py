@@ -1,14 +1,14 @@
-import math
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Security
 from pydantic import BaseModel
 
-from egame179_backend import engine
 from egame179_backend.api.auth.dependencies import get_current_user
-from egame179_backend.db import BalanceDAO, CycleDAO, CycleParamsDAO, MarketDAO, ProductDAO, TransactionDAO
+from egame179_backend.db import CycleDAO, MarketDAO, TransactionDAO, WarehouseDAO, WorldDemandDAO
 from egame179_backend.db.supply import Supply, SupplyDAO
 from egame179_backend.db.user import User
+from egame179_backend.engine.math import delivered_items
+from egame179_backend.engine.utility import check_storage, get_supply_velocities
 
 router = APIRouter()
 
@@ -16,17 +16,17 @@ router = APIRouter()
 class SupplyBid(BaseModel):
     """Supply bid model."""
 
-    market_id: int
-    amount: int
+    market: int
+    quantity: int
 
 
-@router.get("/user")
+@router.get("/list/user")
 async def get_user_supplies(
     user: User = Depends(get_current_user),
     dao: SupplyDAO = Depends(),
     cycle_dao: CycleDAO = Depends(),
-    cycle_params_dao: CycleParamsDAO = Depends(),
     market_dao: MarketDAO = Depends(),
+    wd_dao: WorldDemandDAO = Depends(),
 ) -> list[Supply]:
     """Get current supplies for user.
 
@@ -34,77 +34,68 @@ async def get_user_supplies(
         user (User): authenticated user data.
         dao (SupplyDAO): supplies table data access object.
         cycle_dao (CycleDAO): cycle table data access object.
-        cycle_params_dao (CycleParamsDAO): cycle params table data access object.
         market_dao (MarketDAO): market table data access object.
+        wd_dao (WorldDemandDAO): world_demand table DAO.
 
     Returns:
         list[Supply]: current supplies for user.
     """
-    current_ts = datetime.now()
-    current_cycle = await cycle_dao.get_current()
-    current_cycle_params = await cycle_params_dao.get(current_cycle.cycle)
-    markets = await market_dao.get_all()
-    supplies = await dao.get(cycle=current_cycle.cycle, user_id=user.id)
-
-    velocities = engine.get_velocities(
-        m_id2ring={market.id: market.ring for market in markets},
-        cycle_params=current_cycle_params,
-    )
+    ts = datetime.now()
+    cycle = await cycle_dao.get_current()
+    supplies = await dao.select(cycle=cycle.id, user=user.id)
+    velocities = await get_supply_velocities(market_dao=market_dao, wd_dao=wd_dao, cycle=cycle.id, tau_s=cycle.tau_s)
     for supply in supplies:
-        if supply.amount == 0:
-            delivery_time = (current_ts - supply.ts_start).total_seconds()
-            delivered_amount = math.floor(velocities[supply.market_id] * delivery_time)
-            supply.amount = min(supply.declared_amount, delivered_amount)
+        if supply.delivered == 0:
+            supply.delivered = delivered_items(
+                ts_start=supply.ts_start,
+                ts_finish=ts,
+                velocity=velocities[supply.market],
+                quantity=supply.quantity,
+            )
     return supplies
 
 
-@router.get("/all", dependencies=[Security(get_current_user, scopes=["root"])])
+@router.get("/list", dependencies=[Security(get_current_user, scopes=["root"])])
 async def get_all_supplies(
     dao: SupplyDAO = Depends(),
     cycle_dao: CycleDAO = Depends(),
-    cycle_params_dao: CycleParamsDAO = Depends(),
     market_dao: MarketDAO = Depends(),
+    wd_dao: WorldDemandDAO = Depends(),
 ) -> list[Supply]:
     """Get products history for all users.
 
     Args:
         dao (SupplyDAO): supplies table data access object.
         cycle_dao (CycleDAO): cycle table data access object.
-        cycle_params_dao (CycleParamsDAO): cycle params table data access object.
         market_dao (MarketDAO): market table data access object.
+        wd_dao (WorldDemandDAO): world_demand table DAO.
 
     Returns:
         list[Supply]: current supplies for all users.
     """
-    # TODO: refactor to avoid code duplication
-    current_ts = datetime.now()
-    current_cycle = await cycle_dao.get_current()
-    current_cycle_params = await cycle_params_dao.get(current_cycle.cycle)
-    markets = await market_dao.get_all()
-    supplies = await dao.get(cycle=current_cycle.cycle)
-
-    velocities = engine.get_velocities(
-        m_id2ring={market.id: market.ring for market in markets},
-        cycle_params=current_cycle_params,
-    )
+    ts = datetime.now()
+    cycle = await cycle_dao.get_current()
+    supplies = await dao.select(cycle=cycle.id)
+    velocities = await get_supply_velocities(market_dao=market_dao, wd_dao=wd_dao, cycle=cycle.id, tau_s=cycle.tau_s)
     for supply in supplies:
-        if supply.amount == 0:
-            delivery_time = (current_ts - supply.ts_start).total_seconds()
-            delivered_amount = math.floor(velocities[supply.market_id] * delivery_time)
-            supply.amount = min(supply.declared_amount, delivered_amount)
+        if supply.delivered == 0:
+            supply.delivered = delivered_items(
+                ts_start=supply.ts_start,
+                ts_finish=ts,
+                velocity=velocities[supply.market],
+                quantity=supply.quantity,
+            )
     return supplies
 
 
-@router.post("/make")
+@router.post("/new")
 async def make_supply(
     bid: SupplyBid,
     user: User = Depends(get_current_user),
     dao: SupplyDAO = Depends(),
     cycle_dao: CycleDAO = Depends(),
-    cycle_params_dao: CycleParamsDAO = Depends(),
-    product_dao: ProductDAO = Depends(),
-    balance_dao: BalanceDAO = Depends(),
     transaction_dao: TransactionDAO = Depends(),
+    wh_dao: WarehouseDAO = Depends(),
 ) -> None:
     """Make supply route.
 
@@ -113,30 +104,22 @@ async def make_supply(
         user (User): auth user.
         dao (SupplyDAO): supplies table data access object.
         cycle_dao (CycleDAO): cycle table data access object.
-        cycle_params_dao (CycleParamsDAO): cycle params table data access object.
-        product_dao (ProductDAO): products table data access object.
-        balance_dao (BalanceDAO): balances table DAO.
         transaction_dao (TransactionDAO): transactions table DAO.
+        wh_dao (WarehouseDAO): warehouses table DAO.
 
     Raises:
-        HTTPException: amount <= 0
+        HTTPException: quantity <= 0.
+        HTTPException: warehouse < quantity.
     """
-    if bid.amount <= 0:
-        raise HTTPException(status_code=400, detail=f"Incorrect {bid.amount = }")
-    current_cycle = await cycle_dao.get_current()
-    current_cycle_params = await cycle_params_dao.get(current_cycle.cycle)
-    product = await product_dao.get(cycle=current_cycle.cycle, user_id=user.id, market_id=bid.market_id)
-    supply_success = await engine.make_supply(
-        cycle=current_cycle.cycle,
-        user_id=user.id,
-        market_id=bid.market_id,
-        amount=bid.amount,
-        storage=product.storage,
-        beta=current_cycle_params.beta,
-        balance_dao=balance_dao,
-        transaction_dao=transaction_dao,
-        supply_dao=dao,
+    if bid.quantity <= 0:
+        raise HTTPException(status_code=400, detail=f"Incorrect {bid.quantity = }")
+    cycle = await cycle_dao.get_current()
+    if not await check_storage(cycle=cycle.id, user=user.id, market=bid.market, quantity=bid.quantity, wh_dao=wh_dao):
+        raise HTTPException(status_code=400, detail="Not enough items in warehouse for supply")
+    await transaction_dao.create(
+        cycle=cycle.id,
+        user=user.id,
+        amount=-cycle.beta,
+        description="Fee for market operations (supply)",
     )
-    if supply_success:
-        product.storage -= bid.amount
-        await product_dao.add(product)
+    await dao.create(cycle=cycle.id, user=user.id, market=bid.market, quantity=bid.quantity)

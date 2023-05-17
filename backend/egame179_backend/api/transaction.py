@@ -7,7 +7,7 @@ from egame179_backend.db.user import User
 router = APIRouter()
 
 
-@router.get("/user")
+@router.get("/list/user")
 async def get_user_transactions(
     user: User = Depends(get_current_user),
     dao: TransactionDAO = Depends(),
@@ -21,4 +21,4 @@ async def get_user_transactions(
     Returns:
         list[Transaction]: transactions history for user.
     """
-    return await dao.get(user.id)
+    return await dao.select(user.id)
