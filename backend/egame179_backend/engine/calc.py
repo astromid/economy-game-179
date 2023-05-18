@@ -141,8 +141,15 @@ def calculate_new_prices(
     Returns:
         dict[int, tuple[float, float]]: new prices.
     """
-    market_production = prod_df.groupby(["cycle", "market"])["quantity"].sum().to_dict()
-    market_sold = supp_df.groupby("market")["delivered"].sum().to_dict()
+    if prod_df.empty:
+        market_production = {}
+    else:
+        market_production = prod_df.groupby(["cycle", "market"])["quantity"].sum().to_dict()
+
+    if supp_df.empty:
+        market_sold = {}
+    else:
+        market_sold = supp_df.groupby("market")["delivered"].sum().to_dict()
 
     new_prices: dict[int, tuple[float, float]] = {}
     for price in prices:
@@ -173,8 +180,11 @@ def calculate_new_thetas(cycle: Cycle, thetas: list[Theta], prod_df: pd.DataFram
     Returns:
         dict[tuple[int, int], float]: _description_
     """
-    user_production = prod_df.groupby(["user", "market", "cycle"])["quantity"].sum().reset_index()
-    user_mean_production = user_production.groupby(["user", "market"])["quantity"].mean().to_dict()
+    if prod_df.empty:
+        user_mean_production = {}
+    else:
+        user_production = prod_df.groupby(["user", "market", "cycle"])["quantity"].sum().reset_index()
+        user_mean_production = user_production.groupby(["user", "market"])["quantity"].mean().to_dict()
 
     new_thetas: dict[tuple[int, int], float] = {}
     for theta in thetas:
@@ -207,23 +217,29 @@ def calculate_new_stocks(
         dict[int, float]: {user: new stock}.
     """
     # player stocks
-    balances_df = balances_df.sort_values(["user", "cycle"])
-    balances_df["prev_balance"] = balances_df.groupby("user")["balance"].shift(1).fillna(initial_balance)
-    balances_df = balances_df[balances_df["cycle"] == cycle]
-    balances_df["rel_income"] = balances_df["balance"] / balances_df["prev_balance"]
-    balances_df = balances_df.set_index("user")
-    rel_incomes = balances_df["rel_income"].to_dict()
+    if balances_df.empty:
+        rel_incomes = {}
+    else:
+        balances_df = balances_df.sort_values(["user", "cycle"])
+        balances_df["prev_balance"] = balances_df.groupby("user")["balance"].shift(1).fillna(initial_balance)
+        balances_df = balances_df[balances_df["cycle"] == cycle]
+        balances_df["rel_income"] = balances_df["balance"] / balances_df["prev_balance"]
+        balances_df = balances_df.set_index("user")
+        rel_incomes = balances_df["rel_income"].to_dict()
     # NPC stocks
-    storages_df = storages_df.merge(npc_df, on="market", how="left")
-    storages_df = storages_df.groupby(["user", "cycle"])["quantity"].sum().reset_index()
-    storages_df = storages_df.sort_values(["user", "cycle"])
-    storages_df["prev_quantity"] = storages_df.groupby("user")["quantity"].shift(1)
-    storages_df = storages_df[storages_df["cycle"] == cycle]
-    storages_df["rel_income"] = storages_df["quantity"] / storages_df["prev_quantity"]
-    # first cycle logistics stocks are not available
-    storages_df["rel_income"] = storages_df["rel_income"].fillna(1)
-    storages_df = storages_df.set_index("user")
-    rel_storages = storages_df["rel_income"].to_dict()
+    if storages_df.empty:
+        rel_storages = {}
+    else:
+        storages_df = storages_df.merge(npc_df, on="market", how="left")
+        storages_df = storages_df.groupby(["user", "cycle"])["quantity"].sum().reset_index()
+        storages_df = storages_df.sort_values(["user", "cycle"])
+        storages_df["prev_quantity"] = storages_df.groupby("user")["quantity"].shift(1)
+        storages_df = storages_df[storages_df["cycle"] == cycle]
+        storages_df["rel_income"] = storages_df["quantity"] / storages_df["prev_quantity"]
+        # first cycle logistics stocks are not available
+        storages_df["rel_income"] = storages_df["rel_income"].fillna(1)
+        storages_df = storages_df.set_index("user")
+        rel_storages = storages_df["rel_income"].to_dict()
     new_stocks: dict[int, float] = {}
     for stock in stocks:
         rel_income = rel_incomes.get(stock.user, rel_storages.get(stock.user, 1))

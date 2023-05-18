@@ -178,9 +178,14 @@ async def process_market_shares(cycle: int, supplies_df: pd.DataFrame, market_da
         market_dao (db.MarketDAO): markets table DAO.
     """
     shares = await market_dao.select_shares(cycle=cycle)
-    sold_per_user_market = supplies_df.groupby(["user", "market"])["delivered"].sum().to_dict()
-    sold_per_market = supplies_df.groupby("market")["delivered"].sum().to_dict()
     previous_owners = await get_previous_owners(cycle=cycle, market_dao=market_dao)
+
+    if supplies_df.empty:
+        sold_per_user_market = {}
+        sold_per_market = {}
+    else:
+        sold_per_user_market = supplies_df.groupby(["user", "market"])["delivered"].sum().to_dict()
+        sold_per_market = supplies_df.groupby("market")["delivered"].sum().to_dict()
 
     ic(previous_owners)
     ic(sold_per_user_market)

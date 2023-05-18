@@ -13,16 +13,16 @@ def production_cost(theta: float, price: float, quantity: int) -> float:  # noqa
 def buy_price_next(n_mt: int, n_mt1: int, coeff_h: int, p_mt: float) -> float:  # noqa: D103
     delta_mt = n_mt - n_mt1
     sigma = _sigmoid(delta_mt / coeff_h - math.log(2))
-    return (1.5 * sigma + 0.5) * p_mt
+    return round((1.5 * sigma + 0.5) * p_mt, 2)
 
 
 def sell_price_next(n_mt: int, d_mt: int, coeff_l: int, s_mt: float) -> float:  # noqa: D103
     sigma = _sigmoid((1 - n_mt / d_mt) / coeff_l - math.log(2))
-    return (1.5 * sigma + 0.5) * s_mt
+    return round((1.5 * sigma + 0.5) * s_mt, 2)
 
 
 def theta_next(n_mean: float, coeff_k: int) -> float:  # noqa: D103
-    return 0 if n_mean == 0 else _sigmoid(2 * n_mean / coeff_k - 3) / 3
+    return 0 if n_mean == 0 else round(_sigmoid(2 * n_mean / coeff_k - 3) / 3, 3)
 
 
 def _sigmoid(x: float) -> float:  # noqa: WPS111
@@ -47,4 +47,4 @@ def bulletin_quantity(quantity: int) -> int:  # noqa: D103
 
 def stocks_price(prev_price: float, rel_income: float) -> float:  # noqa: D103
     noised_coeff = rel_income * (1 + random.normalvariate(0, STOCKS_SIGMA))
-    return prev_price * max(0.1, noised_coeff)
+    return round(prev_price * max(0.1, noised_coeff), 2)

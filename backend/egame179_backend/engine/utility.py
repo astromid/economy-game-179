@@ -112,5 +112,7 @@ async def get_previous_owners(cycle: int, market_dao: MarketDAO) -> dict[tuple[i
     """
     prev_shares = await market_dao.select_shares(cycle=cycle - 1, nonzero=True)
     prev_owners_df = pd.DataFrame([share.dict() for share in prev_shares if share.position <= 2])
+    if prev_owners_df.empty:
+        return {}
     prev_owners_df = prev_owners_df.set_index(["market", "position"])
     return prev_owners_df["user"].to_dict()
