@@ -19,7 +19,7 @@ class ProductionBid(BaseModel):
     quantity: int
 
 
-@router.get("/list/user")
+@router.get("/list")
 async def get_user_production(
     user: User = Depends(get_current_user),
     dao: ProductionDAO = Depends(),
@@ -36,7 +36,7 @@ async def get_user_production(
     return await dao.select(user=user.id)
 
 
-@router.get("/thetas/user")
+@router.get("/thetas")
 async def get_user_thetas(
     user: User = Depends(get_current_user),
     dao: ThetaDAO = Depends(),
@@ -53,7 +53,7 @@ async def get_user_thetas(
     return await dao.select(user=user.id)
 
 
-@router.get("/list", dependencies=[Security(get_current_user, scopes=["root"])])
+@router.get("/list/all", dependencies=[Security(get_current_user, scopes=["root"])])
 async def get_production(dao: ProductionDAO = Depends()) -> list[Production]:
     """Get production history for all users.
 
@@ -66,7 +66,7 @@ async def get_production(dao: ProductionDAO = Depends()) -> list[Production]:
     return await dao.select()
 
 
-@router.get("/thetas", dependencies=[Security(get_current_user, scopes=["root"])])
+@router.get("/thetas/all", dependencies=[Security(get_current_user, scopes=["root"])])
 async def get_thetas(dao: ThetaDAO = Depends()) -> list[Theta]:
     """Get thetas for all users.
 

@@ -20,7 +20,7 @@ class SupplyBid(BaseModel):
     quantity: int
 
 
-@router.get("/list/user")
+@router.get("/list")
 async def get_user_supplies(
     user: User = Depends(get_current_user),
     dao: SupplyDAO = Depends(),
@@ -55,7 +55,7 @@ async def get_user_supplies(
     return supplies
 
 
-@router.get("/list", dependencies=[Security(get_current_user, scopes=["root"])])
+@router.get("/list/all", dependencies=[Security(get_current_user, scopes=["root"])])
 async def get_all_supplies(
     dao: SupplyDAO = Depends(),
     cycle_dao: CycleDAO = Depends(),

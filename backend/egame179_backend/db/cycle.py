@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from fastapi import Depends
-from sqlmodel import SQLModel, select
+from sqlmodel import Field, SQLModel, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from egame179_backend.db.session import get_db_session
@@ -12,7 +12,7 @@ class Cycle(SQLModel, table=True):
 
     __tablename__ = "cycles"  # type: ignore
 
-    id: int
+    id: int = Field(primary_key=True)
     ts_start: datetime | None = None
     ts_finish: datetime | None = None
     alpha: float

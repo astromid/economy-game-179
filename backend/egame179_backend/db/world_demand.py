@@ -1,5 +1,5 @@
 from fastapi import Depends
-from sqlmodel import SQLModel, select
+from sqlmodel import Field, SQLModel, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from egame179_backend.db.session import get_db_session
@@ -10,8 +10,8 @@ class WorldDemand(SQLModel, table=True):
 
     __tablename__ = "world_demand"  # type: ignore
 
-    cycle: int
-    ring: int
+    cycle: int = Field(primary_key=True)
+    ring: int = Field(primary_key=True)
     demand_pm: float
 
 

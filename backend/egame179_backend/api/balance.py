@@ -7,7 +7,7 @@ from egame179_backend.db.user import User
 router = APIRouter()
 
 
-@router.get("/list/user")
+@router.get("/list")
 async def get_user_balances(user: User = Depends(get_current_user), dao: BalanceDAO = Depends()) -> list[Balance]:
     """Get balances history for user.
 
@@ -21,7 +21,7 @@ async def get_user_balances(user: User = Depends(get_current_user), dao: Balance
     return await dao.select(user=user.id)
 
 
-@router.get("/list", dependencies=[Security(get_current_user, scopes=["root"])])
+@router.get("/list/all", dependencies=[Security(get_current_user, scopes=["root"])])
 async def get_balances(dao: BalanceDAO = Depends()) -> list[Balance]:
     """Get balances history for all users.
 

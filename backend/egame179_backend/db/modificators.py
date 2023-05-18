@@ -1,5 +1,5 @@
 from fastapi import Depends
-from sqlmodel import SQLModel, select
+from sqlmodel import Field, SQLModel, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from egame179_backend.db.session import get_db_session
@@ -10,10 +10,10 @@ class Modificator(SQLModel, table=True):
 
     __tablename__ = "modificators"  # type: ignore
 
-    cycle: int
-    user: int
-    market: int
-    parameter: str
+    cycle: int = Field(primary_key=True)
+    user: int = Field(primary_key=True)
+    market: int = Field(primary_key=True)
+    parameter: str = Field(primary_key=True)
     value: float  # noqa: WPS110
 
 

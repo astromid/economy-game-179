@@ -1,6 +1,6 @@
 import networkx as nx
 from fastapi import Depends
-from sqlmodel import SQLModel, select
+from sqlmodel import Field, SQLModel, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from egame179_backend.db.session import get_db_session
@@ -11,7 +11,7 @@ class Market(SQLModel, table=True):
 
     __tablename__ = "markets"  # type: ignore
 
-    id: int
+    id: int = Field(primary_key=True)
     name: str
     ring: int
     home_user: int | None
@@ -22,8 +22,8 @@ class MarketConnection(SQLModel, table=True):
 
     __tablename__ = "market_connections"  # type: ignore
 
-    source: int
-    target: int
+    source: int = Field(primary_key=True)
+    target: int = Field(primary_key=True)
 
 
 class MarketShare(SQLModel, table=True):
@@ -31,9 +31,9 @@ class MarketShare(SQLModel, table=True):
 
     __tablename__ = "market_shares"  # type: ignore
 
-    cycle: int
-    user: int
-    market: int
+    cycle: int = Field(primary_key=True)
+    user: int = Field(primary_key=True)
+    market: int = Field(primary_key=True)
     share: float = 0
     position: int = 0
     unlocked: bool
@@ -44,7 +44,7 @@ class Npc(SQLModel, table=True):
 
     __tablename__ = "npcs"  # type: ignore
 
-    user: int
+    user: int = Field(primary_key=True)
     ring: int
 
 

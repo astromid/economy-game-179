@@ -8,7 +8,7 @@ from egame179_backend.db.warehouse import Warehouse, WarehouseDAO
 router = APIRouter()
 
 
-@router.get("/list/user")
+@router.get("/list")
 async def get_user_warehouses(
     user: User = Depends(get_current_user),
     dao: WarehouseDAO = Depends(),
@@ -28,7 +28,7 @@ async def get_user_warehouses(
     return await dao.select(cycle=cycle.id, user=user.id)
 
 
-@router.get("/list", dependencies=[Security(get_current_user, scopes=["root"])])
+@router.get("/list/all", dependencies=[Security(get_current_user, scopes=["root"])])
 async def get_warehouses(dao: WarehouseDAO = Depends()) -> list[Warehouse]:
     """Get warehouse history for all users.
 
