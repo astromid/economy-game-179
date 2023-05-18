@@ -8,18 +8,20 @@ from egame179_backend.db.cycle import Cycle
 from egame179_backend.db.market import MarketShare
 from egame179_backend.db.supply import Supply
 from egame179_backend.db.transaction import Transaction
-from egame179_backend.engine.utility import (
+from egame179_backend.engine.calc import (
     calculate_delivered,
+    calculate_new_prices,
+    calculate_new_stocks,
+    calculate_new_thetas,
     calculate_shares,
     calculate_sold,
-    get_market_names,
-    get_previous_owners,
-    get_world_demand,
 )
+from egame179_backend.engine.utility import get_market_names, get_previous_owners, get_world_demand
 
 
 async def finish_cycle(
     cycle: Cycle,
+    balance_dao: db.BalanceDAO,
     market_dao: db.MarketDAO,
     price_dao: db.MarketPriceDAO,
     supply_dao: db.SupplyDAO,
@@ -31,6 +33,7 @@ async def finish_cycle(
 
     Args:
         cycle (Cycle): finished cycle.
+        balance_dao (db.BalanceDAO): balances table DAO.
         market_dao (db.MarketDAO): markets table DAO.
         price_dao (db.MarketPriceDAO): prices table DAO.
         supply_dao (db.SupplyDAO): supplies table DAO.
@@ -50,12 +53,18 @@ async def finish_cycle(
     )
     supplies_df = pd.DataFrame([supply.dict() for supply in supplies])
     ic("Stage 1: processing supplies finished")
+
     # 2. Storage fees
     await process_storage_fees(cycle=cycle, wh_dao=wh_dao, transaction_dao=transaction_dao)
     ic("Stage 2: processing storage fees finished")
-    # 3. Calculate market shares and positions
+
+    # 3. Life fees
+    await process_life_fees(cycle=cycle, balance_dao=balance_dao, transaction_dao=transaction_dao)
+    ic("Stage 3: processing life fees finished")
+
+    # 4. Calculate market shares and positions
     await process_market_shares(cycle=cycle.id, supplies_df=supplies_df, market_dao=market_dao)
-    ic("Stage 3: processing market shares finished")
+    ic("Stage 4: processing market shares finished")
 
 
 async def process_supplies(
@@ -137,6 +146,29 @@ async def process_storage_fees(cycle: Cycle, transaction_dao: db.TransactionDAO,
     await transaction_dao.add(transactions)
 
 
+async def process_life_fees(cycle: Cycle, balance_dao: db.BalanceDAO, transaction_dao: db.TransactionDAO) -> None:
+    """Process life fees for the cycle.
+
+    Args:
+        cycle (Cycle): finished cycle.
+        balance_dao (db.BalanceDAO): balances table DAO.
+        transaction_dao (db.TransactionDAO): transactions table DAO.
+    """
+    balances = await balance_dao.select(cycle=cycle.id)
+    transactions = [
+        Transaction(
+            ts=cycle.ts_finish,  # type: ignore
+            cycle=cycle.id,
+            user=balance.user,
+            amount=-cycle.alpha,
+            description="Life fee",
+        )
+        for balance in balances
+    ]
+    ic("Life fee transactions:", transactions)
+    await transaction_dao.add(transactions)
+
+
 async def process_market_shares(cycle: int, supplies_df: pd.DataFrame, market_dao: db.MarketDAO) -> None:
     """Process market shares for the cycle.
 
@@ -170,133 +202,230 @@ async def process_market_shares(cycle: int, supplies_df: pd.DataFrame, market_da
     await market_dao.update_shares(updated_shares)
 
 
-async def prepare_cycle(
-    cycle: Cycle,  # new cycle, finished = -1, prev = -2
+async def prepare_new_cycle(  # noqa: WPS211, WPS213, WPS217
+    cycle: Cycle,  # finished cycle, prev_prev = -1, next = +1
     balance_dao: db.BalanceDAO,
     market_dao: db.MarketDAO,
     price_dao: db.MarketPriceDAO,
     production_dao: db.ProductionDAO,
     supply_dao: db.SupplyDAO,
+    stock_dao: db.StockDAO,
+    theta_dao: db.ThetaDAO,
     transaction_dao: db.TransactionDAO,
+    wh_dao: db.WarehouseDAO,
+    wd_dao: db.WorldDemandDAO,
 ) -> None:
-    # 1. Calculate new prices
-    prices = await price_dao.get_all(cycle=cycle - 1)
-    market2price = {price.market_id: price for price in prices}
-    transactions = await transaction_dao.get(user_id=None)
-    demands = get_demands(
-        m_id2ring={market.id: market.ring for market in markets},
-        cycle_params=cycle_params,
+    """Prepare new cycle.
+
+    Args:
+        cycle (Cycle): finished cycle.
+        balance_dao (db.BalanceDAO): balances table DAO.
+        market_dao (db.MarketDAO): markets table DAO.
+        price_dao (db.MarketPriceDAO): market prices table DAO.
+        production_dao (db.ProductionDAO): productions table DAO.
+        supply_dao (db.SupplyDAO): supplies table DAO.
+        stock_dao (db.StockDAO): stocks table DAO.
+        theta_dao (db.ThetaDAO): thetas table DAO.
+        transaction_dao (db.TransactionDAO): transactions table DAO.
+        wh_dao (db.WarehouseDAO): warehouses table DAO.
+        wd_dao (db.WorldDemandDAO): world demands table DAO.
+    """
+    # 5. Calculate new prices
+    prod_df = await process_prices(
+        cycle=cycle,
+        market_dao=market_dao,
+        price_dao=price_dao,
+        production_dao=production_dao,
+        supply_dao=supply_dao,
+        wd_dao=wd_dao,
     )
-    # take transactions from last 3 cycles
-    transactions_df = pd.DataFrame([tr.dict() for tr in transactions if tr.cycle >= cycle - 3])
-    transactions_df = transactions_df.dropna(subset=["market_id", "items"]).astype({"market_id": int, "items": int})
-    # buy for last 3 cycles, sell only for last cycle
-    buy_df = transactions_df[transactions_df["amount"] < 0]
-    sell_df = transactions_df[(transactions_df["amount"] > 0) & (transactions_df["cycle"] == cycle - 1)]
+    ic("Stage 5: new market prices")
 
-    buy_market = buy_df[buy_df["cycle"] == cycle - 1].groupby("market_id")["items"].sum().to_dict()
-    buy_market_prev = buy_df[buy_df["cycle"] == cycle - 2].groupby("market_id")["items"].sum().to_dict()
-    sell_market = sell_df.groupby("market_id")["items"].sum().to_dict()
+    # 6. Update thetas
+    await process_thetas(cycle=cycle, prod_df=prod_df, theta_dao=theta_dao)
+    ic("Stage 6: new thetas")
 
-    for market in markets:
-        price = market2price[market.id]
-        new_buy_price = buy_price_next(
-            n_mt=buy_market.get(market.id, 0),
-            n_mt1=buy_market_prev.get(market.id, 0),
-            h=cycle_params.coeff_h,
-            p_mt=price.buy,
-        )
-        new_sell_price = sell_price_next(
-            n_mt=sell_market.get(market.id, 0),
-            d_mt=demands[market.id],
-            l=cycle_params.coeff_l,
-            s_mt=price.sell,
-        )
-        await price_dao.create(
-            cycle=cycle,
-            market_id=market.id,
-            buy=new_buy_price,
-            sell=new_sell_price,
-        )
+    # 7. Unlock markets by top1/top2 share & home markets
+    await process_unlocks(cycle=cycle, market_dao=market_dao)
+    ic("Stage 7: new unlocked markets")
 
-    # 2. Update products (theta, storage, market share)
-    products = await product_dao.get_all(cycle=cycle - 1)
-    buy_cycle_sum_df = buy_df.groupby(["user_id", "market_id", "cycle"])["items"].sum().reset_index()
-    buy_mean = buy_cycle_sum_df.groupby(["user_id", "market_id"])["items"].mean().to_dict()
-    # ! check validity of using amount vs. real_amount
-    sell_by_user = sell_df.groupby(["user_id", "market_id"])["items"].sum().to_dict()
+    # 8. Process overdraft fees
+    await process_overdrafts(cycle=cycle, balance_dao=balance_dao, transaction_dao=transaction_dao)
+    ic("Stage 8: overdraft fees")
 
-    from icecream import ic
-    ic(buy_cycle_sum_df)
-    ic(buy_mean)
-    ic(sell_by_user)
-
-    market_shares: dict[int, list[tuple[int, float]]] = defaultdict(list)
-    for product in products:
-        share = sell_by_user.get((product.user_id, product.market_id), 0) / sell_market.get(product.market_id, 1)
-        market_shares[product.market_id].append((product.user_id, share))
-        await product_dao.add(
-            Product(
-                cycle=cycle,
-                user_id=product.user_id,
-                market_id=product.market_id,
-                storage=product.storage,
-                theta=theta_next(buy_mean.get((product.user_id, product.market_id), 0), k=cycle_params.coeff_k),
-                share=share,
-            ),
-        )
-    ic(market_shares)
-
-    market_shares = {m_id: [share for share in shares if share[1] > 0] for m_id, shares in market_shares.items()}
-    ic(market_shares)
-
-    # 3. Unlock markets by top1/top2 share
-    sorted_shares = {m_id: sorted(market_shares[m_id], key=lambda x: x[1], reverse=True) for m_id in market_shares}
-    top_shares = {m_id: [share[0] for share in sorted_shares[m_id][:2]] for m_id in sorted_shares}
-
-    ic(sorted_shares)
-    ic(top_shares)
-
-    # step1: lock all unprotected markets
-    unlocked_markets = await unlocked_market_dao.get_all()
-    for um in unlocked_markets:
-        await unlocked_market_dao.lock(user_id=um.user_id, market_id=um.market_id)
-
-    # step2: unlock top-shared markets and their links
-    m_id2market = {market.id: market for market in markets}
-    for m_id, top_users in top_shares.items():
-        for user_id in top_users:
-            market = m_id2market[m_id]
-            to_unlock = {m_id, market.link1, market.link2, market.link3, market.link4, market.link5}
-            for um_id in to_unlock:
-                if um_id is not None:
-                    await unlocked_market_dao.unlock(user_id=user_id, market_id=um_id)
-
-
-async def life_overdraft_fees() -> None:
-    await make_transaction(
-        cycle=cycle.cycle,
-        user_id=user_id,
-        amount=cycle_params.alpha,
-        description="Life fee",
-        items=None,
-        market_id=None,
-        overdraft=True,
-        inflow=False,
+    # 9. Calculate new stocks
+    await process_stocks(
+        cycle=cycle.id,
         balance_dao=balance_dao,
+        market_dao=market_dao,
+        stock_dao=stock_dao,
         transaction_dao=transaction_dao,
+        wh_dao=wh_dao,
     )
-    overdrafted_balances = await balance_dao.get_overdrafted(cycle=cycle.cycle)
-    for balance in overdrafted_balances:
-        await make_transaction(
-            cycle=cycle.cycle,
-            user_id=balance.user_id,
-            amount=abs(balance.amount) * cycle_params.overdraft_rate,
-            description="Fee for overdraft",
-            items=None,
-            market_id=None,
-            overdraft=True,
-            inflow=False,
-            balance_dao=balance_dao,
-            transaction_dao=transaction_dao,
+    ic("Stage 9: new stocks")
+
+    # 10. Make auxiliary production
+    await process_auxiliary_production(
+        cycle=cycle.id,
+        balance_dao=balance_dao,
+        market_dao=market_dao,
+        production_dao=production_dao,
+    )
+    ic("Stage 10: auxiliary production")
+
+
+async def process_prices(
+    cycle: Cycle,
+    market_dao: db.MarketDAO,
+    price_dao: db.MarketPriceDAO,
+    production_dao: db.ProductionDAO,
+    supply_dao: db.SupplyDAO,
+    wd_dao: db.WorldDemandDAO,
+) -> pd.DataFrame:
+    """Process new prices for the cycle.
+
+    Args:
+        cycle (Cycle): finished cycle.
+        market_dao (db.MarketDAO): markets table DAO.
+        price_dao (db.MarketPriceDAO): prices table DAO.
+        production_dao (db.ProductionDAO): production table DAO.
+        supply_dao (db.SupplyDAO): supplies table DAO.
+        wd_dao (db.WorldDemandDAO): world demand table DAO.
+
+    Returns:
+        pd.DataFrame: production dataframe for futher theta calculation.
+    """
+    prices = await price_dao.select(cycle=cycle.id)
+    supplies = await supply_dao.select(cycle=cycle.id)
+    demand = await get_world_demand(cycle=cycle.id, market_dao=market_dao, wd_dao=wd_dao)
+    production = await production_dao.select()
+
+    prod_df = pd.DataFrame([prod.dict() for prod in production if prod.cycle >= cycle.id - 2])
+    new_prices = calculate_new_prices(
+        cycle=cycle,
+        prices=prices,
+        prod_df=prod_df,
+        supp_df=pd.DataFrame([supp.dict() for supp in supplies]),
+        demand=demand,
+    )
+    await price_dao.create(cycle=cycle.id + 1, new_prices=new_prices)
+    ic(new_prices)
+    return prod_df
+
+
+async def process_thetas(cycle: Cycle, prod_df: pd.DataFrame, theta_dao: db.ThetaDAO) -> None:
+    """Process new thetas for the cycle.
+
+    Args:
+        cycle (Cycle): finished cycle.
+        prod_df (pd.DataFrame): production dataframe.
+        theta_dao (db.ThetaDAO): thetas table DAO.
+    """
+    thetas = await theta_dao.select(cycle=cycle.id)
+    new_thetas = calculate_new_thetas(cycle=cycle, thetas=thetas, prod_df=prod_df)
+    ic(new_thetas)
+    await theta_dao.create(cycle=cycle.id + 1, new_thetas=new_thetas)
+
+
+async def process_unlocks(cycle: Cycle, market_dao: db.MarketDAO) -> None:
+    """Process new unlocks for the cycle.
+
+    Args:
+        cycle (Cycle): finished cycle.
+        market_dao (db.MarketDAO): markets table DAO.
+    """
+    graph = await market_dao.get_graph()
+    shares = await market_dao.select_shares(cycle=cycle.id)
+    new_unlocks: dict[tuple[int, int], bool] = {}
+    for share in shares:
+        if share.position in {1, 2}:
+            new_unlocks[share.user, share.market] = True
+            for node in graph.neighbors(share.market):
+                new_unlocks[share.user, node] = True
+        else:
+            new_unlocks[share.user, share.market] = False
+    ic(new_unlocks)
+    await market_dao.create_shares(cycle=cycle.id + 1, new_unlocks=new_unlocks)
+
+
+async def process_overdrafts(cycle: Cycle, balance_dao: db.BalanceDAO, transaction_dao: db.TransactionDAO) -> None:
+    """Process overdraft fees for the cycle.
+
+    Args:
+        cycle (Cycle): finished cycle.
+        balance_dao (db.BalanceDAO): balances table DAO.
+        transaction_dao (db.TransactionDAO): transactions table DAO.
+    """
+    balances = await balance_dao.select(cycle=cycle.id)
+    transactions = [
+        Transaction(
+            ts=cycle.ts_finish,  # type: ignore
+            cycle=cycle.id,
+            user=balance.user,
+            amount=balance.balance * cycle.overdraft_rate,  # balance is already negative
+            description="Overdraft fee",
         )
+        for balance in balances
+        if balance.balance < 0
+    ]
+    ic("Overdraft fees:", transactions)
+    await transaction_dao.add(transactions)
+
+
+async def process_stocks(  # noqa: WPS217
+    cycle: int,
+    balance_dao: db.BalanceDAO,
+    market_dao: db.MarketDAO,
+    stock_dao: db.StockDAO,
+    transaction_dao: db.TransactionDAO,
+    wh_dao: db.WarehouseDAO,
+) -> None:
+    """Process new stocks for the cycle.
+
+    Args:
+        cycle (int): finished cycle.
+        balance_dao (db.BalanceDAO): balances table DAO.
+        market_dao (db.MarketDAO): markets table DAO.
+        stock_dao (db.StockDAO): stocks table DAO.
+        transaction_dao (db.TransactionDAO): transactions table DAO.
+        wh_dao (db.WarehouseDAO): warehouses table DAO.
+    """
+    stocks = await stock_dao.select(cycle=cycle)
+    balances = await balance_dao.select()
+    storages = await wh_dao.select()
+    npcs = await market_dao.get_market_npcs()
+    init_balance = await transaction_dao.get_init_balance()
+
+    new_stocks = calculate_new_stocks(
+        cycle=cycle,
+        stocks=stocks,
+        balances_df=pd.DataFrame([balance.dict() for balance in balances if balance.cycle >= cycle - 1]),
+        storages_df=pd.DataFrame([storage.dict() for storage in storages if storage.cycle >= cycle - 1]),
+        npc_df=pd.DataFrame(npcs, columns=["market", "user"]),
+        initial_balance=init_balance,
+    )
+    ic("New stocks", new_stocks)
+    await stock_dao.create(cycle=cycle + 1, new_stocks=new_stocks)
+
+
+async def process_auxiliary_production(
+    cycle: int,
+    balance_dao: db.BalanceDAO,
+    market_dao: db.MarketDAO,
+    production_dao: db.ProductionDAO,
+) -> None:
+    """Process auxiliary production for the cycle.
+
+    Args:
+        cycle (int): finished cycle.
+        balance_dao (db.BalanceDAO): balances table DAO.
+        market_dao (db.MarketDAO): markets table DAO.
+        production_dao (db.ProductionDAO): production table DAO.
+    """
+    balances = await balance_dao.select(cycle=cycle)
+    markets = await market_dao.select_markets()
+    await production_dao.create_auxiliary(
+        cycle=cycle + 1,
+        users=[balance.user for balance in balances],
+        markets=[market.id for market in markets],
+    )

@@ -5,7 +5,6 @@ from egame179_backend.db.cycle import CycleDAO
 from egame179_backend.db.market import MarketDAO
 from egame179_backend.db.market_price import MarketPriceDAO
 from egame179_backend.db.modificators import ModificatorDAO
-from egame179_backend.db.npc import NpcDAO
 from egame179_backend.db.production import ProductionDAO
 from egame179_backend.db.stocks import StockDAO
 from egame179_backend.db.supply import SupplyDAO
@@ -23,7 +22,6 @@ __all__ = [
     "MarketDAO",
     "MarketPriceDAO",
     "ModificatorDAO",
-    "NpcDAO",
     "ProductionDAO",
     "StockDAO",
     "SupplyDAO",

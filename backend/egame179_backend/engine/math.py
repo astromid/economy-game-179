@@ -41,8 +41,10 @@ def sold_items(delivered: int, demand: int, total: int) -> int:  # noqa: D103
 
 
 def bulletin_quantity(quantity: int) -> int:  # noqa: D103
-    return math.floor(quantity * (1 + random.normalvariate(0, BULLETIN_SIGMA)))
+    noised_quantity = math.floor(quantity * (1 + random.normalvariate(0, BULLETIN_SIGMA)))
+    return max(1, noised_quantity)
 
 
 def stocks_price(prev_price: float, rel_income: float) -> float:  # noqa: D103
-    return prev_price * rel_income * (1 + random.normalvariate(0, STOCKS_SIGMA))
+    noised_coeff = rel_income * (1 + random.normalvariate(0, STOCKS_SIGMA))
+    return prev_price * max(0.1, noised_coeff)

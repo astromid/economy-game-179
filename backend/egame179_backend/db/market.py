@@ -1,5 +1,3 @@
-import itertools
-
 import networkx as nx
 from fastapi import Depends
 from sqlmodel import SQLModel, select
@@ -36,12 +34,21 @@ class MarketShare(SQLModel, table=True):
     cycle: int
     user: int
     market: int
-    share: float
-    position: int
+    share: float = 0
+    position: int = 0
     unlocked: bool
 
 
-class MarketDAO:
+class Npc(SQLModel, table=True):
+    """NPCs table."""
+
+    __tablename__ = "npcs"  # type: ignore
+
+    user: int
+    ring: int
+
+
+class MarketDAO:  # noqa: WPS214
     """Class for accessing markets & market_connections table."""
 
     def __init__(self, session: AsyncSession = Depends(get_db_session)):
@@ -78,6 +85,18 @@ class MarketDAO:
         graph.add_edges_from([(edge.source, edge.target) for edge in edges])
         return graph
 
+    async def get_market_npcs(self) -> dict[int, int]:
+        """Get market to npc mapping.
+
+        Returns:
+            dict[int, int]: {market: npc user}
+        """
+        markets = await self.select_markets()
+        query = select(Npc)
+        raw_npcs = await self.session.exec(query)  # type: ignore
+        ring2npc = {npc.ring: npc.user for npc in raw_npcs.all()}
+        return {market.id: ring2npc[market.ring] for market in markets}
+
     async def select_shares(
         self,
         cycle: int | None = None,
@@ -104,25 +123,20 @@ class MarketDAO:
         raw_shares = await self.session.exec(query)  # type: ignore
         return raw_shares.all()
 
-    async def create_shares(self, cycle: int, users: list[int], unlocked: set[tuple[int, int]]) -> None:
+    async def create_shares(self, cycle: int, new_unlocks: dict[tuple[int, int], bool]) -> None:
         """Create share records for new cycle.
 
         Args:
             cycle (int): target cycle.
-            users (list[int]): player ids.
-            unlocked (set[tuple[int, int]]): set of unlocked markets (user id, market_id).
+            new_unlocks (dict[tuple[int, int], bool]): dict of unlocked markets (user id, market_id).
         """
         markets = await self.select_markets()
+        for market in markets:
+            if market.home_user is not None:
+                new_unlocks[(market.home_user, market.id)] = True
         shares = [
-            MarketShare(
-                cycle=cycle,
-                user=user,
-                market=market.id,
-                share=0,
-                position=0,
-                unlocked=(user, market.id) in unlocked or (market.home_user == user),
-            )
-            for user, market in itertools.product(users, markets)
+            MarketShare(cycle=cycle, user=user, market=mrkt, unlocked=status)
+            for (user, mrkt), status in new_unlocks.items()
         ]
         self.session.add_all(shares)
         await self.session.commit()

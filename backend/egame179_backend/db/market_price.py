@@ -51,16 +51,16 @@ class MarketPriceDAO:
         raw_prices = await self.session.exec(query)  # type: ignore
         return raw_prices.all()
 
-    async def create(self, cycle: int, markets: dict[int, tuple[float, float]]) -> None:
+    async def create(self, cycle: int, new_prices: dict[int, tuple[float, float]]) -> None:
         """Create market prices for new cycle.
 
         Args:
             cycle (int): target cycle.
-            markets (dict[int, tuple[float, float]]): {market id: (buy price, sell price)}
+            new_prices (dict[int, tuple[float, float]]): {market id: (buy price, sell price)}
         """
         prices = [
             MarketPrice(cycle=cycle, market=market, buy=buy, sell=sell)
-            for market, (buy, sell) in markets.items()
+            for market, (buy, sell) in new_prices.items()
         ]
         self.session.add_all(prices)
         await self.session.commit()

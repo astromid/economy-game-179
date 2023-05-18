@@ -21,13 +21,18 @@ class StockDAO:
     def __init__(self, session: AsyncSession = Depends(get_db_session)):
         self.session = session
 
-    async def select(self) -> list[Stock]:
+    async def select(self, cycle: int | None = None) -> list[Stock]:
         """Get stock prices history for all players & NPCs.
+
+        Args:
+            cycle (int, optional): target cycle. Defaults to None.
 
         Returns:
             list[Stock]: stocks history.
         """
         query = select(Stock)
+        if cycle is not None:
+            query = query.where(Stock.cycle == cycle)
         raw_stocks = await self.session.exec(query)  # type: ignore
         return raw_stocks.all()
 

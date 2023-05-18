@@ -35,7 +35,7 @@ class TransactionDAO:
         Returns:
             list[Transaction]: game transactions.
         """
-        query = select(Transaction).order_by(Transaction.id)
+        query = select(Transaction).order_by(Transaction.cycle, Transaction.ts)
         if user is not None:
             query = query.where(Transaction.user == user)
         raw_transactions = await self.session.exec(query)  # type: ignore
@@ -61,3 +61,13 @@ class TransactionDAO:
         """
         self.session.add_all(transactions)
         await self.session.commit()
+
+    async def get_init_balance(self) -> float:
+        """Get initial balance.
+
+        Returns:
+            float: amount of first transaction.
+        """
+        query = select(Transaction).order_by(Transaction.id).limit(1)
+        raw_transaction = await self.session.exec(query)  # type: ignore
+        return raw_transaction.one().amount
