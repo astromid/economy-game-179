@@ -11,19 +11,18 @@ from egame179_frontend.settings import settings
 class Transaction(BaseModel):
     """Transaction model."""
 
+    id: int
     ts: datetime
     cycle: int
-    user_id: int
+    user: int
     amount: float
     description: str
-    items: int | None = None
-    market_id: int | None = None
 
 
 class TransactionAPI:
     """Transaction API."""
 
-    _user_transactions_url = str(settings.backend_url / "transaction" / "user")
+    _user_transactions_url = str(settings.backend_url / "transaction/list")
 
     @classmethod
     def get_user_transactions(cls) -> list[Transaction]:

@@ -10,21 +10,21 @@ class Stock(BaseModel):
     """Stock model."""
 
     cycle: int
-    user_id: int
-    price_noise: float
+    user: int
+    price: float
 
 
 class StocksAPI:
     """Balance API."""
 
-    _api_url = str(settings.backend_url / "stocks/all")
+    _api_url = str(settings.backend_url / "stocks/list")
 
     @classmethod
     def get_stocks(cls) -> list[Stock]:
         """Get stocks.
 
         Returns:
-            list[Balance]: stocks price history.
+            list[Stock]: stocks price history.
         """
         response = httpx.get(cls._api_url, headers=st.session_state.auth_header)
         response.raise_for_status()

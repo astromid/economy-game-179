@@ -343,11 +343,11 @@ async def process_unlocks(cycle: Cycle, market_dao: db.MarketDAO) -> None:
     shares = await market_dao.select_shares(cycle=cycle.id)
     new_unlocks: dict[tuple[int, int], bool] = {}
     for share in shares:
-        if share.position in {1, 2}:
+        if share.position == 1:
             new_unlocks[share.user, share.market] = True
             for node in graph.neighbors(share.market):
                 new_unlocks[share.user, node] = True
-        else:
+        elif not new_unlocks.get((share.user, share.market), False):
             new_unlocks[share.user, share.market] = False
     ic(new_unlocks)
     await market_dao.create_shares(cycle=cycle.id + 1, new_unlocks=new_unlocks)

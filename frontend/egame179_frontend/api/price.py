@@ -10,7 +10,7 @@ class Price(BaseModel):
     """Price model."""
 
     cycle: int
-    market_id: int
+    market: int
     buy: float
     sell: float
 
@@ -18,7 +18,7 @@ class Price(BaseModel):
 class PriceAPI:
     """Price API."""
 
-    _all_prices_url = str(settings.backend_url / "price" / "all")
+    _prices_url = str(settings.backend_url / "market" / "prices")
 
     @classmethod
     def get_market_prices(cls) -> list[Price]:
@@ -27,6 +27,6 @@ class PriceAPI:
         Returns:
             list[Prices]: prices for all markets.
         """
-        response = httpx.get(cls._all_prices_url, headers=st.session_state.auth_header)
+        response = httpx.get(cls._prices_url, headers=st.session_state.auth_header)
         response.raise_for_status()
         return parse_obj_as(list[Price], response.json())

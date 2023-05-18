@@ -12,29 +12,35 @@ class Market(BaseModel):
     id: int
     name: str
     ring: int
-    link1: int
-    link2: int
-    link3: int
-    link4: int | None
-    link5: int | None
+    home_user: int | None
 
 
-class UnlockedMarket(BaseModel):
-    """Unlocked market model."""
+class MarketConnection(BaseModel):
+    """Market connections model."""
 
-    user_id: int
-    market_id: int
-    protected: bool
+    source: int
+    target: int
+
+
+class MarketShare(BaseModel):
+    """Market share with player visible info."""
+
+    user: int
+    market: int
+    share: float | None = None
+    position: int
 
 
 class MarketAPI:
     """Market API."""
 
     _api_url = settings.backend_url / "market"
-
-    _all_markets_url = str(_api_url / "all")
-    _user_unlocked_markets_url = str(_api_url / "unlocked/user")
-    _all_unlocked_markets_url = str(_api_url / "unlocked/all")
+    _nodes_url = str(_api_url / "nodes")
+    _edges_url = str(_api_url / "edges")
+    _unlocked_url = str(_api_url / "unlocked")
+    _shares_url = str(_api_url / "shares")
+    _shares_all_url = str(_api_url / "shares" / "all")
+    _demand_factors_url = str(_api_url / "demand_factors")
 
     @classmethod
     def get_markets(cls) -> list[Market]:
@@ -43,28 +49,61 @@ class MarketAPI:
         Returns:
             list[Market]: all market graph nodes.
         """
-        response = httpx.get(cls._all_markets_url, headers=st.session_state.auth_header)
+        response = httpx.get(cls._nodes_url, headers=st.session_state.auth_header)
         response.raise_for_status()
         return parse_obj_as(list[Market], response.json())
 
     @classmethod
-    def get_user_unlocked_markets(cls) -> list[UnlockedMarket]:
+    def get_edges(cls) -> list[MarketConnection]:
+        """Get all markets edges.
+
+        Returns:
+            list[MarketConnection]: all market graph edges.
+        """
+        response = httpx.get(cls._nodes_url, headers=st.session_state.auth_header)
+        response.raise_for_status()
+        return parse_obj_as(list[MarketConnection], response.json())
+
+    @classmethod
+    def get_unlocked_markets(cls) -> list[int]:
         """Get unlocked markets for particular user.
 
         Returns:
-            list[UnlockedMarket]: list of unlocked markets for the user.
+            list[int]: list of unlocked markets for the user.
         """
-        response = httpx.get(cls._user_unlocked_markets_url, headers=st.session_state.auth_header)
+        response = httpx.get(cls._unlocked_url, headers=st.session_state.auth_header)
         response.raise_for_status()
-        return parse_obj_as(list[UnlockedMarket], response.json())
+        return parse_obj_as(list[int], response.json())
 
     @classmethod
-    def get_unlocked_markets(cls) -> list[UnlockedMarket]:
-        """Get unlocked markets for all users.
+    def get_shares_user(cls) -> list[MarketShare]:
+        """Get market shares visible for user.
 
         Returns:
-            list[UnlockedMarket]: list of unlocked markets.
+            list[MarketShare]: list of market shares.
         """
-        response = httpx.get(cls._all_unlocked_markets_url, headers=st.session_state.auth_header)
+        response = httpx.get(cls._shares_url, headers=st.session_state.auth_header)
         response.raise_for_status()
-        return parse_obj_as(list[UnlockedMarket], response.json())
+        return parse_obj_as(list[MarketShare], response.json())
+
+    @classmethod
+    def get_shares(cls) -> list[MarketShare]:
+        """Get market shares visible for user.
+
+        Returns:
+            list[MarketShare]: list of market shares.
+        """
+        response = httpx.get(cls._shares_all_url, headers=st.session_state.auth_header)
+        response.raise_for_status()
+        return parse_obj_as(list[MarketShare], response.json())
+
+    @classmethod
+    def get_demand_factors(cls) -> dict[int, float]:
+        """Get demand factors for all markets.
+
+        Returns:
+            dict[int, float]: demand factors for all markets.
+        """
+        response = httpx.get(cls._unlocked_url, headers=st.session_state.auth_header)
+        response.raise_for_status()
+        return parse_obj_as(dict[int, float], response.json())

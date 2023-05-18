@@ -15,10 +15,10 @@ class Supply(BaseModel):
     ts_start: datetime
     ts_finish: datetime | None = None
     cycle: int
-    user_id: int
-    market_id: int
-    declared_amount: int
-    amount: int
+    user: int
+    market: int
+    quantity: int
+    delivered: int
 
 
 class SupplyAPI:
@@ -26,9 +26,9 @@ class SupplyAPI:
 
     _api_url = settings.backend_url / "supply"
 
-    _user_supplies_url = str(_api_url / "user")
-    _all_supplies_url = str(_api_url / "all")
-    _make_supply_url = str(_api_url / "make")
+    _user_supplies_url = str(_api_url / "list")
+    _supplies_url = str(_api_url / "list/all")
+    _new_url = str(_api_url / "new")
 
     @classmethod
     def get_user_supplies(cls) -> list[Supply]:
@@ -48,18 +48,18 @@ class SupplyAPI:
         Returns:
             list[Supply]: all users supplies.
         """
-        response = httpx.get(cls._all_supplies_url, headers=st.session_state.auth_header)
+        response = httpx.get(cls._supplies_url, headers=st.session_state.auth_header)
         response.raise_for_status()
         return parse_obj_as(list[Supply], response.json())
 
     @classmethod
-    def make_supply(cls, market_id: int, amount: int) -> None:
+    def new(cls, market: int, quantity: int) -> None:
         """Start supply to target market.
 
         Args:
-            market_id (int): target market id.
-            amount (int): number of items.
+            market (int): target market id.
+            quantity (int): number of items.
         """
-        bid = {"market_id": market_id, "amount": amount}
-        response = httpx.post(cls._make_supply_url, json=bid, headers=st.session_state.auth_header)
+        bid = {"market": market, "quantity": quantity}
+        response = httpx.post(cls._new_url, json=bid, headers=st.session_state.auth_header)
         response.raise_for_status()

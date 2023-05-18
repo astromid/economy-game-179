@@ -30,8 +30,7 @@ class AuthAPI:
 
     _token_url = str(settings.backend_url / "token")
     _user_url = str(settings.backend_url / "user")
-    _players_url = str(settings.backend_url / "players")
-    _npc_ids_url = str(settings.backend_url / "npc_ids")
+    _names_url = str(settings.backend_url / "names")
 
     @classmethod
     def get_auth_header(cls, login: str, password: str) -> dict[str, str] | None:
@@ -66,23 +65,12 @@ class AuthAPI:
         return User.parse_obj(response.json())
 
     @classmethod
-    def get_players(cls) -> list[User]:
-        """Get players info.
+    def get_names(cls) -> dict[int, str]:
+        """Get player names mapping.
 
         Returns:
-            list[User]: players info.
+            dict[int, str]: {user: name} mapping.
         """
-        response = httpx.get(cls._players_url, headers=st.session_state.auth_header)
+        response = httpx.get(cls._names_url, headers=st.session_state.auth_header)
         response.raise_for_status()
-        return parse_obj_as(list[User], response.json())
-
-    @classmethod
-    def get_npc_ids(cls) -> list[int]:
-        """Get NPC player ids.
-
-        Returns:
-            list[int]: NPC user ids.
-        """
-        response = httpx.get(cls._npc_ids_url, headers=st.session_state.auth_header)
-        response.raise_for_status()
-        return parse_obj_as(list[int], response.json())
+        return parse_obj_as(dict[int, str], response.json())

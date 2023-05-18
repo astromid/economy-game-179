@@ -68,7 +68,7 @@ async def get_user_unlocked_markets(
     return [share.market for share in shares if share.unlocked]
 
 
-@router.get("/shares/user")
+@router.get("/shares")
 async def get_user_market_shares(
     user: User = Depends(get_current_user),
     dao: MarketDAO = Depends(),
@@ -114,7 +114,11 @@ async def get_user_market_shares(
     return visible_shares
 
 
-@router.get("/shares", dependencies=[Security(get_current_user, scopes=["root"])])
+@router.get(
+    "/shares/all",
+    dependencies=[Security(get_current_user, scopes=["root"])],
+    response_model=list[MarketSharePlayer],
+)
 async def get_market_shares(dao: MarketDAO = Depends(), cycle_dao: CycleDAO = Depends()) -> list[MarketShare]:
     """Get all market shares for previous cycle.
 

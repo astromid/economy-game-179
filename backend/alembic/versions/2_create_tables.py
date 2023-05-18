@@ -63,13 +63,12 @@ def upgrade() -> None:
         sa.Column("delivered", sa.Integer),
     )
     op.create_table(
-        "modificators",
+        "fee_modificators",
         sa.Column("cycle", sa.Integer, sa.ForeignKey("cycles.id")),
         sa.Column("user", sa.Integer, sa.ForeignKey("users.id")),
-        sa.Column("market", sa.Integer, sa.ForeignKey("markets.id")),
-        sa.Column("parameter", AutoString),
-        sa.Column("value", sa.Float, nullable=False),
-        sa.PrimaryKeyConstraint("cycle", "user", "market", "parameter"),
+        sa.Column("fee", AutoString),
+        sa.Column("coeff", sa.Float, nullable=False),
+        sa.PrimaryKeyConstraint("cycle", "user", "fee"),
     )
     op.create_table(
         "bulletins",
@@ -362,7 +361,7 @@ def downgrade() -> None:
     views = ("warehouses", "balances")
     tables = (
         "bulletins",
-        "modificators",
+        "fee_modificators",
         "supplies",
         "production",
         "stocks",
