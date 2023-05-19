@@ -16,6 +16,9 @@ class ThemeColors(Enum):
     AQUA = "#38aab0"  # noqa: WPS115
 
 
+PlayerColors = ("#ee6666", "#91cc75", "#5470c6", "#bbbbbb", "#38aab0", "#da70d6")
+
+
 def load_css() -> None:
     """Load CSS styles."""
     log = logging.getLogger(__name__)

@@ -26,6 +26,7 @@ class _ViewData:
     buy_prices: pd.DataFrame
     sell_prices: pd.DataFrame
     current_prices: pd.DataFrame
+    shares: pd.DataFrame
 
 
 @st.cache_data(max_entries=1)
@@ -38,6 +39,7 @@ def _cache_view_data(
     unlocked_markets: list[int],
     shares: dict[tuple[int, int], tuple[int, float | None]],
     thetas: dict[int, float],
+    names: dict[int, str],
 ) -> _ViewData:
     market2name = {node_id: node["name"] for node_id, node in _nx_graph.nodes.items()}
     user2home = {node["home_user"]: node_id for node_id, node in _nx_graph.nodes.items()}
@@ -55,6 +57,17 @@ def _cache_view_data(
         owned=owned_markets,
         unlocked=unlocked_markets,
     )
+    shares_df = pd.DataFrame(
+        [
+            {
+                "market": market2name[market],
+                "position": position,
+                "company": names[user],
+                "share": share,
+            }
+            for (market, position), (user, share) in shares.items()
+        ],
+    )
     return _ViewData(
         player_name=player_name,
         cycle=cycle,
@@ -62,6 +75,7 @@ def _cache_view_data(
         buy_prices=prices[[X_AXIS, "buy", C_AXIS]].rename(columns={"buy": Y_AXIS}),
         sell_prices=prices[[X_AXIS, "sell", C_AXIS]].rename(columns={"sell": Y_AXIS}),
         current_prices=current_prices,
+        shares=shares_df,
     )
 
 
@@ -86,6 +100,7 @@ class MarketsView(AppView):
             unlocked_markets=state.unlocked_markets,
             shares=state.shares,
             thetas=state.thetas,
+            names=state.names,
         )
 
         st.markdown(f"## Аналитика по рынкам {view_data.player_name} Inc.")
@@ -118,3 +133,9 @@ class MarketsView(AppView):
                     chart_size=CHART_SIZE,  # type: ignore
                 ),
             )
+
+        st.markdown("#### Доступная информация о владении рынками")
+        if view_data.shares.empty:
+            st.write("Нет доступной информации")
+        else:
+            st.dataframe(view_data.shares.sort_values(["market", "position"]))

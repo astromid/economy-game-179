@@ -104,7 +104,13 @@ def radar_chart(thetas: dict[str, float]) -> pyecharts.charts.Radar:
     return radar
 
 
-def markets_graph(nx_graph: nx.Graph, home: int, owned: list[int], unlocked: list[int]) -> pyecharts.charts.Graph:
+def markets_graph(
+    nx_graph: nx.Graph,
+    home: int,
+    owned: list[int],
+    unlocked: list[int],
+    owner_colors: dict[int, str] | None = None,
+) -> pyecharts.charts.Graph:
     """Graph chart for markets visualization.
 
     Args:
@@ -112,12 +118,14 @@ def markets_graph(nx_graph: nx.Graph, home: int, owned: list[int], unlocked: lis
         home (int): home market id.
         owned (list[int]): owned markets for player.
         unlocked (list[int]): unlocked markets for player.
+        owner_colors (dict[int, str], optional): root market viz, defaults to None.
 
     Returns:
         pyecharts.charts.Graph: graph chart for rendering.
     """
-    nodes = [
-        {
+    nodes = []
+    for node_id, node in nx_graph.nodes(data=True):
+        node = {
             "name": node["name"],
             "demand_factor": node["demand_factor"],
             "storage": node["storage"],
@@ -125,10 +133,12 @@ def markets_graph(nx_graph: nx.Graph, home: int, owned: list[int], unlocked: lis
             "top2": node["top2"],
             "symbol": "circle",
             "symbolSize": NODE_SIZE_PX * node["demand_factor"],
-            "itemStyle": {"color": get_graph_node_color(node_id, home=home, owned=owned, unlocked=unlocked)},
         }
-        for node_id, node in nx_graph.nodes(data=True)
-    ]
+        if owner_colors is not None:
+            node["itemStyle"] = {"color": owner_colors[node["owner"]]}
+        else:
+            node["itemStyle"] = {"color": get_graph_node_color(node_id, home=home, owned=owned, unlocked=unlocked)}
+        nodes.append(node)
     links = [
         {
             "source": nx_graph.nodes[source]["name"],
