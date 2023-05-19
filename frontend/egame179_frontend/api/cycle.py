@@ -11,7 +11,7 @@ from egame179_frontend.settings import settings
 class Cycle(BaseModel):
     """Cycle model."""
 
-    cycle: int
+    id: int
     ts_start: datetime | None
     ts_finish: datetime | None
     alpha: float

@@ -12,7 +12,6 @@ class UserRoles(Enum):
     """User roles."""
 
     ROOT = "root"  # noqa: WPS115
-    EDITOR = "editor"  # noqa: WPS115
     NEWS = "news"  # noqa: WPS115
     PLAYER = "player"  # noqa: WPS115
 
@@ -31,6 +30,7 @@ class AuthAPI:
     _token_url = str(settings.backend_url / "token")
     _user_url = str(settings.backend_url / "user")
     _names_url = str(settings.backend_url / "names")
+    _players_url = str(settings.backend_url / "players")
 
     @classmethod
     def get_auth_header(cls, login: str, password: str) -> dict[str, str] | None:
@@ -74,3 +74,14 @@ class AuthAPI:
         response = httpx.get(cls._names_url, headers=st.session_state.auth_header)
         response.raise_for_status()
         return parse_obj_as(dict[int, str], response.json())
+
+    @classmethod
+    def get_players(cls) -> list[int]:
+        """Get player ids.
+
+        Returns:
+            list[int]: player ids.
+        """
+        response = httpx.get(cls._names_url, headers=st.session_state.auth_header)
+        response.raise_for_status()
+        return parse_obj_as(list[int], response.json())

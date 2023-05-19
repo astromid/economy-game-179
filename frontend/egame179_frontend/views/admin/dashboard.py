@@ -13,19 +13,16 @@ from egame179_frontend.views.registry import AppView, appview
 class _ViewData:
     cycle: int
     ts_start: str | None
-    ts_finish: str | None
 
 
 @st.cache_data(max_entries=1)
 def _cache_view_data(
     cycle: int,
     ts_start: datetime | None,
-    ts_finish: datetime | None,
 ) -> _ViewData:
     return _ViewData(
         cycle,
-        ts_start.isoformat() if ts_start is not None else None,
-        ts_finish.isoformat() if ts_finish is not None else None,
+        ts_start.time().isoformat() if ts_start is not None else None,
     )
 
 
@@ -43,10 +40,10 @@ class RootDashboard(AppView):
 
     def render(self) -> None:
         """Render view."""
-        game_state: RootState = st.session_state.game
-        self.state = _cache_view_data(**game_state.cycle.dict())  # type: ignore
+        state: RootState = st.session_state.game
+        self.state = _cache_view_data(cycle=state.cycle.id, ts_start=state.cycle.ts_start)  # type: ignore
 
-        col1, col2 = st.columns([2, 1])
+        col1, col2 = st.columns([2, 1], gap="medium")
         with col1:
             _cycle_stats(self.state)
             st.markdown("---")
@@ -56,28 +53,21 @@ class RootDashboard(AppView):
 
 
 def _cycle_stats(state: _ViewData) -> None:
-    col1, col2, col3 = st.columns(3)
+    col1, col2 = st.columns(2)
     with col1:
         st.metric("Текущий цикл", state.cycle)
     with col2:
         st.metric("Начался", state.ts_start)
-    with col3:
-        st.metric("Закончился", state.ts_finish)
 
 
 def _cycle_controls(state: _ViewData) -> None:
-    col1, col2, col3 = st.columns(3)
+    col1, col2 = st.columns(2)
     with col1:
-        st.button("Новый цикл", on_click=CycleAPI.create_cycle, disabled=state.ts_finish is None)
-    with col2:
         st.button("Начать цикл", on_click=CycleAPI.start_cycle, disabled=state.ts_start is not None)
-    with col3:
-        st.button(
-            "Завершить цикл",
-            on_click=CycleAPI.finish_cycle,
-            disabled=(state.ts_start is None) or (state.ts_finish is not None),
-        )
+    with col2:
+        st.button("Завершить цикл", on_click=CycleAPI.finish_cycle, disabled=state.ts_start is None)
     if st.button("! Реинициализация игры !"):
+
         import subprocess
         result = subprocess.run(["./_reinit_db.sh"], stdout=subprocess.PIPE, text=True)
         st.write("stdout:", result.stdout)

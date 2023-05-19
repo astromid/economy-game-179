@@ -8,7 +8,7 @@ from httpx import HTTPStatusError
 from millify import millify
 from streamlit_echarts import st_pyecharts
 
-from egame179_frontend.api import ProductAPI
+from egame179_frontend.api import ProductionAPI
 from egame179_frontend.api.user import UserRoles
 from egame179_frontend.state import PlayerState
 from egame179_frontend.views.registry import AppView, appview

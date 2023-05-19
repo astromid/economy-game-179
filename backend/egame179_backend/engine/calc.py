@@ -1,5 +1,5 @@
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import pandas as pd
 
@@ -78,7 +78,7 @@ def calculate_sold(
         )
         transactions.append(
             Transaction(
-                ts=supply.ts_finish,  # type: ignore
+                ts=supply.ts_finish + timedelta(seconds=10),  # type: ignore
                 cycle=cycle + 1,  # supplies have deferred transactions
                 user=supply.user,
                 amount=supply.delivered * sell_prices[supply.market],

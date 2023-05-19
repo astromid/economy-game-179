@@ -14,7 +14,6 @@ class Logout(AppView):
     icon = "box-arrow-right"
     roles = (
         UserRoles.ROOT.value,
-        UserRoles.EDITOR.value,
         UserRoles.NEWS.value,
         UserRoles.PLAYER.value,
     )

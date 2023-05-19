@@ -208,7 +208,7 @@ async def process_market_shares(cycle: int, supplies_df: pd.DataFrame, market_da
 
 
 async def prepare_new_cycle(  # noqa: WPS211, WPS213, WPS217
-    cycle: Cycle,  # finished cycle, prev_prev = -1, next = +1
+    cycle: Cycle,  # finished cycle, prev = -1, next = +1
     balance_dao: db.BalanceDAO,
     market_dao: db.MarketDAO,
     price_dao: db.MarketPriceDAO,
@@ -269,12 +269,13 @@ async def prepare_new_cycle(  # noqa: WPS211, WPS213, WPS217
     )
     ic("Stage 9: new stocks")
 
-    # 10. Make auxiliary production
-    await process_auxiliary_production(
-        cycle=cycle.id,
+    # 10. Make auxiliary production & transactions
+    await process_auxiliary(
+        cycle=cycle,
         balance_dao=balance_dao,
         market_dao=market_dao,
         production_dao=production_dao,
+        transaction_dao=transaction_dao,
     )
     ic("Stage 10: auxiliary production")
 
@@ -413,24 +414,36 @@ async def process_stocks(  # noqa: WPS217
     await stock_dao.create(cycle=cycle + 1, new_stocks=new_stocks)
 
 
-async def process_auxiliary_production(
-    cycle: int,
+async def process_auxiliary(
+    cycle: Cycle,
     balance_dao: db.BalanceDAO,
     market_dao: db.MarketDAO,
     production_dao: db.ProductionDAO,
+    transaction_dao: db.TransactionDAO,
 ) -> None:
-    """Process auxiliary production for the cycle.
+    """Process auxiliary production & transactions for the cycle.
 
     Args:
-        cycle (int): finished cycle.
+        cycle (Cycle): finished cycle.
         balance_dao (db.BalanceDAO): balances table DAO.
         market_dao (db.MarketDAO): markets table DAO.
         production_dao (db.ProductionDAO): production table DAO.
+        transaction_dao (db.TransactionDAO): transactions table DAO.
     """
-    balances = await balance_dao.select(cycle=cycle)
+    balances = await balance_dao.select(cycle=cycle.id)
     markets = await market_dao.select_markets()
     await production_dao.create_auxiliary(
-        cycle=cycle + 1,
+        cycle=cycle.id + 1,
         users=[balance.user for balance in balances],
         markets=[market.id for market in markets],
     )
+    await transaction_dao.add([
+        Transaction(
+            ts=cycle.ts_finish,  # type: ignore
+            cycle=cycle.id + 1,
+            user=bal.user,
+            amount=0,
+            description="Ugly hack",
+        )
+        for bal in balances
+    ])

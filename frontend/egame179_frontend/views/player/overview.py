@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from typing import Any
 
 import pandas as pd
@@ -6,6 +7,7 @@ import streamlit as st
 from millify import millify
 
 from egame179_frontend.api.user import UserRoles
+from egame179_frontend.settings import settings
 from egame179_frontend.state import PlayerState
 from egame179_frontend.views.registry import AppView, appview
 
@@ -14,6 +16,7 @@ from egame179_frontend.views.registry import AppView, appview
 class _ViewData:
     name: str
     cycle: int
+    cycle_start: datetime | None
     balance: str
     balance_delta: str | None
     balances: list[float]
@@ -25,15 +28,19 @@ class _ViewData:
 def _cache_view_data(
     name: str,
     cycle: int,
+    cycle_start: datetime | None,
     balances: list[float],
     cycle_params: dict[str, float | int],
     transactions: list[dict[str, Any]],
 ) -> _ViewData:
-    balance_delta = millify(balances[-1] - balances[-2], precision=3) if cycle > 1 else None
-    transactions_df = pd.DataFrame(reversed(transactions)).drop("user_id", axis=1)
+    transactions_df = pd.DataFrame(reversed(transactions)).drop("user", axis=1)
+    init_bal = transactions_df.iloc[-1]["amount"]
+    balances = [init_bal] + balances
+    balance_delta = millify(balances[-2] - balances[-3], precision=3) if cycle > 1 else None
     return _ViewData(
         name=name,
         cycle=cycle,
+        cycle_start=cycle_start,
         balance=millify(balances[-1], precision=3),
         balance_delta=balance_delta,
         balances=balances,
@@ -56,9 +63,10 @@ class PlayerDashboard(AppView):
         state: PlayerState = st.session_state.game
         view_data = _cache_view_data(
             name=st.session_state.user.name,
-            cycle=state.cycle.cycle,
+            cycle=state.cycle.id,
+            cycle_start=state.cycle.ts_start,
             balances=state.balances,
-            cycle_params=state.cycle_params,
+            cycle_params=state.cycle.dict(),
             transactions=state.transactions,
         )
 
@@ -69,11 +77,22 @@ class PlayerDashboard(AppView):
         self._transactions_block(view_data)
 
     def _metrics_block(self, view_data: _ViewData) -> None:
-        col1, col2, _ = st.columns([1, 1, 5])
+        if view_data.cycle_start is not None:
+            est_timedelta = timedelta(seconds=settings.estimated_cycle_time)
+            cycle_start = view_data.cycle_start.time().isoformat()
+            cycle_end = (view_data.cycle_start + est_timedelta).time().isoformat()
+        else:
+            cycle_start = None
+            cycle_end = None
+        col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
         with col1:
-            st.metric(label="Цикл", value=view_data.cycle)
+            st.metric("Баланс", value=view_data.balance, delta=view_data.balance_delta)
         with col2:
-            st.metric(label="Баланс", value=view_data.balance, delta=view_data.balance_delta)
+            st.metric("Цикл #", value=view_data.cycle)
+        with col3:
+            st.metric("Начался", value=cycle_start)
+        with col4:
+            st.metric("Ожидаемое время завершения", value=cycle_end)
 
     def _overview_block(self, view_data: _ViewData) -> None:
         col1, col2 = st.columns([1, 1])
@@ -81,7 +100,7 @@ class PlayerDashboard(AppView):
             st.markdown("#### Динамика баланса")
             # TODO: change to ECharts bar chart
             st.bar_chart(
-                data={"cycle": list(range(1, view_data.cycle + 1)), "balance": view_data.balances},
+                data={"cycle": list(range(view_data.cycle + 1)), "balance": view_data.balances},
                 x="cycle",
                 y="balance",
             )

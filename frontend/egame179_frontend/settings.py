@@ -1,10 +1,5 @@
-from pathlib import Path
-from tempfile import gettempdir
-
 from pydantic import BaseSettings
 from yarl import URL
-
-# TEMP_DIR = Path(gettempdir())
 
 
 class Settings(BaseSettings):
@@ -12,6 +7,7 @@ class Settings(BaseSettings):
 
     backend_host: str = "localhost"
     backend_port: int = 8000
+    estimated_cycle_time: int = 900
 
     @property
     def backend_url(self) -> URL:

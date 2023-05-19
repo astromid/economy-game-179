@@ -19,6 +19,15 @@ class Production(BaseModel):
     quantity: int
 
 
+class Theta(BaseModel):
+    """Theta model"""
+
+    cycle: int
+    user: int
+    market: int
+    theta: float
+
+
 class ProductionAPI:
     """Production API."""
 
@@ -51,6 +60,18 @@ class ProductionAPI:
         response = httpx.get(cls._products_url, headers=st.session_state.auth_header)
         response.raise_for_status()
         return parse_obj_as(list[Production], response.json())
+
+    @classmethod
+    def get_user_thetas(cls) -> list[Theta]:
+        response = httpx.get(cls._user_thetas_url, headers=st.session_state.auth_header)
+        response.raise_for_status()
+        return parse_obj_as(list[Theta], response.json())
+
+    @classmethod
+    def get_thetas(cls) -> list[Theta]:
+        response = httpx.get(cls._thetas_url, headers=st.session_state.auth_header)
+        response.raise_for_status()
+        return parse_obj_as(list[Theta], response.json())
 
     @classmethod
     def new(cls, market: int, quantity: int) -> None:

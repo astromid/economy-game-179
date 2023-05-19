@@ -15,13 +15,6 @@ class Market(BaseModel):
     home_user: int | None
 
 
-class MarketConnection(BaseModel):
-    """Market connections model."""
-
-    source: int
-    target: int
-
-
 class MarketShare(BaseModel):
     """Market share with player visible info."""
 
@@ -54,15 +47,15 @@ class MarketAPI:
         return parse_obj_as(list[Market], response.json())
 
     @classmethod
-    def get_edges(cls) -> list[MarketConnection]:
+    def get_edges(cls) -> list[tuple[int, int]]:
         """Get all markets edges.
 
         Returns:
-            list[MarketConnection]: all market graph edges.
+            list[tuple[int, int]]: all market graph edges.
         """
         response = httpx.get(cls._nodes_url, headers=st.session_state.auth_header)
         response.raise_for_status()
-        return parse_obj_as(list[MarketConnection], response.json())
+        return parse_obj_as(list[tuple[int, int]], response.json())
 
     @classmethod
     def get_unlocked_markets(cls) -> list[int]:

@@ -77,3 +77,16 @@ async def get_names(dao: UserDAO = Depends()) -> dict[int, str]:
         dict[int, str]: {user: name}.
     """
     return await dao.get_names()
+
+
+@router.get("/players")
+async def get_players(dao: UserDAO = Depends()) -> list[int]:
+    """Get player ids.
+
+    Args:
+        dao (UserDAO): user table data access object.
+
+    Returns:
+        list [int]: player ids
+    """
+    return await dao.get_players()

@@ -2,7 +2,7 @@ from dataclasses import fields
 
 import streamlit as st
 
-from egame179_frontend.api import CycleAPI
+from egame179_frontend.api import CycleAPI, SyncStatusAPI
 from egame179_frontend.api.user import User, UserRoles
 from egame179_frontend.state import PlayerState, RootState
 
@@ -30,17 +30,17 @@ def clean_cached_state() -> None:
 def init_game_state() -> None:
     """Initialize game state after user auth."""
     server_cycle = CycleAPI.get_cycle()  # get cycle info from server and check sync
-    st.session_state.interim_block = (server_cycle.ts_start is None) or (server_cycle.ts_finish is not None)
+    st.session_state.interim_block = server_cycle.ts_start is None
     user: User = st.session_state.user
     if st.session_state.game is None:  # first run for this user, we need to create empty game states
         match user.role:
             case UserRoles.ROOT.value:
                 st.session_state.game = RootState(cycle=server_cycle)
             case UserRoles.PLAYER.value:
-                st.session_state.game = PlayerState(user_id=user.id, cycle=server_cycle)
-            case _:
-                # TODO: support news & editor roles
-                raise ValueError(f"Unsupported user.role {user.role}")
+                st.session_state.game = PlayerState(user=user.id, cycle=server_cycle)
+            case UserRoles.NEWS:
+                # TODO: add News state
+                st.session_state.game = None
     elif st.session_state.game.cycle != server_cycle:
         st.session_state.game.cycle = server_cycle
         # clear cached state (except new cycle & constant markets graph)
@@ -48,3 +48,4 @@ def init_game_state() -> None:
             # TODO: refactor this to avoid hardcoded fields
             if field.name not in {"cycle", "_players", "_npcs", "_markets"}:
                 setattr(st.session_state.game, field.name, None)
+        SyncStatusAPI.sync()
