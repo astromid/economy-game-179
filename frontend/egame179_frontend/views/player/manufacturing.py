@@ -115,7 +115,9 @@ class ManufacturingView(AppView):
         if view_data.products.empty:
             st.write("Нет записей о производстве.")
         else:
-            st.dataframe(view_data.products)
+            products = view_data.products.copy()
+            products["market"] = products["market"].map(view_data.m_id2name)
+            st.dataframe(products[["id", "ts", "cycle", "quantity", "market"]])
 
 
 def _prices_block(prices: dict[int, tuple[float, str | None]], m_id2name: dict[int, str]) -> None:
@@ -173,7 +175,7 @@ def _manufacturing(amount: int, market_id: int, market: str) -> None:
     else:
         st.success(f"{amount} шт. товаров {market} отправлены на склад.", icon="⚙")
         st.session_state.game.clear_after_buy()
-    sleep(1)
+    sleep(1.5)
     st.experimental_rerun()
 
 

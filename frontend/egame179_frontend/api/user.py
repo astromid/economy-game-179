@@ -82,6 +82,6 @@ class AuthAPI:
         Returns:
             list[int]: player ids.
         """
-        response = httpx.get(cls._names_url, headers=st.session_state.auth_header)
+        response = httpx.get(cls._players_url, headers=st.session_state.auth_header)
         response.raise_for_status()
         return parse_obj_as(list[int], response.json())

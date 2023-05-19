@@ -170,7 +170,7 @@ class PlayerState:  # noqa: WPS214
             self._storage = {
                 wh.market: wh.quantity
                 for wh in api.WarehouseAPI.get_user_storage()
-                if wh.cycle == self.cycle.id
+                if wh.cycle == self.cycle.id and wh.quantity > 0
             }
         return self._storage
 

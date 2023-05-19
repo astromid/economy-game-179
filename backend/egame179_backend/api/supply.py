@@ -51,7 +51,9 @@ async def get_user_supplies(
     """
     ts = datetime.now()
     cycle = await cycle_dao.get_current()
-    supplies = await dao.select(cycle=cycle.id, user=user.id)
+    # If cycle is not started yet, get supplies from previous cycle
+    target_cycle = cycle.id if cycle.ts_start is not None else cycle.id - 1
+    supplies = await dao.select(cycle=target_cycle, user=user.id)
     velocities = await get_supply_velocities(market_dao=market_dao, wd_dao=wd_dao, cycle=cycle.id, tau_s=cycle.tau_s)
     for supply in supplies:
         if supply.delivered == 0:
@@ -84,7 +86,9 @@ async def get_all_supplies(
     """
     ts = datetime.now()
     cycle = await cycle_dao.get_current()
-    supplies = await dao.select(cycle=cycle.id)
+    # If cycle is not started yet, get supplies from previous cycle
+    target_cycle = cycle.id if cycle.ts_start is not None else cycle.id - 1
+    supplies = await dao.select(cycle=target_cycle)
     velocities = await get_supply_velocities(market_dao=market_dao, wd_dao=wd_dao, cycle=cycle.id, tau_s=cycle.tau_s)
     for supply in supplies:
         if supply.delivered == 0:

@@ -98,7 +98,7 @@ def upgrade() -> None:
                     SELECT p.cycle, p.user, p.market, p.quantity AS quantity
                     FROM production p
                     UNION ALL
-                    SELECT s.cycle, s.user, s.market, -COALESCE(s.delivered, s.quantity) AS quantity
+                    SELECT s.cycle, s.user, s.market, -COALESCE(NULLIF(s.delivered, 0), s.quantity) AS quantity
                     FROM supplies s
                 ) AS ps
             GROUP BY ps.cycle, ps.user, ps.market

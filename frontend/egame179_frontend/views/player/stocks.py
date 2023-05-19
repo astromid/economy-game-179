@@ -12,7 +12,7 @@ from egame179_frontend.visualization import stocks_chart
 X_AXIS = "cycle"
 Y_AXIS = "price"
 C_AXIS = "company"
-CHART_SIZE = MappingProxyType({"width": 800, "height": 350})
+CHART_SIZE = MappingProxyType({"width": 600, "height": 350})
 
 
 @dataclass
@@ -22,10 +22,10 @@ class _ViewData:
 
 
 @st.cache_data(max_entries=1)
-def _cache_view_data(stocks: pd.DataFrame, npc_ids: list[int]) -> _ViewData:
+def _cache_view_data(stocks: pd.DataFrame, player_ids: list[int]) -> _ViewData:
     return _ViewData(
-        player_stocks=stocks[~stocks["user_id"].isin(npc_ids)],
-        npc_stocks=stocks[stocks["user_id"].isin(npc_ids)],
+        player_stocks=stocks[stocks["user"].isin(player_ids)],
+        npc_stocks=stocks[~stocks["user"].isin(player_ids)],
     )
 
 
@@ -44,7 +44,7 @@ class StocksView(AppView):
     def render(self) -> None:
         """Render view."""
         state: PlayerState = st.session_state.game
-        view_data = _cache_view_data(stocks=state.stocks, npc_ids=state.npc_ids)
+        view_data = _cache_view_data(stocks=state.stocks, player_ids=state.player_ids)
 
         st.markdown("## Биржевые котировки")
         st.markdown("#### Акции корпораций")

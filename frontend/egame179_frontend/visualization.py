@@ -166,10 +166,10 @@ def get_graph_node_color(market_id: int, home: int, owned: list[int], unlocked: 
     Returns:
         str: node color.
     """
-    if market_id == home:
-        color = ThemeColors.BLUE.value  # home market
-    elif market_id in owned:
+    if market_id in owned:
         color = ThemeColors.AQUA.value  # owned markets
+    elif market_id == home:
+        color = ThemeColors.BLUE.value  # home market
     elif market_id in unlocked:
         color = ThemeColors.GREEN.value  # unlocked markets
     else:
