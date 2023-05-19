@@ -148,9 +148,9 @@ def calculate_new_prices(
         market_production = prod_df.groupby(["cycle", "market"])["quantity"].sum().to_dict()
 
     if supp_df.empty:
-        market_sold = {}
+        market_delivered = {}
     else:
-        market_sold = supp_df.groupby("market")["delivered"].sum().to_dict()
+        market_delivered = supp_df.groupby("market")["quantity"].sum().to_dict()
 
     new_prices: dict[int, tuple[float, float]] = {}
     for price in prices:
@@ -161,7 +161,7 @@ def calculate_new_prices(
             p_mt=price.buy,
         )
         sell_price = sell_price_next(
-            n_mt=market_sold.get(price.market, 0),
+            n_mt=market_delivered.get(price.market, 0),
             d_mt=demand[price.market],
             coeff_l=cycle.coeff_l,
             s_mt=price.sell,
