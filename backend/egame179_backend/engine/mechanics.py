@@ -16,13 +16,14 @@ from egame179_backend.engine.calc import (
     calculate_shares,
     calculate_sold,
 )
-from egame179_backend.engine.utility import get_market_names, get_previous_owners, get_world_demand
+from egame179_backend.engine.utility import get_fee_mods, get_market_names, get_previous_owners, get_world_demand
 
 
 async def finish_cycle(
     cycle: Cycle,
     balance_dao: db.BalanceDAO,
     market_dao: db.MarketDAO,
+    mod_dao: db.FeeModificatorDAO,
     price_dao: db.MarketPriceDAO,
     supply_dao: db.SupplyDAO,
     transaction_dao: db.TransactionDAO,
@@ -35,6 +36,7 @@ async def finish_cycle(
         cycle (Cycle): finished cycle.
         balance_dao (db.BalanceDAO): balances table DAO.
         market_dao (db.MarketDAO): markets table DAO.
+        mod_dao (db.FeeModificatorDAO): fee_modificators table DAO.
         price_dao (db.MarketPriceDAO): prices table DAO.
         supply_dao (db.SupplyDAO): supplies table DAO.
         transaction_dao (db.TransactionDAO): transactions table DAO.
@@ -55,11 +57,11 @@ async def finish_cycle(
     ic("Stage 1: processing supplies finished")
 
     # 2. Storage fees
-    await process_storage_fees(cycle=cycle, wh_dao=wh_dao, transaction_dao=transaction_dao)
+    await process_storage_fees(cycle=cycle, mod_dao=mod_dao, wh_dao=wh_dao, transaction_dao=transaction_dao)
     ic("Stage 2: processing storage fees finished")
 
     # 3. Life fees
-    await process_life_fees(cycle=cycle, balance_dao=balance_dao, transaction_dao=transaction_dao)
+    await process_life_fees(cycle=cycle, balance_dao=balance_dao, mod_dao=mod_dao, transaction_dao=transaction_dao)
     ic("Stage 3: processing life fees finished")
 
     # 4. Calculate market shares and positions
@@ -120,14 +122,21 @@ async def process_supplies(
     return supplies
 
 
-async def process_storage_fees(cycle: Cycle, transaction_dao: db.TransactionDAO, wh_dao: db.WarehouseDAO) -> None:
+async def process_storage_fees(
+    cycle: Cycle,
+    mod_dao: db.FeeModificatorDAO,
+    transaction_dao: db.TransactionDAO,
+    wh_dao: db.WarehouseDAO,
+) -> None:
     """Process storage fees for the cycle.
 
     Args:
         cycle (Cycle): current cycle.
+        mod_dao (db.FeeModificatorDAO): fee_modificators table DAO.
         transaction_dao (db.TransactionDAO): transactions table DAO.
         wh_dao (db.WarehouseDAO): warehouses table DAO.
     """
+    fee_mods = await get_fee_mods(cycle=cycle.id, fee="gamma", mod_dao=mod_dao)
     warehouses = await wh_dao.select(cycle=cycle.id)
     total_storage: dict[int, int] = defaultdict(int)
     for wh in warehouses:
@@ -137,8 +146,8 @@ async def process_storage_fees(cycle: Cycle, transaction_dao: db.TransactionDAO,
             ts=cycle.ts_finish,  # type: ignore
             cycle=cycle.id,
             user=user,
-            amount=-cycle.gamma * storage,
-            description=f"Storage fee ({storage} items, {cycle.gamma} / item)",
+            amount=-cycle.gamma * fee_mods.get(user, 1) * storage,
+            description=f"Storage fee ({storage} items, ({cycle.gamma} x {fee_mods.get(user, 1)}) / item)",
         )
         for user, storage in total_storage.items()
     ]
@@ -146,22 +155,29 @@ async def process_storage_fees(cycle: Cycle, transaction_dao: db.TransactionDAO,
     await transaction_dao.add(transactions)
 
 
-async def process_life_fees(cycle: Cycle, balance_dao: db.BalanceDAO, transaction_dao: db.TransactionDAO) -> None:
+async def process_life_fees(
+    cycle: Cycle,
+    balance_dao: db.BalanceDAO,
+    mod_dao: db.FeeModificatorDAO,
+    transaction_dao: db.TransactionDAO,
+) -> None:
     """Process life fees for the cycle.
 
     Args:
         cycle (Cycle): finished cycle.
         balance_dao (db.BalanceDAO): balances table DAO.
+        mod_dao (db.FeeModificatorDAO): fee_modificators table DAO.
         transaction_dao (db.TransactionDAO): transactions table DAO.
     """
+    fee_mods = await get_fee_mods(cycle=cycle.id, fee="alpha", mod_dao=mod_dao)
     balances = await balance_dao.select(cycle=cycle.id)
     transactions = [
         Transaction(
             ts=cycle.ts_finish,  # type: ignore
             cycle=cycle.id,
             user=balance.user,
-            amount=-cycle.alpha,
-            description="Life fee",
+            amount=-cycle.alpha * fee_mods.get(balance.user, 1),
+            description=f"Life fee ({cycle.alpha} x {fee_mods.get(balance.user, 1)})",
         )
         for balance in balances
     ]
@@ -437,13 +453,15 @@ async def process_auxiliary(
         users=[balance.user for balance in balances],
         markets=[market.id for market in markets],
     )
-    await transaction_dao.add([
-        Transaction(
-            ts=cycle.ts_finish,  # type: ignore
-            cycle=cycle.id + 1,
-            user=bal.user,
-            amount=0,
-            description="Ugly hack",
-        )
-        for bal in balances
-    ])
+    await transaction_dao.add(
+        [
+            Transaction(
+                ts=cycle.ts_finish,  # type: ignore
+                cycle=cycle.id + 1,
+                user=bal.user,
+                amount=0,
+                description="Ugly hack",
+            )
+            for bal in balances
+        ],
+    )

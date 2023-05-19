@@ -22,12 +22,13 @@ class FeeModificatorDAO:
     def __init__(self, session: AsyncSession = Depends(get_db_session)):
         self.session = session
 
-    async def select(self, cycle: int, user: int | None = None) -> list[FeeModificator]:
+    async def select(self, cycle: int, user: int | None = None, fee: str | None = None) -> list[FeeModificator]:
         """Get cycle modificators.
 
         Args:
             cycle (int): target cycle.
-            user (int, optional): target user id. If None, all transactions return.
+            user (int, optional): target user id. If None, all modificators return.
+            fee (str, optional): target fee name. If None, all modificators return.
 
         Returns:
             list[Modificator]: cycle modificators.
@@ -35,6 +36,8 @@ class FeeModificatorDAO:
         query = select(FeeModificator).where(FeeModificator.cycle == cycle)
         if user is not None:
             query = query.where(FeeModificator.user == user)
+        if fee is not None:
+            query = query.where(FeeModificator.fee == fee)
         raw_modificators = await self.session.exec(query)  # type: ignore
         return raw_modificators.all()
 

@@ -36,6 +36,7 @@ async def finish(  # noqa: WPS211
     dao: CycleDAO = Depends(),
     balance_dao: db.BalanceDAO = Depends(),
     market_dao: db.MarketDAO = Depends(),
+    mod_dao: db.FeeModificatorDAO = Depends(),
     production_dao: db.ProductionDAO = Depends(),
     price_dao: db.MarketPriceDAO = Depends(),
     stock_dao: db.StockDAO = Depends(),
@@ -51,6 +52,7 @@ async def finish(  # noqa: WPS211
         dao (CycleDAO): cycles table data access object.
         balance_dao (BalanceDAO): balances table data access object.
         market_dao (MarketDAO): markets table data access object.
+        mod_dao (FeeModificatorDAO): fee_modificators table data access object.
         production_dao (ProductionDAO): productions table data access object.
         price_dao (MarketPriceDAO): market_prices table data access object.
         stock_dao (StockDAO): stocks table data access object.
@@ -65,6 +67,7 @@ async def finish(  # noqa: WPS211
         cycle=finished_cycle,
         balance_dao=balance_dao,
         market_dao=market_dao,
+        mod_dao=mod_dao,
         price_dao=price_dao,
         supply_dao=supply_dao,
         transaction_dao=transaction_dao,

@@ -1,6 +1,6 @@
 import pandas as pd
 
-from egame179_backend.db import BalanceDAO, MarketDAO, WarehouseDAO, WorldDemandDAO
+from egame179_backend.db import BalanceDAO, FeeModificatorDAO, MarketDAO, WarehouseDAO, WorldDemandDAO
 
 
 async def check_balance(cycle: int, user: int, amount: float, balance_dao: BalanceDAO) -> bool:
@@ -116,3 +116,18 @@ async def get_previous_owners(cycle: int, market_dao: MarketDAO) -> dict[tuple[i
         return {}
     prev_owners_df = prev_owners_df.set_index(["market", "position"])
     return prev_owners_df["user"].to_dict()
+
+
+async def get_fee_mods(cycle: int, fee: str, mod_dao: FeeModificatorDAO) -> dict[int, float]:
+    """Get fee modificators for all users.
+
+    Args:
+        cycle (int): current cycle.
+        fee (str): fee type.
+        mod_dao (FeeModificatorDAO): fee_modificators table DAO.
+
+    Returns:
+        dict[int, float]: {user: target fee coeff}.
+    """
+    mods = await mod_dao.select(cycle=cycle, fee=fee)
+    return {mod.user: mod.coeff for mod in mods}
