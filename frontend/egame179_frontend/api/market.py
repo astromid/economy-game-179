@@ -33,6 +33,7 @@ class MarketAPI:
     _unlocked_url = str(_api_url / "unlocked")
     _shares_url = str(_api_url / "shares")
     _shares_all_url = str(_api_url / "shares" / "all")
+    _unlock_url = str(_api_url / "unlock")
     _demand_factors_url = str(_api_url / "demand_factors")
 
     @classmethod
@@ -89,6 +90,19 @@ class MarketAPI:
         response = httpx.get(cls._shares_all_url, headers=st.session_state.auth_header)
         response.raise_for_status()
         return parse_obj_as(list[MarketShare], response.json())
+
+    @classmethod
+    def unlock_market(cls, cycle: int, user: int, market: int) -> None:
+        """Unlock market for user.
+
+        Args:
+            cycle (int): the cycle to unlock the market.
+            user (int): user to unlock the market for.
+            market (int): market to unlock.
+        """
+        unlock_request = {"cycle": cycle, "user": user, "market": market}
+        response = httpx.post(cls._unlock_url, json=unlock_request, headers=st.session_state.auth_header)
+        response.raise_for_status()
 
     @classmethod
     def get_demand_factors(cls) -> dict[int, float]:

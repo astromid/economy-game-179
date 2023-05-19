@@ -43,7 +43,7 @@ async def get_modificators(
         list[Modificator]: modificators for all users.
     """
     cycle = await cycle_dao.get_current()
-    return await dao.select(cycle=cycle.id)
+    return await dao.select(cycle=cycle.id, future=True)
 
 
 @router.post("/new", dependencies=[Security(get_current_user, scopes=["root"])])

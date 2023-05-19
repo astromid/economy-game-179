@@ -8,8 +8,18 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from egame179_backend.db.session import get_db_session
 
 BULLETIN_TEMPLATES = (
-    "TEMPLATE #0 {market} {user} {quantity}.",
-    "TEMPLATE #1 {market} {user} {quantity}.",
+    "Новая сделка на рынке {market}: корпорация {user} заключила контракт на продажу {quantity} товаров.",
+    "{quantity} единиц продукции {market} поступают на склад корпорации {user} и скоро будут доступны на рынке.",
+    "Корпорация {user} с гордостью заявила о поставке {quantity} высококачественных единиц {market}.",
+    "Аналитики ожидают появление на рынке {market} {quantity} единиц товара от корпорации {user}.",
+    "Согласно отчетности корпорации {user}, на рынок {market} поступило {quantity} единиц товара.",
+    "{user} заключила контракт на поставку {quantity} единиц товара на рынок {market}.",
+    "Биржа {market} сообщает о поставке {quantity} единиц товара от корпорации {user}.",
+    "Независимый эксперт считает, что корпорация {user} поставит на рынок {market} {quantity} единиц товара.",
+    "По мере поступления новых данных, аналитики уточняют прогнозы поставок {quantity} {market} от корпорации {user}.",
+    "{market} ожидает поставку {quantity} единиц товара от корпорации {user}.",
+    "{quantity} единиц товара от корпорации {user} могут поступить на рынок {market}.",
+    "Центр аналитики сообщает, что корпорация {user} может поставить на рынок {market} {quantity} единиц товара.",
 )
 
 

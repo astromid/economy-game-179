@@ -22,13 +22,15 @@ async def get_current(dao: CycleDAO = Depends()) -> Cycle:
 
 
 @router.get("/start", dependencies=[Security(get_current_user, scopes=["root"])])
-async def start(dao: CycleDAO = Depends()) -> None:
+async def start(dao: CycleDAO = Depends(), sync_dao: db.SyncStatusDAO = Depends()) -> None:
     """Start current cycle.
 
     Args:
         dao (CycleDAO): cycles table data access object.
+        sync_dao (SyncStatusDAO): sync status table data access object.
     """
     await dao.start()
+    await sync_dao.desync_all()
 
 
 @router.get("/finish", dependencies=[Security(get_current_user, scopes=["root"])])
@@ -41,6 +43,7 @@ async def finish(  # noqa: WPS211
     price_dao: db.MarketPriceDAO = Depends(),
     stock_dao: db.StockDAO = Depends(),
     supply_dao: db.SupplyDAO = Depends(),
+    sync_dao: db.SyncStatusDAO = Depends(),
     theta_dao: db.ThetaDAO = Depends(),
     transaction_dao: db.TransactionDAO = Depends(),
     wh_dao: db.WarehouseDAO = Depends(),
@@ -57,6 +60,7 @@ async def finish(  # noqa: WPS211
         price_dao (MarketPriceDAO): market_prices table data access object.
         stock_dao (StockDAO): stocks table data access object.
         supply_dao (SupplyDAO): supplies table data access object.
+        sync_dao (SyncStatusDAO): sync status table data access object.
         theta_dao (ThetaDAO): thetas table data access object.
         transaction_dao (TransactionDAO): transactions table data access object.
         wh_dao (WarehouseDAO): warehouses table data access object.
@@ -87,3 +91,4 @@ async def finish(  # noqa: WPS211
         wh_dao=wh_dao,
         wd_dao=wd_dao,
     )
+    await sync_dao.desync_all()

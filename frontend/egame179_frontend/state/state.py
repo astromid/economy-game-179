@@ -38,6 +38,7 @@ def init_game_state() -> None:
                 st.session_state.game = RootState(cycle=server_cycle)
             case UserRoles.PLAYER.value:
                 st.session_state.game = PlayerState(user=user.id, cycle=server_cycle)
+                SyncStatusAPI.sync()
             case UserRoles.NEWS:
                 # TODO: add News state
                 st.session_state.game = None

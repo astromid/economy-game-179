@@ -2,8 +2,8 @@ import math
 import random
 from datetime import datetime
 
-BULLETIN_SIGMA = 0.2
-STOCKS_SIGMA = 0.1
+BULLETIN_SIGMA = 0.3
+STOCKS_SIGMA = 0.15
 
 
 def production_cost(theta: float, price: float, quantity: int) -> float:  # noqa: D103

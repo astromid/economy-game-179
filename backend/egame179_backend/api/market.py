@@ -21,6 +21,14 @@ class MarketSharePlayer(BaseModel):
     position: int
 
 
+class UnlockRequest(BaseModel):
+    """Unlock market request."""
+
+    cycle: int
+    user: int
+    market: int
+
+
 @router.get("/nodes")
 async def get_market_nodes(dao: MarketDAO = Depends()) -> list[Market]:
     """Get all markets graph nodes.
@@ -131,6 +139,17 @@ async def get_market_shares(dao: MarketDAO = Depends(), cycle_dao: CycleDAO = De
     """
     current_cycle = await cycle_dao.get_current()
     return await dao.select_shares(cycle=current_cycle.id - 1, nonzero=True)
+
+
+@router.post("/unlock", dependencies=[Security(get_current_user, scopes=["root"])])
+async def unlock_market(unlock_request: UnlockRequest, dao: MarketDAO = Depends()) -> None:
+    """Unlock market for user.
+
+    Args:
+        unlock_request (UnlockRequest): unlock request data.
+        dao (MarketDAO): markets table data access object.
+    """
+    await dao.unlock_market(cycle=unlock_request.cycle, user=unlock_request.user, market=unlock_request.market)
 
 
 @router.get("/demand_factors")

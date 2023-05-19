@@ -149,3 +149,22 @@ class MarketDAO:  # noqa: WPS214
         """
         self.session.add_all(shares)
         await self.session.commit()
+
+    async def unlock_market(self, cycle: int, user: int, market: int) -> None:
+        """Unlock market for user.
+
+        Args:
+            cycle (int): target cycle.
+            user (int): target user id.
+            market (int): target market id.
+        """
+        query = select(MarketShare).where(
+            MarketShare.cycle == cycle,
+            MarketShare.user == user,
+            MarketShare.market == market,
+        )
+        raw_share = await self.session.exec(query)  # type: ignore
+        share = raw_share.one()
+        share.unlocked = True
+        self.session.add(share)
+        await self.session.commit()
