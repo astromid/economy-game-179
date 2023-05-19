@@ -1,6 +1,7 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
 
+import numpy as np
 import pandas as pd
 from icecream import ic
 
@@ -225,6 +226,7 @@ def calculate_new_stocks(
         balances_df["prev_balance"] = balances_df.groupby("user")["balance"].shift(1).fillna(initial_balance)
         balances_df = balances_df[balances_df["cycle"] == cycle]
         balances_df["rel_income"] = balances_df["balance"] / balances_df["prev_balance"]
+        balances_df["rel_income"] = balances_df["rel_income"].replace([np.inf, -np.inf], np.nan).fillna(1)
         balances_df = balances_df.set_index("user")
         ic(balances_df)
         rel_incomes = balances_df["rel_income"].to_dict()
@@ -238,8 +240,8 @@ def calculate_new_stocks(
         storages_df["prev_quantity"] = storages_df.groupby("npc")["quantity"].shift(1)
         storages_df = storages_df[storages_df["cycle"] == cycle]
         storages_df["rel_income"] = storages_df["quantity"] / storages_df["prev_quantity"]
-        # first cycle logistics stocks are not available
-        storages_df["rel_income"] = storages_df["rel_income"].fillna(1)
+        # avoid division by zero
+        storages_df["rel_income"] = storages_df["rel_income"].replace([np.inf, -np.inf], np.nan).fillna(1)
         storages_df = storages_df.set_index("npc")
         ic(storages_df)
         rel_storages = storages_df["rel_income"].to_dict()

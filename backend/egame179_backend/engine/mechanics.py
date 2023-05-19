@@ -274,7 +274,17 @@ async def prepare_new_cycle(  # noqa: WPS211, WPS213, WPS217
     await process_overdrafts(cycle=cycle, balance_dao=balance_dao, transaction_dao=transaction_dao)
     ic("Stage 8: overdraft fees")
 
-    # 9. Calculate new stocks
+    # 9. Make auxiliary production & transactions
+    await process_auxiliary(
+        cycle=cycle,
+        balance_dao=balance_dao,
+        market_dao=market_dao,
+        production_dao=production_dao,
+        transaction_dao=transaction_dao,
+    )
+    ic("Stage 9: auxiliary production")
+
+    # 10. Calculate new stocks
     await process_stocks(
         cycle=cycle.id,
         balance_dao=balance_dao,
@@ -283,17 +293,7 @@ async def prepare_new_cycle(  # noqa: WPS211, WPS213, WPS217
         transaction_dao=transaction_dao,
         wh_dao=wh_dao,
     )
-    ic("Stage 9: new stocks")
-
-    # 10. Make auxiliary production & transactions
-    await process_auxiliary(
-        cycle=cycle,
-        balance_dao=balance_dao,
-        market_dao=market_dao,
-        production_dao=production_dao,
-        transaction_dao=transaction_dao,
-    )
-    ic("Stage 10: auxiliary production")
+    ic("Stage 10: new stocks")
 
 
 async def process_prices(
