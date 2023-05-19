@@ -7,7 +7,7 @@ import pandas as pd
 import streamlit as st
 from httpx import HTTPStatusError
 
-from egame179_frontend.api import CycleAPI, ModificatorAPI, MarketAPI
+from egame179_frontend.api import CycleAPI, MarketAPI, ModificatorAPI
 from egame179_frontend.api.user import UserRoles
 from egame179_frontend.settings import settings
 from egame179_frontend.state.state import RootState
