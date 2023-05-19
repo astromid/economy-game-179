@@ -1,11 +1,11 @@
 import math
 from dataclasses import dataclass
 from itertools import chain
+from time import sleep
 
 import pandas as pd
 import streamlit as st
 from httpx import HTTPStatusError
-from millify import millify
 from streamlit_echarts import st_pyecharts
 
 from egame179_frontend.api import ProductionAPI
@@ -23,7 +23,7 @@ class _ViewData:
     cycle: int
     balance: float
     unlocked_markets: list[int]
-    prices: dict[int, tuple[float, str, str | None]]
+    prices: dict[int, tuple[float, str | None]]
     thetas: dict[int, float]
     products: pd.DataFrame
     m_id2name: dict[int, str]
@@ -42,20 +42,20 @@ def _cache_view_data(
     m_id2name: dict[int, str],
 ) -> _ViewData:
     prices = prices.drop("sell", axis=1)
-    prices = prices[prices["cycle"] >= cycle - 1].sort_values(["market_id", "cycle"])
-    prices["buy_prev"] = prices.groupby("market_id")["buy"].shift(1)
+    prices = prices[prices["cycle"] >= cycle - 1].sort_values(["market", "cycle"])
+    prices["buy_prev"] = prices.groupby("market")["buy"].shift(1)
     prices["buy_delta_pct"] = (prices["buy"] - prices["buy_prev"]) / prices["buy_prev"]
-    prices = prices[prices["cycle"] == cycle].set_index("market_id")
+    prices = prices[prices["cycle"] == cycle].set_index("market")
     prices_delta_dict = prices["buy_delta_pct"].to_dict()
     prices_dict = {
         m_id: (
             price,
-            millify(price, precision=3),
             None if pd.isna(prices_delta_dict[m_id]) else f"{prices_delta_dict[m_id]:.2%}",
         )
         for m_id, price in prices["buy"].to_dict().items()
     }
-    products["market"] = products["market_id"].map(m_id2name)
+    if not products.empty:
+        products["market_name"] = products["market"].map(m_id2name)
     return _ViewData(
         player_name=player_name,
         cycle=cycle,
@@ -78,24 +78,24 @@ class ManufacturingView(AppView):
     icon = "gear"
     roles = (UserRoles.PLAYER.value,)
 
-    def render(self) -> None:
+    def render(self) -> None:  # noqa: WPS213
         """Render view."""
         state: PlayerState = st.session_state.game
         view_data = _cache_view_data(
             player_name=st.session_state.user.name,
-            cycle=state.cycle.cycle,
+            cycle=state.cycle.id,
             balance=state.balances[-1],
             unlocked_markets=state.unlocked_markets,
             prices=state.prices,
             thetas=state.thetas,
-            products=pd.DataFrame(state.products),
+            products=pd.DataFrame(state.production),
             m_id2name={node_id: node["name"] for node_id, node in state.markets.nodes.items()},
         )
 
         st.markdown(f"## Производство {view_data.player_name} Inc.")
-        balance_col, _ = st.columns([1, 6])
+        balance_col, _ = st.columns([2, 5])
         with balance_col:
-            st.metric(label="Баланс", value=millify(view_data.balance, precision=3))
+            st.metric(label="Баланс", value=view_data.balance)
         _prices_block(prices=view_data.prices, m_id2name=view_data.m_id2name)
 
         col1, col2 = st.columns([2, 3])
@@ -112,22 +112,25 @@ class ManufacturingView(AppView):
             _theta_radar_block(thetas=view_data.thetas, m_id2name=view_data.m_id2name)
         st.markdown("---")
         st.markdown("### Записи о производстве")
-        st.dataframe(view_data.products)
+        if view_data.products.empty:
+            st.write("Нет записей о производстве.")
+        else:
+            st.dataframe(view_data.products)
 
 
-def _prices_block(prices: dict[int, tuple[float, str, str | None]], m_id2name: dict[int, str]) -> None:
+def _prices_block(prices: dict[int, tuple[float, str | None]], m_id2name: dict[int, str]) -> None:
     n_rows = math.ceil(len(prices) / MAX_METRICS_IN_ROW)
     st.markdown("#### Рыночные цены производства")
     columns = chain(*[st.columns(MAX_METRICS_IN_ROW) for _ in range(n_rows)])
     for col, m_id in zip(columns, prices):
         with col:
-            st.metric(label=m_id2name[m_id], value=prices[m_id][1], delta=prices[m_id][2])
+            st.metric(label=m_id2name[m_id], value=prices[m_id][0], delta=prices[m_id][1])
 
 
 def _buy_form_block(
     balance: float,
     unlocked_markets: list[int],
-    prices: dict[int, tuple[float, str, str | None]],
+    prices: dict[int, tuple[float, str | None]],
     thetas: dict[int, float],
     m_id2name: dict[int, str],
     name2m_id: dict[str, int],
@@ -164,12 +167,14 @@ def _buy_form_block(
 
 def _manufacturing(amount: int, market_id: int, market: str) -> None:
     try:
-        ProductAPI.buy(market_id=market_id, amount=amount)
+        ProductionAPI.new(market=market_id, quantity=amount)
     except HTTPStatusError as exc:
         st.error(f"Ошибка: {exc = }", icon="⚙")
     else:
         st.success(f"{amount} шт. товаров {market} отправлены на склад.", icon="⚙")
         st.session_state.game.clear_after_buy()
+    sleep(1)
+    st.experimental_rerun()
 
 
 def _theta_radar_block(thetas: dict[int, float], m_id2name: dict[int, str]) -> None:

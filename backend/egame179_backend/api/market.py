@@ -6,7 +6,7 @@ from pydantic import BaseModel
 
 from egame179_backend.api.auth.dependencies import get_current_user
 from egame179_backend.db import CycleDAO, WorldDemandDAO
-from egame179_backend.db.market import Market, MarketConnection, MarketDAO, MarketShare
+from egame179_backend.db.market import Market, MarketDAO, MarketShare
 from egame179_backend.db.user import User
 
 router = APIRouter()
@@ -35,14 +35,14 @@ async def get_market_nodes(dao: MarketDAO = Depends()) -> list[Market]:
 
 
 @router.get("/edges")
-async def get_market_edges(dao: MarketDAO = Depends()) -> list[MarketConnection]:
+async def get_market_edges(dao: MarketDAO = Depends()) -> list[tuple[int, int]]:
     """Get all markets graph edges.
 
     Args:
         dao (MarketDAO): markets table data access object.
 
     Returns:
-        list[MarketsConnection]: list of market edges.
+        list[tuple[int, int]]: list of market edges.
     """
     return await dao.select_connections()
 

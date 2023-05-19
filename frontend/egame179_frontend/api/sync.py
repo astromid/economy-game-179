@@ -16,7 +16,7 @@ class SyncStatusAPI:
     @classmethod
     def sync(cls) -> None:
         """Send sync signal."""
-        response = httpx.get(cls._status_url, headers=st.session_state.auth_header)
+        response = httpx.get(cls._sync_url, headers=st.session_state.auth_header)
         response.raise_for_status()
 
     @classmethod

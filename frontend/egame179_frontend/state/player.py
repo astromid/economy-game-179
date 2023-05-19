@@ -18,6 +18,7 @@ class PlayerState:  # noqa: WPS214
     _names: dict[int, str] | None = None
     _player_ids: list[int] | None = None
     _markets: nx.Graph | None = None
+    _modificators: dict[str, float] | None = None
     _balances: list[float] | None = None
     _transactions: list[dict[str, Any]] | None = None
     _unlocked_markets: list[int] | None = None
@@ -62,9 +63,20 @@ class PlayerState:  # noqa: WPS214
         if self._markets is None:
             self._markets = nx.Graph()
             for market in api.MarketAPI.get_markets():
-                self._markets.add_node(market.id, name=market.name, ring=market.ring)
+                self._markets.add_node(market.id, name=market.name, ring=market.ring, home_user=market.home_user)
             self._markets.add_edges_from(api.MarketAPI.get_edges())
         return self._markets
+
+    @property
+    def modificators(self) -> dict[str, float]:
+        """Player fee modificators.
+
+        Returns:
+            dict[str, float]: fee coeffs.
+        """
+        if self._modificators is None:
+            self._modificators = {fee.fee: fee.coeff for fee in api.ModificatorAPI.get_user_modificators()}
+        return self._modificators
 
     @property
     def balances(self) -> list[float]:
@@ -167,7 +179,7 @@ class PlayerState:  # noqa: WPS214
         """Market shares, visible for player.
 
         Returns:
-            dict[int, list[tuple[str, float | None]]]: {market_id: [(user_name, share %)]}.
+            dict[tuple[int, int], tuple[int, float | None]]: {(market_id, position): (user_id, share)}
         """
         if self._shares is None:
             self._shares = {}
@@ -186,7 +198,7 @@ class PlayerState:  # noqa: WPS214
             graph = deepcopy(self.markets)
             for node_id, node in graph.nodes.items():
                 node["demand_factor"] = self.demand_factors[node_id]
-                node["storage"] = self.storage[node_id]
+                node["storage"] = self.storage.get(node_id, 0)
                 for pos in (1, 2):
                     player, share = self.shares.get((node_id, pos), (None, None))
                     player_name = self.names[player] if player is not None else "None"
@@ -223,9 +235,11 @@ class PlayerState:  # noqa: WPS214
         self._production = None
         self._storage = None
         self._transactions = None
+        self._detailed_markets = None
 
     def clear_after_supply(self) -> None:
         """Clean invalid caches after supply operation."""
         self._balances = None
         self._storage = None
         self._transactions = None
+        self._detailed_markets = None

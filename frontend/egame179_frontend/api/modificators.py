@@ -18,7 +18,7 @@ class FeeModificator(BaseModel):
 class ModificatorAPI:
     """Modificators API."""
 
-    _api_url = settings.backend_url / "modificator"
+    _api_url = settings.backend_url / "modificators"
     _list_url = str(_api_url / "list")
     _list_all_url = str(_api_url / "list" / "all")
     _new_url = str(_api_url / "new")

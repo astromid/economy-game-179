@@ -423,7 +423,7 @@ async def process_stocks(  # noqa: WPS217
         stocks=stocks,
         balances_df=pd.DataFrame([balance.dict() for balance in balances if balance.cycle >= cycle - 1]),
         storages_df=pd.DataFrame([storage.dict() for storage in storages if storage.cycle >= cycle - 1]),
-        npc_df=pd.DataFrame(npcs, columns=["market", "user"]),
+        npc_df=pd.DataFrame(npcs.items(), columns=["market", "npc"]),
         initial_balance=init_balance,
     )
     ic("New stocks", new_stocks)

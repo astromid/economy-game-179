@@ -48,4 +48,5 @@ def init_game_state() -> None:
             # TODO: refactor this to avoid hardcoded fields
             if field.name not in {"cycle", "_players", "_npcs", "_markets"}:
                 setattr(st.session_state.game, field.name, None)
-        SyncStatusAPI.sync()
+        if user.role == UserRoles.PLAYER.value:
+            SyncStatusAPI.sync()

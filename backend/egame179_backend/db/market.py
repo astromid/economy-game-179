@@ -64,7 +64,7 @@ class MarketDAO:  # noqa: WPS214
         raw_markets = await self.session.exec(query)  # type: ignore
         return raw_markets.all()
 
-    async def select_connections(self) -> list[MarketConnection]:
+    async def select_connections(self) -> list[tuple[int, int]]:
         """Get market graph edges.
 
         Returns:
@@ -72,7 +72,7 @@ class MarketDAO:  # noqa: WPS214
         """
         query = select(MarketConnection)
         raw_connections = await self.session.exec(query)  # type: ignore
-        return raw_connections.all()
+        return [(edge.source, edge.target) for edge in raw_connections.all()]
 
     async def get_graph(self) -> nx.Graph:
         """Get market graph.
@@ -82,7 +82,7 @@ class MarketDAO:  # noqa: WPS214
         """
         graph = nx.Graph()
         edges = await self.select_connections()
-        graph.add_edges_from([(edge.source, edge.target) for edge in edges])
+        graph.add_edges_from(edges)
         return graph
 
     async def get_market_npcs(self) -> dict[int, int]:

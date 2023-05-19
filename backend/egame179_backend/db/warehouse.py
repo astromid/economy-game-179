@@ -40,7 +40,8 @@ class WarehouseDAO:
         )
         raw_warehouse = await self.session.exec(query)  # type: ignore
         warehouse = raw_warehouse.one_or_none()
-        return 0 if warehouse is None else warehouse.quantity
+        # quantity is Decimal I don't know why
+        return 0 if warehouse is None else int(warehouse.quantity)
 
     async def select(self, cycle: int | None = None, user: int | None = None) -> list[Warehouse]:
         """Get user storages.
@@ -58,4 +59,8 @@ class WarehouseDAO:
         if cycle is not None:
             query = query.where(Warehouse.cycle == cycle)
         raw_warehouses = await self.session.exec(query)  # type: ignore
-        return raw_warehouses.all()
+        warehouses = raw_warehouses.all()
+        for warehouse in warehouses:
+            # quantity is Decimal I don't know why
+            warehouse.quantity = int(warehouse.quantity)
+        return warehouses

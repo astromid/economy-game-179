@@ -7,7 +7,7 @@ max-imports = 16
 max-line-length = 120
 max-line-complexity = 20
 max-local-variables = 12
-max-module-members = 10
+max-module-members = 14
 extend-ignore = E203
 docstring_style=google
 

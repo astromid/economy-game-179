@@ -13,6 +13,7 @@ class ThemeColors(Enum):
     GREEN = "#91cc75"  # noqa: WPS115
     BLUE = "#5470c6"  # noqa: WPS115
     GRAY = "#bbbbbb"  # noqa: WPS115
+    AQUA = "#38aab0"  # noqa: WPS115
 
 
 def load_css() -> None:

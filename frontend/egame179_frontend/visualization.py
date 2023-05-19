@@ -15,9 +15,7 @@ TOOLTIP_JS = "".join(
         "function(params){",
         "var bulletItem = (field, value) => ",
         "'<p>' + params.marker + ' ' + field + ' ' + '<b>' + value + '</b></p>';",
-        "let tip = bulletItem('Цена производства', params.data.buy);",
-        "tip += bulletItem('Цена продажи', params.data.sell);",
-        "tip += bulletItem('Фактор спроса', params.data.demand_factor);",
+        "let tip = bulletItem('Фактор спроса', params.data.demand_factor);",
         "tip += bulletItem('Склад', params.data.storage);",
         "tip += bulletItem('Владелец', params.data.top1);",
         "tip += bulletItem('Конкурент', params.data.top2);",
@@ -106,12 +104,14 @@ def radar_chart(thetas: dict[str, float]) -> pyecharts.charts.Radar:
     return radar
 
 
-def markets_graph(nx_graph: nx.Graph, unlocked_markets: list[int]) -> pyecharts.charts.Graph:
+def markets_graph(nx_graph: nx.Graph, home: int, owned: list[int], unlocked: list[int]) -> pyecharts.charts.Graph:
     """Graph chart for markets visualization.
 
     Args:
         nx_graph (nx.Graph): markets graph with additional info.
-        unlocked_markets (list[int]): unlocked markets for player.
+        home (int): home market id.
+        owned (list[int]): owned markets for player.
+        unlocked (list[int]): unlocked markets for player.
 
     Returns:
         pyecharts.charts.Graph: graph chart for rendering.
@@ -119,15 +119,13 @@ def markets_graph(nx_graph: nx.Graph, unlocked_markets: list[int]) -> pyecharts.
     nodes = [
         {
             "name": node["name"],
-            "buy": node["buy"],
-            "sell": node["sell"],
             "demand_factor": node["demand_factor"],
             "storage": node["storage"],
             "top1": node["top1"],
             "top2": node["top2"],
             "symbol": "circle",
             "symbolSize": NODE_SIZE_PX * node["demand_factor"],
-            "itemStyle": {"color": get_graph_node_color(node_id, unlocked_markets)},
+            "itemStyle": {"color": get_graph_node_color(node_id, home=home, owned=owned, unlocked=unlocked)},
         }
         for node_id, node in nx_graph.nodes(data=True)
     ]
@@ -156,19 +154,23 @@ def markets_graph(nx_graph: nx.Graph, unlocked_markets: list[int]) -> pyecharts.
     return graph
 
 
-def get_graph_node_color(market_id: int, unlocked_markets: list[int]) -> str:
+def get_graph_node_color(market_id: int, home: int, owned: list[int], unlocked: list[int]) -> str:
     """Get color of market node in graph.
 
     Args:
         market_id (int): current market id
-        unlocked_markets (list[int]): list of unlocked market ids.
+        home (int): home market id
+        owned (list[int]): list of owned market ids.
+        unlocked (list[int]): list of unlocked market ids.
 
     Returns:
         str: node color.
     """
-    if market_id == unlocked_markets[-1]:
+    if market_id == home:
         color = ThemeColors.BLUE.value  # home market
-    elif market_id in unlocked_markets:
+    elif market_id in owned:
+        color = ThemeColors.AQUA.value  # owned markets
+    elif market_id in unlocked:
         color = ThemeColors.GREEN.value  # unlocked markets
     else:
         color = ThemeColors.GRAY.value

@@ -2,6 +2,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 
 import pandas as pd
+from icecream import ic
 
 from egame179_backend.db.cycle import Cycle
 from egame179_backend.db.market import MarketShare
@@ -225,21 +226,25 @@ def calculate_new_stocks(
         balances_df = balances_df[balances_df["cycle"] == cycle]
         balances_df["rel_income"] = balances_df["balance"] / balances_df["prev_balance"]
         balances_df = balances_df.set_index("user")
+        ic(balances_df)
         rel_incomes = balances_df["rel_income"].to_dict()
     # NPC stocks
     if storages_df.empty:
         rel_storages = {}
     else:
         storages_df = storages_df.merge(npc_df, on="market", how="left")
-        storages_df = storages_df.groupby(["user", "cycle"])["quantity"].sum().reset_index()
-        storages_df = storages_df.sort_values(["user", "cycle"])
-        storages_df["prev_quantity"] = storages_df.groupby("user")["quantity"].shift(1)
+        storages_df = storages_df.groupby(["npc", "cycle"])["quantity"].sum().reset_index()
+        storages_df = storages_df.sort_values(["npc", "cycle"])
+        storages_df["prev_quantity"] = storages_df.groupby("npc")["quantity"].shift(1)
         storages_df = storages_df[storages_df["cycle"] == cycle]
         storages_df["rel_income"] = storages_df["quantity"] / storages_df["prev_quantity"]
         # first cycle logistics stocks are not available
         storages_df["rel_income"] = storages_df["rel_income"].fillna(1)
-        storages_df = storages_df.set_index("user")
+        storages_df = storages_df.set_index("npc")
+        ic(storages_df)
         rel_storages = storages_df["rel_income"].to_dict()
+    ic(rel_incomes)
+    ic(rel_storages)
     new_stocks: dict[int, float] = {}
     for stock in stocks:
         rel_income = rel_incomes.get(stock.user, rel_storages.get(stock.user, 1))

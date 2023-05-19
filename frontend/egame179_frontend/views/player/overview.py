@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import Any
 
 import pandas as pd
@@ -15,37 +15,28 @@ from egame179_frontend.views.registry import AppView, appview
 @dataclass
 class _ViewData:
     name: str
-    cycle: int
-    cycle_start: datetime | None
-    balance: str
-    balance_delta: str | None
+    cycle: dict[str, Any]
     balances: list[float]
-    cycle_params: dict[str, float]
     transactions: pd.DataFrame
+    fee_mods: dict[str, float]
 
 
 @st.cache_data(max_entries=1)
 def _cache_view_data(
     name: str,
-    cycle: int,
-    cycle_start: datetime | None,
+    cycle: dict[str, Any],
     balances: list[float],
-    cycle_params: dict[str, float | int],
     transactions: list[dict[str, Any]],
+    fee_mods: dict[str, float],
 ) -> _ViewData:
     transactions_df = pd.DataFrame(reversed(transactions)).drop("user", axis=1)
     init_bal = transactions_df.iloc[-1]["amount"]
-    balances = [init_bal] + balances
-    balance_delta = millify(balances[-2] - balances[-3], precision=3) if cycle > 1 else None
     return _ViewData(
         name=name,
         cycle=cycle,
-        cycle_start=cycle_start,
-        balance=millify(balances[-1], precision=3),
-        balance_delta=balance_delta,
-        balances=balances,
-        cycle_params=cycle_params,
+        balances=[init_bal] + balances,
         transactions=transactions_df,
+        fee_mods=fee_mods,
     )
 
 
@@ -63,11 +54,10 @@ class PlayerDashboard(AppView):
         state: PlayerState = st.session_state.game
         view_data = _cache_view_data(
             name=st.session_state.user.name,
-            cycle=state.cycle.id,
-            cycle_start=state.cycle.ts_start,
+            cycle=state.cycle.dict(),
             balances=state.balances,
-            cycle_params=state.cycle.dict(),
             transactions=state.transactions,
+            fee_mods=state.modificators,
         )
 
         st.markdown(f"## Сводный отчёт {view_data.name} Inc.")
@@ -77,40 +67,53 @@ class PlayerDashboard(AppView):
         self._transactions_block(view_data)
 
     def _metrics_block(self, view_data: _ViewData) -> None:
-        if view_data.cycle_start is not None:
+        ts_start = view_data.cycle["ts_start"]
+        if ts_start is not None:
             est_timedelta = timedelta(seconds=settings.estimated_cycle_time)
-            cycle_start = view_data.cycle_start.time().isoformat()
-            cycle_end = (view_data.cycle_start + est_timedelta).time().isoformat()
+            cycle_start = ts_start.time().isoformat()
+            cycle_end = (ts_start + est_timedelta).time().isoformat()
         else:
-            cycle_start = None
-            cycle_end = None
+            cycle_start = "Ожидание"
+            cycle_end = "Перерыв ~5 минут"
         col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
         with col1:
-            st.metric("Баланс", value=view_data.balance, delta=view_data.balance_delta)
+            balances = view_data.balances
+            balance_delta = balances[-2] - balances[-3] if view_data.cycle["id"] > 1 else None
+            st.metric(
+                "Баланс",
+                value=millify(balances[-1], precision=2),
+                delta=millify(balance_delta, precision=2) if balance_delta is not None else None,
+            )
         with col2:
-            st.metric("Цикл #", value=view_data.cycle)
+            st.metric("Цикл #", value=view_data.cycle["id"])
         with col3:
             st.metric("Начался", value=cycle_start)
         with col4:
             st.metric("Ожидаемое время завершения", value=cycle_end)
 
     def _overview_block(self, view_data: _ViewData) -> None:
-        col1, col2 = st.columns([1, 1])
+        col1, col2 = st.columns([1, 1], gap="medium")
         with col1:
             st.markdown("#### Динамика баланса")
-            # TODO: change to ECharts bar chart
             st.bar_chart(
-                data={"cycle": list(range(view_data.cycle + 1)), "balance": view_data.balances},
+                data={"cycle": list(range(view_data.cycle["id"] + 1)), "balance": view_data.balances},
                 x="cycle",
                 y="balance",
             )
         with col2:
+            alpha = view_data.cycle["alpha"]
+            alpha_coeff = view_data.fee_mods.get("alpha", 1)
+            beta = view_data.cycle["beta"]
+            beta_coeff = view_data.fee_mods.get("beta", 1)
+            gamma = view_data.cycle["gamma"]
+            gamma_coeff = view_data.fee_mods.get("gamma", 1)
+
             st.markdown("#### Параметры цикла")
-            st.write("Операционные расходы: ", view_data.cycle_params["alpha"])
-            st.write("Комиссия за операции на рынке: ", view_data.cycle_params["beta"])
-            st.write("Стоимость складского хранения: ", view_data.cycle_params["gamma"])
-            st.write("Время полной поставки: ", view_data.cycle_params["tau_s"])
-            st.write("Кредитная ставка за овердрафт: ", view_data.cycle_params["overdraft_rate"])
+            st.write(f"Организационные расходы: {alpha * alpha_coeff} ({alpha} x {alpha_coeff})")
+            st.write(f"Комиссия за операции на рынке: {beta * beta_coeff} ({beta} x {beta_coeff})")
+            st.write(f"Стоимость складского хранения: {gamma * gamma_coeff} ({gamma} x {gamma_coeff})")
+            st.write(f"Время полной поставки: {view_data.cycle['tau_s']} с")
+            st.write(f"Кредитная ставка за овердрафт: {view_data.cycle['overdraft_rate']}")
 
     def _transactions_block(self, view_data: _ViewData) -> None:
         st.markdown("### Транзакции по корпоративному счёту")

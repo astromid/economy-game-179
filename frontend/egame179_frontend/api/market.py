@@ -53,7 +53,7 @@ class MarketAPI:
         Returns:
             list[tuple[int, int]]: all market graph edges.
         """
-        response = httpx.get(cls._nodes_url, headers=st.session_state.auth_header)
+        response = httpx.get(cls._edges_url, headers=st.session_state.auth_header)
         response.raise_for_status()
         return parse_obj_as(list[tuple[int, int]], response.json())
 
@@ -97,6 +97,6 @@ class MarketAPI:
         Returns:
             dict[int, float]: demand factors for all markets.
         """
-        response = httpx.get(cls._unlocked_url, headers=st.session_state.auth_header)
+        response = httpx.get(cls._demand_factors_url, headers=st.session_state.auth_header)
         response.raise_for_status()
         return parse_obj_as(dict[int, float], response.json())
