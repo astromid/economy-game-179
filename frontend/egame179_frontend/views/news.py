@@ -27,6 +27,11 @@ class BulletinsView(AppView):
         st.markdown(f"#### Биржевые сводки (Цикл {state.cycle.id})")
 
         html = MARQUEE_TEMPLATE.format(
-            bulletins="".join([f"<p> [{bulletin['ts']}] {bulletin['text']} </p>" for bulletin in state.bulletins]),
+            bulletins="".join(
+                [
+                    f"<p><font size=20> [{bulletin['ts']}] {bulletin['text']} </font></p>"
+                    for bulletin in state.bulletins
+                ],
+            ),
         )
         components.html(html, height=800)
