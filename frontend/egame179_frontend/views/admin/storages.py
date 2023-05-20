@@ -41,7 +41,7 @@ def _cache_view_data(
 class RootStorageView(AppView):
     """Storage AppView."""
 
-    idx = 2
+    idx = 3
     name = "Склады"
     icon = "box-seam"
     roles = (UserRoles.ROOT.value,)

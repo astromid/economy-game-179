@@ -61,7 +61,7 @@ def _cache_view_data(
 class RootSuppliesView(AppView):
     """Supplies AppView."""
 
-    idx = 1
+    idx = 2
     name = "Поставки"
     icon = "box-seam"
     roles = (UserRoles.ROOT.value,)

@@ -33,7 +33,7 @@ def _cache_view_data(stocks: pd.DataFrame, player_ids: list[int]) -> _ViewData:
 class RootStocksView(AppView):
     """Stocks AppView."""
 
-    idx = 4
+    idx = 5
     name = "Биржевые сводки"
     icon = "graph-up"
     roles = (UserRoles.ROOT.value,)
