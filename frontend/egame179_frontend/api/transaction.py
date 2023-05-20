@@ -22,7 +22,9 @@ class Transaction(BaseModel):
 class TransactionAPI:
     """Transaction API."""
 
-    _user_transactions_url = str(settings.backend_url / "transaction/list")
+    _api_url = settings.backend_url / "transaction"
+    _user_transactions_url = str(_api_url / "list")
+    _transactions_url = str(_api_url / "list/all")
 
     @classmethod
     def get_user_transactions(cls) -> list[Transaction]:
@@ -32,5 +34,16 @@ class TransactionAPI:
             list[Transaction]: current user transactions.
         """
         response = httpx.get(cls._user_transactions_url, headers=st.session_state.auth_header)
+        response.raise_for_status()
+        return parse_obj_as(list[Transaction], response.json())
+
+    @classmethod
+    def get_transactions(cls) -> list[Transaction]:
+        """Get transactions.
+
+        Returns:
+            list[Transaction]: current user transactions.
+        """
+        response = httpx.get(cls._transactions_url, headers=st.session_state.auth_header)
         response.raise_for_status()
         return parse_obj_as(list[Transaction], response.json())

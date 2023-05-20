@@ -125,7 +125,7 @@ def markets_graph(
     """
     nodes = []
     for node_id, node in nx_graph.nodes(data=True):
-        node = {
+        gnode = {
             "name": node["name"],
             "demand_factor": node["demand_factor"],
             "storage": node["storage"],
@@ -135,10 +135,10 @@ def markets_graph(
             "symbolSize": NODE_SIZE_PX * node["demand_factor"],
         }
         if owner_colors is not None:
-            node["itemStyle"] = {"color": owner_colors[node["owner"]]}
+            gnode["itemStyle"] = {"color": owner_colors.get(node["owner"], ThemeColors.GRAY.value)}
         else:
-            node["itemStyle"] = {"color": get_graph_node_color(node_id, home=home, owned=owned, unlocked=unlocked)}
-        nodes.append(node)
+            gnode["itemStyle"] = {"color": get_graph_node_color(node_id, home=home, owned=owned, unlocked=unlocked)}
+        nodes.append(gnode)
     links = [
         {
             "source": nx_graph.nodes[source]["name"],

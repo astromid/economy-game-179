@@ -1,3 +1,4 @@
+from collections import defaultdict
 from copy import deepcopy
 from dataclasses import dataclass
 from typing import Any
@@ -27,7 +28,7 @@ class RootState:  # noqa: WPS214
     _demand_factors: dict[int, float] | None = None
     _production: list[dict[str, Any]] | None = None
     _thetas: dict[int, float] | None = None
-    _storage: dict[int, int] | None = None
+    _storage: dict[int, list[dict[str, Any]]] | None = None
     _shares: dict[tuple[int, int], tuple[int, float | None]] | None = None
     _stocks: pd.DataFrame | None = None
     _detailed_markets: nx.Graph | None = None
@@ -99,7 +100,7 @@ class RootState:  # noqa: WPS214
             list[float]: balances ordered by cycle.
         """
         if self._balances is None:
-            self._balances = [bal.balance for bal in api.BalanceAPI.get_user_balances()]
+            self._balances = [bal.balance for bal in api.BalanceAPI.get_balances()]
         return self._balances
 
     @property
@@ -110,7 +111,7 @@ class RootState:  # noqa: WPS214
             list[dict[str, Any]]: player transactions.
         """
         if self._transactions is None:
-            self._transactions = [tr.dict() for tr in api.TransactionAPI.get_user_transactions()]
+            self._transactions = [tr.dict() for tr in api.TransactionAPI.get_transactions()]
         return self._transactions
 
     @property
@@ -143,7 +144,7 @@ class RootState:  # noqa: WPS214
             list[dict[str, Any]]: list of dicts with product info.
         """
         if self._production is None:
-            self._production = [prod.dict() for prod in api.ProductionAPI.get_user_products()]
+            self._production = [prod.dict() for prod in api.ProductionAPI.get_products()]
         return self._production
 
     @property
@@ -156,25 +157,26 @@ class RootState:  # noqa: WPS214
         if self._thetas is None:
             self._thetas = {
                 theta.market: theta.theta
-                for theta in api.ProductionAPI.get_user_thetas()
+                for theta in api.ProductionAPI.get_thetas()
                 if theta.cycle == self.cycle.id
             }
         return self._thetas
 
     @property
-    def storage(self) -> dict[int, int]:
-        """Current storage.
-
-        Returns:
-            dict[int, int]: {market_id: storage}
-        """
+    def storage(self) -> dict[int, list[dict[str, Any]]]:
         if self._storage is None:
-            self._storage = {
-                wh.market: wh.quantity
-                for wh in api.WarehouseAPI.get_user_storage()
-                if wh.cycle == self.cycle.id and wh.quantity > 0
-            }
+            self._storage = defaultdict(list)
+            for wh in api.WarehouseAPI.get_storages():
+                if wh.cycle == self.cycle.id and wh.quantity > 0:
+                    self._storage[wh.market].append(wh.dict())
         return self._storage
+
+    @property
+    def total_storage(self) -> dict[int, int]:
+        total = {}
+        for market, storages in self.storage.items():
+            total[market] = sum([wh["quantity"] for wh in storages])
+        return total
 
     @property
     def shares(self) -> dict[tuple[int, int], tuple[int, float | None]]:
@@ -185,7 +187,7 @@ class RootState:  # noqa: WPS214
         """
         if self._shares is None:
             self._shares = {}
-            for share in api.MarketAPI.get_shares_user():
+            for share in api.MarketAPI.get_shares():
                 self._shares[(share.market, share.position)] = (share.user, share.share)
         return self._shares
 
@@ -200,7 +202,8 @@ class RootState:  # noqa: WPS214
             graph = deepcopy(self.markets)
             for node_id, node in graph.nodes.items():
                 node["demand_factor"] = self.demand_factors[node_id]
-                node["storage"] = self.storage.get(node_id, 0)
+                node["storage"] = self.total_storage.get(node_id, 0)
+                node["owner"] = self.shares.get((node_id, 1), (None, None))[0]
                 for pos in (1, 2):
                     player, share = self.shares.get((node_id, pos), (None, None))
                     player_name = self.names[player] if player is not None else "None"
@@ -217,7 +220,7 @@ class RootState:  # noqa: WPS214
             list[dict[str, Any]]: list of dicts with supply info.
         """
         # we do not cache supplies, because they are changing in real time
-        return [supply.dict() for supply in api.SupplyAPI.get_user_supplies()]
+        return [supply.dict() for supply in api.SupplyAPI.get_supplies()]
 
     @property
     def stocks(self) -> pd.DataFrame:
@@ -230,18 +233,3 @@ class RootState:  # noqa: WPS214
             self._stocks = pd.DataFrame([stock.dict() for stock in api.StocksAPI.get_stocks()])
             self._stocks["company"] = self._stocks["user"].map(self.names)
         return self._stocks
-
-    def clear_after_buy(self) -> None:
-        """Clean invalid caches after buy operation."""
-        self._balances = None
-        self._production = None
-        self._storage = None
-        self._transactions = None
-        self._detailed_markets = None
-
-    def clear_after_supply(self) -> None:
-        """Clean invalid caches after supply operation."""
-        self._balances = None
-        self._storage = None
-        self._transactions = None
-        self._detailed_markets = None
