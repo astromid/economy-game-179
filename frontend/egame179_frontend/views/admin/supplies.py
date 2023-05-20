@@ -62,7 +62,7 @@ class RootSuppliesView(AppView):
     """Supplies AppView."""
 
     idx = 2
-    name = "Склады и поставки"
+    name = "Поставки"
     icon = "box-seam"
     roles = (UserRoles.ROOT.value,)
 

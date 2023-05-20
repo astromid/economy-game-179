@@ -42,7 +42,7 @@ class RootStorageView(AppView):
     """Storage AppView."""
 
     idx = 2
-    name = "Склады и поставки"
+    name = "Склады"
     icon = "box-seam"
     roles = (UserRoles.ROOT.value,)
 
