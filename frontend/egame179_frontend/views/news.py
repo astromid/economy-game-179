@@ -6,7 +6,7 @@ from egame179_frontend.state.state import NewsState
 from egame179_frontend.views.registry import AppView, appview
 
 MARQUEE_TEMPLATE = """
-    <marquee behavior="scroll" direction="up" scrollamount="3" height="800" width="800">
+    <marquee behavior="scroll" direction="up" scrollamount="3" height="800" width="1000">
         {bulletins}
     </marquee>
 """
