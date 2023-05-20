@@ -11,7 +11,7 @@ from egame179_frontend.api.user import UserRoles
 from egame179_frontend.state import RootState
 from egame179_frontend.views.registry import AppView, appview
 
-MAX_METRICS_IN_ROW = 5
+MAX_METRICS_IN_ROW = 3
 
 
 @dataclass
