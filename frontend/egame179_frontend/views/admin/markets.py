@@ -75,7 +75,7 @@ def _cache_view_data(
 class RootMarketsView(AppView):
     """Markets AppView."""
 
-    idx = 2
+    idx = 1
     name = "Рынки"
     icon = "pie-chart-fill"
     roles = (UserRoles.ROOT.value,)
