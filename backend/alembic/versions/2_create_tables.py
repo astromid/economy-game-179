@@ -61,6 +61,7 @@ def upgrade() -> None:
         sa.Column("market", sa.Integer, sa.ForeignKey("markets.id"), nullable=False),
         sa.Column("quantity", sa.Integer, nullable=False),
         sa.Column("delivered", sa.Integer),
+        sa.Column("sold", sa.Integer),
     )
     op.create_table(
         "fee_modificators",
@@ -98,7 +99,7 @@ def upgrade() -> None:
                     SELECT p.cycle, p.user, p.market, p.quantity AS quantity
                     FROM production p
                     UNION ALL
-                    SELECT s.cycle, s.user, s.market, -COALESCE(NULLIF(s.delivered, 0), s.quantity) AS quantity
+                    SELECT s.cycle, s.user, s.market, -COALESCE(NULLIF(s.sold, 0), s.quantity) AS quantity
                     FROM supplies s
                 ) AS ps
             GROUP BY ps.cycle, ps.user, ps.market

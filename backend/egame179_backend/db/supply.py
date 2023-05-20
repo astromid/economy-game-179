@@ -20,6 +20,7 @@ class Supply(SQLModel, table=True):
     market: int
     quantity: int
     delivered: int = 0
+    sold: int = 0
 
 
 class SupplyDAO:

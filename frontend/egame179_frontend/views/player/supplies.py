@@ -172,13 +172,18 @@ def _make_supply(amount: int, market_id: int, market: str) -> None:
 def _supplies_block(supplies: list[dict[str, Any]], m_id2name: dict[int, str]) -> None:
     st.write("#### Активные поставки")
     for supply in supplies:
-        amount = supply["delivered"]
         total = supply["quantity"]
-        percent = amount / total
         market = m_id2name[supply["market"]]
         ts_start = supply["ts_start"].time().strftime("%H:%M:%S")
-        status = "поставлено" if supply["ts_finish"] is None else "закончена, продано"
-        text = f"{ts_start} Поставка {total} шт. {market} [{status}: {amount}/{total}]"  # noqa: WPS221
+        if supply["ts_finish"] is None:
+            delivered = supply["delivered"]
+            percent = delivered / total
+            status = f"в процессе: {delivered}/{total}"
+        else:
+            sold = supply["sold"]
+            percent = sold / total
+            status = f"закончена, продано: {sold}/{total}"
+        text = f"{ts_start} Поставка {total} шт. {market} [{status}]"
         st.progress(percent, text)
     if not supplies:
         st.info("Нет активных поставок.")

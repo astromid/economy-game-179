@@ -1,5 +1,5 @@
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import numpy as np
 import pandas as pd
@@ -11,15 +11,7 @@ from egame179_backend.db.market_price import MarketPrice
 from egame179_backend.db.stocks import Stock
 from egame179_backend.db.supply import Supply
 from egame179_backend.db.theta import Theta
-from egame179_backend.db.transaction import Transaction
-from egame179_backend.engine.math import (
-    buy_price_next,
-    delivered_items,
-    sell_price_next,
-    sold_items,
-    stocks_price,
-    theta_next,
-)
+from egame179_backend.engine.math import buy_price_next, delivered_items, sell_price_next, stocks_price, theta_next
 
 
 def calculate_delivered(
@@ -48,46 +40,6 @@ def calculate_delivered(
         )
         total_delivered[supply.market] += supply.delivered
     return supplies, total_delivered
-
-
-def calculate_sold(
-    cycle: int,
-    supplies: list[Supply],
-    demand: dict[int, int],
-    total_delivered: dict[int, int],
-    sell_prices: dict[int, float],
-    market_names: dict[int, str],
-) -> tuple[list[Supply], list[Transaction]]:
-    """Calculate sold items for all supplies.
-
-    Args:
-        cycle (int): target cycle.
-        supplies (list[Supply]): list of supplies.
-        demand (dict[int, int]): demand for all markets.
-        total_delivered (dict[int, int]): total delivered items for all markets.
-        sell_prices (dict[int, float]): sell prices for all markets.
-        market_names (dict[int, str]): market names mapping.
-
-    Returns:
-        tuple[list[Supply], list[Transaction]]: (updated supplies, transactions).
-    """
-    transactions: list[Transaction] = []
-    for supply in supplies:
-        supply.delivered = sold_items(
-            delivered=supply.delivered,
-            demand=demand[supply.market],
-            total=total_delivered[supply.market],
-        )
-        transactions.append(
-            Transaction(
-                ts=supply.ts_finish + timedelta(seconds=10),  # type: ignore
-                cycle=cycle + 1,  # supplies have deferred transactions
-                user=supply.user,
-                amount=supply.delivered * sell_prices[supply.market],
-                description=f"Sell {supply.delivered} items of {market_names[supply.market]}",
-            ),
-        )
-    return supplies, transactions
 
 
 def calculate_shares(
@@ -151,7 +103,7 @@ def calculate_new_prices(
     if supp_df.empty:
         market_delivered = {}
     else:
-        market_delivered = supp_df.groupby("market")["quantity"].sum().to_dict()
+        market_delivered = supp_df.groupby("market")["delivered"].sum().to_dict()
 
     new_prices: dict[int, tuple[float, float]] = {}
     for price in prices:
@@ -224,9 +176,10 @@ def calculate_new_stocks(
     else:
         balances_df = balances_df.sort_values(["user", "cycle"])
         balances_df["prev_balance"] = balances_df.groupby("user")["balance"].shift(1).fillna(initial_balance)
+        # avoid division by zero
+        balances_df["prev_balance"] = balances_df["prev_balance"].replace(0, np.nan).fillna(1)
         balances_df = balances_df[balances_df["cycle"] == cycle]
         balances_df["rel_income"] = balances_df["balance"] / balances_df["prev_balance"]
-        balances_df["rel_income"] = balances_df["rel_income"].replace([np.inf, -np.inf], np.nan).fillna(1)
         balances_df = balances_df.set_index("user")
         ic(balances_df)
         rel_incomes = balances_df["rel_income"].to_dict()
@@ -237,11 +190,11 @@ def calculate_new_stocks(
         storages_df = storages_df.merge(npc_df, on="market", how="left")
         storages_df = storages_df.groupby(["npc", "cycle"])["quantity"].sum().reset_index()
         storages_df = storages_df.sort_values(["npc", "cycle"])
-        storages_df["prev_quantity"] = storages_df.groupby("npc")["quantity"].shift(1)
+        storages_df["prev_quantity"] = storages_df.groupby("npc")["quantity"].shift(1).fillna(10)
+        # avoid division by zero
+        storages_df["prev_quantity"] = storages_df["prev_quantity"].replace(0, 1)
         storages_df = storages_df[storages_df["cycle"] == cycle]
         storages_df["rel_income"] = storages_df["quantity"] / storages_df["prev_quantity"]
-        # avoid division by zero
-        storages_df["rel_income"] = storages_df["rel_income"].replace([np.inf, -np.inf], np.nan).fillna(1)
         storages_df = storages_df.set_index("npc")
         ic(storages_df)
         rel_storages = storages_df["rel_income"].to_dict()

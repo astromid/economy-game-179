@@ -115,7 +115,12 @@ async def get_user_market_shares(
         else:
             visible_shares.extend(
                 [
-                    MarketSharePlayer(user=user, market=market.id, share=shr, position=pos)
+                    MarketSharePlayer(
+                        user=user,
+                        market=market.id,
+                        share=shr if shr <= 1 else 0,
+                        position=pos,
+                    )
                     for pos, (user, shr) in pos_shares.items()
                 ],
             )

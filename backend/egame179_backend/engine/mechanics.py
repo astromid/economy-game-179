@@ -14,12 +14,12 @@ from egame179_backend.engine.calc import (
     calculate_new_stocks,
     calculate_new_thetas,
     calculate_shares,
-    calculate_sold,
 )
+from egame179_backend.engine.math import sold_items
 from egame179_backend.engine.utility import get_fee_mods, get_market_names, get_previous_owners, get_world_demand
 
 
-async def finish_cycle(
+async def finish_cycle(  # noqa: WPS213, WPS217
     cycle: Cycle,
     balance_dao: db.BalanceDAO,
     market_dao: db.MarketDAO,
@@ -45,47 +45,47 @@ async def finish_cycle(
     """
     # 1. Finish ongoing supplies, calculate deliveries
     demand = await get_world_demand(market_dao=market_dao, wd_dao=wd_dao, cycle=cycle.id)
-    supplies = await process_supplies(
-        cycle=cycle,
-        demand=demand,
-        supply_dao=supply_dao,
+    supplies = await process_supplies(cycle=cycle, demand=demand, supply_dao=supply_dao)
+    ic("Stage 1: supplies finished")
+
+    # 2. Storage fees
+    await process_storage_fees(cycle=cycle, mod_dao=mod_dao, wh_dao=wh_dao, transaction_dao=transaction_dao)
+    ic("Stage 2: storage fees")
+
+    # 3. Life fees
+    await process_life_fees(cycle=cycle, balance_dao=balance_dao, mod_dao=mod_dao, transaction_dao=transaction_dao)
+    ic("Stage 3: life fees")
+
+    # 4. Overdraft fees
+    await process_overdrafts(cycle=cycle, balance_dao=balance_dao, transaction_dao=transaction_dao)
+    ic("Stage 4: overdraft fees")
+
+    # 5. Process supply transactions
+    await process_supply_transactions(
+        cycle=cycle.id,
+        supplies=supplies,
         market_dao=market_dao,
         price_dao=price_dao,
         transaction_dao=transaction_dao,
     )
-    supplies_df = pd.DataFrame([supply.dict() for supply in supplies])
-    ic("Stage 1: processing supplies finished")
+    ic("Stage 5: supply transactions")
 
-    # 2. Storage fees
-    await process_storage_fees(cycle=cycle, mod_dao=mod_dao, wh_dao=wh_dao, transaction_dao=transaction_dao)
-    ic("Stage 2: processing storage fees finished")
-
-    # 3. Life fees
-    await process_life_fees(cycle=cycle, balance_dao=balance_dao, mod_dao=mod_dao, transaction_dao=transaction_dao)
-    ic("Stage 3: processing life fees finished")
-
-    # 4. Calculate market shares and positions
-    await process_market_shares(cycle=cycle.id, supplies_df=supplies_df, market_dao=market_dao)
-    ic("Stage 4: processing market shares finished")
+    # 6. Calculate market shares and positions
+    await process_market_shares(
+        cycle=cycle.id,
+        supplies_df=pd.DataFrame([supply.dict() for supply in supplies]),
+        market_dao=market_dao,
+    )
+    ic("Stage 6: market shares & positions")
 
 
-async def process_supplies(
-    cycle: Cycle,
-    demand: dict[int, int],
-    market_dao: db.MarketDAO,
-    price_dao: db.MarketPriceDAO,
-    supply_dao: db.SupplyDAO,
-    transaction_dao: db.TransactionDAO,
-) -> list[Supply]:
-    """Finish ongoing supplies, calculate deliveries, make transactions.
+async def process_supplies(cycle: Cycle, demand: dict[int, int], supply_dao: db.SupplyDAO) -> list[Supply]:
+    """Finish ongoing supplies, calculate deliveries.
 
     Args:
         cycle (Cycle): current cycle.
         demand (dict[int, int]): demand for each market.
-        market_dao (db.MarketDAO): markets table DAO.
-        price_dao (db.MarketPriceDAO): market_prices table DAO.
         supply_dao (db.SupplyDAO): supplies table DAO.
-        transaction_dao (db.TransactionDAO): transactions table DAO.
 
     Raises:
         ValueError: if cycle is not finished yet.
@@ -95,30 +95,21 @@ async def process_supplies(
     """
     if cycle.ts_finish is None:
         raise ValueError("Cycle is not finished yet")
-    market_names = await get_market_names(market_dao=market_dao)
-    prices = await price_dao.select(cycle=cycle.id)
-    sell_prices = {price.market: price.sell for price in prices}
-
     supplies = await supply_dao.select(cycle=cycle.id, ongoing=True)
     supplies, total_delivered = calculate_delivered(
         supplies=supplies,
         ts_finish=cycle.ts_finish,
         velocities={market: demand / cycle.tau_s for market, demand in demand.items()},
     )
-    # calculate real deliveries in case of market overflow & make sell transactions
-    supplies, transactions = calculate_sold(
-        cycle=cycle.id,
-        supplies=supplies,
-        demand=demand,
-        total_delivered=total_delivered,
-        sell_prices=sell_prices,
-        market_names=market_names,
-    )
+    # calculate sold items in case of market overflow
+    for supply in supplies:
+        supply.sold = sold_items(
+            delivered=supply.delivered,
+            demand=demand[supply.market],
+            total=total_delivered[supply.market],
+        )
     ic("Final supplies:", supplies)
-    ic("Sell transactions:", transactions)
-
     await supply_dao.update(supplies)
-    await transaction_dao.add(transactions)
     return supplies
 
 
@@ -185,6 +176,63 @@ async def process_life_fees(
     await transaction_dao.add(transactions)
 
 
+async def process_overdrafts(cycle: Cycle, balance_dao: db.BalanceDAO, transaction_dao: db.TransactionDAO) -> None:
+    """Process overdraft fees for the cycle.
+
+    Args:
+        cycle (Cycle): finished cycle.
+        balance_dao (db.BalanceDAO): balances table DAO.
+        transaction_dao (db.TransactionDAO): transactions table DAO.
+    """
+    balances = await balance_dao.select(cycle=cycle.id)
+    transactions = [
+        Transaction(
+            ts=cycle.ts_finish,  # type: ignore
+            cycle=cycle.id,
+            user=balance.user,
+            amount=balance.balance * cycle.overdraft_rate,  # balance is already negative
+            description="Overdraft fee",
+        )
+        for balance in balances
+        if balance.balance < 0
+    ]
+    ic("Overdraft fees:", transactions)
+    await transaction_dao.add(transactions)
+
+
+async def process_supply_transactions(
+    cycle: int,
+    supplies: list[Supply],
+    market_dao: db.MarketDAO,
+    price_dao: db.MarketPriceDAO,
+    transaction_dao: db.TransactionDAO,
+) -> None:
+    """Process supply transactions.
+
+    Args:
+        cycle (int): finished cycle.
+        supplies (list[Supply]): supplies.
+        market_dao (db.MarketDAO): markets table DAO.
+        price_dao (db.MarketPriceDAO): prices table DAO.
+        transaction_dao (db.TransactionDAO): transactions table DAO.
+    """
+    market_names = await get_market_names(market_dao=market_dao)
+    prices = await price_dao.select(cycle=cycle)
+    sell_prices = {price.market: price.sell for price in prices}
+    transactions = [
+        Transaction(
+            ts=supply.ts_finish,  # type: ignore
+            cycle=cycle,
+            user=supply.user,
+            amount=supply.sold * sell_prices[supply.market],
+            description=f"Sell {supply.sold} items of {market_names[supply.market]}",
+        )
+        for supply in supplies
+    ]
+    ic("Sell transactions:", transactions)
+    await transaction_dao.add(transactions)
+
+
 async def process_market_shares(cycle: int, supplies_df: pd.DataFrame, market_dao: db.MarketDAO) -> None:
     """Process market shares for the cycle.
 
@@ -200,8 +248,8 @@ async def process_market_shares(cycle: int, supplies_df: pd.DataFrame, market_da
         sold_per_user_market = {}
         sold_per_market = {}
     else:
-        sold_per_user_market = supplies_df.groupby(["user", "market"])["delivered"].sum().to_dict()
-        sold_per_market = supplies_df.groupby("market")["delivered"].sum().to_dict()
+        sold_per_user_market = supplies_df.groupby(["user", "market"])["sold"].sum().to_dict()
+        sold_per_market = supplies_df.groupby("market")["sold"].sum().to_dict()
 
     ic(previous_owners)
     ic(sold_per_user_market)
@@ -251,7 +299,7 @@ async def prepare_new_cycle(  # noqa: WPS211, WPS213, WPS217
         wh_dao (db.WarehouseDAO): warehouses table DAO.
         wd_dao (db.WorldDemandDAO): world demands table DAO.
     """
-    # 5. Calculate new prices
+    # 7. Calculate new prices
     prod_df = await process_prices(
         cycle=cycle,
         market_dao=market_dao,
@@ -260,21 +308,17 @@ async def prepare_new_cycle(  # noqa: WPS211, WPS213, WPS217
         supply_dao=supply_dao,
         wd_dao=wd_dao,
     )
-    ic("Stage 5: new market prices")
+    ic("Stage 7: new market prices")
 
-    # 6. Update thetas
+    # 8. Update thetas
     await process_thetas(cycle=cycle, prod_df=prod_df, theta_dao=theta_dao)
-    ic("Stage 6: new thetas")
+    ic("Stage 7: new thetas")
 
-    # 7. Unlock markets by top1/top2 share & home markets
+    # 9. Unlock markets by top1/top2 share & home markets
     await process_unlocks(cycle=cycle, market_dao=market_dao)
-    ic("Stage 7: new unlocked markets")
+    ic("Stage 9: new unlocked markets")
 
-    # 8. Process overdraft fees
-    await process_overdrafts(cycle=cycle, balance_dao=balance_dao, transaction_dao=transaction_dao)
-    ic("Stage 8: overdraft fees")
-
-    # 9. Make auxiliary production & transactions
+    # 10. Make auxiliary production & transactions
     await process_auxiliary(
         cycle=cycle,
         balance_dao=balance_dao,
@@ -282,9 +326,9 @@ async def prepare_new_cycle(  # noqa: WPS211, WPS213, WPS217
         production_dao=production_dao,
         transaction_dao=transaction_dao,
     )
-    ic("Stage 9: auxiliary production")
+    ic("Stage 10: auxiliary production")
 
-    # 10. Calculate new stocks
+    # 11. Calculate new stocks
     await process_stocks(
         cycle=cycle.id,
         balance_dao=balance_dao,
@@ -293,7 +337,7 @@ async def prepare_new_cycle(  # noqa: WPS211, WPS213, WPS217
         transaction_dao=transaction_dao,
         wh_dao=wh_dao,
     )
-    ic("Stage 10: new stocks")
+    ic("Stage 11: new stocks")
 
 
 async def process_prices(
@@ -368,30 +412,6 @@ async def process_unlocks(cycle: Cycle, market_dao: db.MarketDAO) -> None:
             new_unlocks[share.user, share.market] = False
     ic(new_unlocks)
     await market_dao.create_shares(cycle=cycle.id + 1, new_unlocks=new_unlocks)
-
-
-async def process_overdrafts(cycle: Cycle, balance_dao: db.BalanceDAO, transaction_dao: db.TransactionDAO) -> None:
-    """Process overdraft fees for the cycle.
-
-    Args:
-        cycle (Cycle): finished cycle.
-        balance_dao (db.BalanceDAO): balances table DAO.
-        transaction_dao (db.TransactionDAO): transactions table DAO.
-    """
-    balances = await balance_dao.select(cycle=cycle.id)
-    transactions = [
-        Transaction(
-            ts=cycle.ts_finish,  # type: ignore
-            cycle=cycle.id,
-            user=balance.user,
-            amount=balance.balance * cycle.overdraft_rate,  # balance is already negative
-            description="Overdraft fee",
-        )
-        for balance in balances
-        if balance.balance < 0
-    ]
-    ic("Overdraft fees:", transactions)
-    await transaction_dao.add(transactions)
 
 
 async def process_stocks(  # noqa: WPS217

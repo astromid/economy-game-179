@@ -163,7 +163,7 @@ def _create_fee_modificator(view_data: _ViewData) -> None:
     st.markdown("#### Создание модификатора")
     cycle = st.radio(
         "Цикл модификатора",
-        options=[0, view_data.cycle["id"] + 1, view_data.cycle["id"] + 2],
+        options=[0, view_data.cycle["id"], view_data.cycle["id"] + 1],
         horizontal=True,
     )
     user = st.selectbox(
@@ -173,7 +173,7 @@ def _create_fee_modificator(view_data: _ViewData) -> None:
     )
     fee = st.selectbox("Комиссия (параметр)", options=["alpha", "beta", "gamma"])
     coeff = st.number_input("Коэффициент")
-    if st.button("Создать", disabled=cycle == 0):
+    if st.button("Создать", disabled=(view_data.cycle["ts_start"] is not None) or cycle == 0):
         try:
             ModificatorAPI.new(cycle=cycle, user=name2uid[user], fee=fee, coeff=coeff)  # type: ignore
         except HTTPStatusError as exc:

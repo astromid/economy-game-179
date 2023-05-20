@@ -19,6 +19,7 @@ class Supply(BaseModel):
     market: int
     quantity: int
     delivered: int
+    sold: int
 
 
 class SupplyAPI:
