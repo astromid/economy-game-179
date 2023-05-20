@@ -29,7 +29,7 @@ class BulletinsView(AppView):
         html = MARQUEE_TEMPLATE.format(
             bulletins="".join(
                 [
-                    f"<p><font size='4'> [{bulletin['ts']}] {bulletin['text']} </font></p>"
+                    f"<p><font size='6'> [{bulletin['ts']}] {bulletin['text']} </font></p>"
                     for bulletin in state.bulletins
                 ],
             ),
