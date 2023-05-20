@@ -22,7 +22,7 @@ class RootState:  # noqa: WPS214
     _sync_status: dict[int, bool] | None = None
     _markets: nx.Graph | None = None
     _modificators: list[dict[str, Any]] | None = None
-    _balances: list[float] | None = None
+    _balances: dict[int, list[float]] | None = None
     _transactions: list[dict[str, Any]] | None = None
     _prices: pd.DataFrame | None = None
     _demand_factors: dict[int, float] | None = None
@@ -93,14 +93,11 @@ class RootState:  # noqa: WPS214
         return self._modificators
 
     @property
-    def balances(self) -> list[float]:
-        """Player balances history.
-
-        Returns:
-            list[float]: balances ordered by cycle.
-        """
+    def balances(self) -> dict[int, list[float]]:
         if self._balances is None:
-            self._balances = [bal.balance for bal in api.BalanceAPI.get_balances()]
+            self._balances = defaultdict(list)
+            for balance in api.BalanceAPI.get_balances():
+                self._balances[balance.user].append(balance.balance)
         return self._balances
 
     @property

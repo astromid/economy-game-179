@@ -9,7 +9,7 @@ from egame179_frontend.api.user import UserRoles
 from egame179_frontend.state import RootState
 from egame179_frontend.views.registry import AppView, appview
 
-MAX_METRICS_IN_ROW = 5
+MAX_METRICS_IN_ROW = 4
 
 
 @dataclass
@@ -56,7 +56,7 @@ class RootStorageView(AppView):
             names=state.names,
         )
 
-        st.markdown("## Склады")
+        st.markdown("### Запасы на складах")
         _storage_block(storage=view_data.storage, m_id2name=view_data.m_id2name, names=view_data.names)
 
 
@@ -66,11 +66,10 @@ def _storage_block(
     names: dict[int, str],
 ) -> None:
     n_rows = math.ceil(len(storage) / MAX_METRICS_IN_ROW)
-    st.markdown("#### Запасы на складах")
     columns = chain(*[st.columns(MAX_METRICS_IN_ROW) for _ in range(n_rows)])
     for col, m_id in zip(columns, storage):
         with col:
-            st.write(f"Рынок {m_id2name[m_id]}")
+            st.markdown(f"#### Рынок {m_id2name[m_id]}")
             mstorage = storage[m_id]
             st.bar_chart(
                 data={
