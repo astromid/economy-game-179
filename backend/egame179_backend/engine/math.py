@@ -1,6 +1,7 @@
 import math
-import random
 from datetime import datetime
+
+import numpy as np
 
 BULLETIN_SIGMA = 0.3
 STOCKS_SIGMA = 0.15
@@ -41,10 +42,10 @@ def sold_items(delivered: int, demand: int, total: int) -> int:  # noqa: D103
 
 
 def bulletin_quantity(quantity: int) -> int:  # noqa: D103
-    noised_quantity = math.floor(quantity * (1 + random.normalvariate(0, BULLETIN_SIGMA)))
+    noised_quantity = math.floor(quantity * (1 + np.random.normal(scale=BULLETIN_SIGMA)))
     return max(1, noised_quantity)
 
 
 def stocks_price(prev_price: float, rel_income: float) -> float:  # noqa: D103
-    noised_coeff = rel_income * (1 + random.normalvariate(0, STOCKS_SIGMA))
+    noised_coeff = rel_income * (1 + np.random.normal(scale=STOCKS_SIGMA))
     return round(prev_price * max(0.1, noised_coeff), 2)

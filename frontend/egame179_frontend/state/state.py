@@ -4,7 +4,7 @@ import streamlit as st
 
 from egame179_frontend.api import CycleAPI, SyncStatusAPI
 from egame179_frontend.api.user import User, UserRoles
-from egame179_frontend.state import PlayerState, RootState
+from egame179_frontend.state import NewsState, PlayerState, RootState
 
 
 def init_session_state() -> None:
@@ -27,7 +27,7 @@ def clean_cached_state() -> None:
     st.cache_data.clear()
 
 
-def init_game_state() -> None:
+def init_game_state() -> None:  # noqa: WPS231
     """Initialize game state after user auth."""
     server_cycle = CycleAPI.get_cycle()  # get cycle info from server and check sync
     st.session_state.interim_block = server_cycle.ts_start is None
@@ -39,15 +39,14 @@ def init_game_state() -> None:
             case UserRoles.PLAYER.value:
                 st.session_state.game = PlayerState(user=user.id, cycle=server_cycle)
                 SyncStatusAPI.sync()
-            case UserRoles.NEWS:
-                # TODO: add News state
-                st.session_state.game = None
+            case UserRoles.NEWS.value:
+                st.session_state.game = NewsState(cycle=server_cycle)
     elif st.session_state.game.cycle != server_cycle:
         st.session_state.game.cycle = server_cycle
         # clear cached state (except new cycle & constant markets graph)
         for field in fields(st.session_state.game):
             # TODO: refactor this to avoid hardcoded fields
-            if field.name not in {"cycle", "_players", "_npcs", "_markets"}:
+            if field.name not in {"cycle", "_names", "_player_ids", "_markets"}:
                 setattr(st.session_state.game, field.name, None)
         if user.role == UserRoles.PLAYER.value:
             SyncStatusAPI.sync()

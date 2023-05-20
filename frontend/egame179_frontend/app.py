@@ -38,10 +38,11 @@ def app() -> None:
 
 def header() -> None:
     """UI header."""
-    st.markdown("### Система корпоративного управления CP v.2023/05.77")
+    if st.session_state.user.role in {UserRoles.PLAYER.value, UserRoles.ROOT.value}:
+        st.markdown("#### Система корпоративного управления CP v.2023/05.77")
+        st.markdown("---")
     if st.session_state.user.role == UserRoles.PLAYER.value and st.session_state.interim_block:
         st.warning("Цикл ещё не запущен. Активные элементы управления заблокированы.", icon="⚠️")
-    st.markdown("---")
 
 
 def under_menu_block() -> None:
@@ -94,12 +95,3 @@ if __name__ == "__main__":
     st.set_page_config(page_title="CP v.2023/05.77", layout="wide")
     load_css()
     app()
-
-    # try:
-    #     app()
-    # except httpx.HTTPStatusError as exc:
-    #     http_exception_handler(exc)
-    # except httpx.ConnectError as exc:
-    #     error_spinner("Сервер недоступен", sleep=5, exc=exc)
-    # except ConnectionRefusedError as exc:
-    #     error_spinner("Сервер недоступен", sleep=5, exc=exc)

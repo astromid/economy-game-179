@@ -1,8 +1,8 @@
-import random
 from datetime import datetime
 
+import numpy as np
 from fastapi import Depends
-from sqlmodel import Field, SQLModel, select
+from sqlmodel import Field, SQLModel, col, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from egame179_backend.db.session import get_db_session
@@ -49,7 +49,7 @@ class BulletinDAO:
         Returns:
             list[Bulletin]: supply information bulletins.
         """
-        query = select(Bulletin).where(Bulletin.cycle == cycle).order_by(Bulletin.id)
+        query = select(Bulletin).where(Bulletin.cycle == cycle).order_by(col(Bulletin.id).desc())
         raw_bulletins = await self.session.exec(query)  # type: ignore
         return raw_bulletins.all()
 
@@ -62,7 +62,7 @@ class BulletinDAO:
             market (str): bulletin market.
             quantity (int): bulletin quantity (noised).
         """
-        template = random.choice(BULLETIN_TEMPLATES)  # noqa: S311
+        template = np.random.choice(BULLETIN_TEMPLATES)  # noqa: S311
         text = template.format(market=market, user=user, quantity=quantity)
         self.session.add(Bulletin(ts=datetime.now(), cycle=cycle, text=text))
         await self.session.commit()
