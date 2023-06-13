@@ -1,8 +1,8 @@
-name: egame-179
+name: egame179
 channels:
 - conda-forge
 dependencies:
-- python=3.10.*
+- python>=3.11
 - aiomysql
 - alembic
 - antlr4-python3-runtime
@@ -27,7 +27,7 @@ dependencies:
 - seaborn
 - sqlalchemy
 - sqlmodel>=0.0.8
-- streamlit>=1.20
+- streamlit>=1.23
 - tqdm
 - ujson
 - uvicorn
