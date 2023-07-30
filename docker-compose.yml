@@ -1,0 +1,85 @@
+version: '3.9'
+
+services:
+  api:
+    build:
+      context: ./backend
+      dockerfile: ./backend/Dockerfile
+    image: egame179-backend:${EGAME179_BACKEND_VERSION:-latest}
+    restart: always
+    env_file:
+    - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      EGAME179_BACKEND_HOST: 0.0.0.0
+      EGAME179_BACKEND_PORT: 8179
+      EGAME179_BACKEND_DB_HOST: egame179-backend-db
+      EGAME179_BACKEND_DB_PORT: 3306
+      EGAME179_BACKEND_DB_USER: ${EGAME179_BACKEND_DB_USER}
+      EGAME179_BACKEND_DB_PASS: ${EGAME179_BACKEND_DB_PASS}
+      EGAME179_BACKEND_DB_BASE: egame179
+
+  db:
+    image: mariadb:latest
+    hostname: egame179-backend-db
+    restart: always
+    env_file:
+    - .env
+    environment:
+      MARIADB_ROOT_PASSWORD: ${EGAME179_BACKEND_DB_ROOT_PASS}
+      MARIADB_USER: ${EGAME179_BACKEND_DB_USER}
+      MARIADB_PASSWORD: ${EGAME179_BACKEND_DB_PASS}
+      MARIADB_DATABASE: egame179
+    healthcheck:
+      test:
+      - CMD
+      - mysql
+      - -u
+      - ${EGAME179_BACKEND_DB_USER}
+      - -p********
+      - -e
+      - SELECT 1
+      interval: 3s
+      timeout: 3s
+      retries: 40
+    volumes:
+    - egame179-backend-db-data:/var/lib/mysql
+
+  migrator:
+    image: egame179-backend:${EGAME179_BACKEND_VERSION:-latest}
+    restart: "no"
+    command: alembic upgrade head
+    env_file:
+    - .env
+    environment:
+      EGAME179_BACKEND_DB_HOST: egame179-backend-db
+      EGAME179_BACKEND_DB_PORT: 3306
+      EGAME179_BACKEND_DB_USER: ${EGAME179_BACKEND_DB_USER}
+      EGAME179_BACKEND_DB_PASS: ${EGAME179_BACKEND_DB_PASS}
+      EGAME179_BACKEND_DB_BASE: egame179
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ./frontend/Dockerfile
+    image: egame179-frontend:${EGAME179_FRONTEND_VERSION:-latest}
+    restart: always
+    env_file:
+    - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      EGAME179_FRONTEND_HOST: 0.0.0.0
+      EGAME179_FRONTEND_PORT: 8501
+      EGAME179_BACKEND_HOST: 127.0.0.1
+      EGAME179_BACKEND_PORT: 8179
+
+volumes:
+  egame179-backend-db-data:
+    name: egame179-backend-db-data

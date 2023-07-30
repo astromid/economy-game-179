@@ -1,0 +1,33 @@
+initial_balance: 1
+initial_stocks_price: 1
+users:
+  - {id: 0, role: "root", name: "root", login: "", password: ""}
+  - {id: 1, role: "player", name: "PlayerCorp1", login: "", password: ""}
+  - { ... }
+npcs:
+  - {user: 2, ring: 0}
+  - { ... }
+cycles:
+  total: 10
+  fees:
+    fee: [fee_init, fee_mult]
+    ...
+  constants:
+    tau_sec: 1
+    coeff_h: 1
+    coeff_k: 1
+    coeff_l: 1
+    overdraft_rate: 1.0
+markets:
+  - {id: 0, name: "", ring: 2, home_user: 0}
+  - { ... }
+market_connections:
+  - {source: 0, target: 1}
+  - { ... }
+market_prices:
+  - {cycle: 1, market_id: 0, buy: 0.0, sell: 0.0}
+  - { ... }
+world_demand:
+  0: [ ... ]
+  1: [ ... ]
+  2: [ ... ]

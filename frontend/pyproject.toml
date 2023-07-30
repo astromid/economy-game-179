@@ -1,0 +1,68 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "egame179_frontend"
+description = "Streamlit frontend for economic strategy game."
+authors = [
+    {name = "Yan Budakyan", email = "astromid@gmail.com"}
+]
+version = "1.0.0"
+readme = "README.md"
+license = {text = "MIT License"}
+dependencies = [
+    "httpx",
+    "millify",
+    "networkx",
+    "omegaconf",
+    "pandas",
+    "pydantic[dotenv]",
+    "streamlit",
+    "streamlit-echarts",
+    "streamlit-option-menu",
+    "ujson",
+]
+
+[tool.setuptools.packages.find]
+include = ["egame179_frontend"]
+namespaces = false
+
+[tool.black]
+line-length = 120
+target-version = ['py311']
+include = '\.pyi?$'
+exclude = '''
+(
+    /(
+        \.eggs
+        | \.git
+        | \.hg
+        | \.mypy_cache
+        | \.tox
+        | \.venv
+        | _build
+        | buck-out
+        | build
+        | dist
+        | docs
+    )/
+)
+'''
+
+[tool.mypy]
+python_version = "3.11"
+# strict = true
+ignore_missing_imports = true
+allow_subclassing_any = true
+allow_untyped_calls = true
+pretty = true
+show_error_codes = true
+implicit_reexport = true
+allow_untyped_decorators = true
+warn_return_any = false
+warn_unused_configs = true
+plugins = ["numpy.typing.mypy_plugin", "pydantic.mypy", "sqlalchemy.ext.mypy.plugin"]
+
+[tool.refurb]
+python_version = "3.11"

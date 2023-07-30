@@ -1,0 +1,82 @@
+[flake8]
+inline-quotes = double
+max-annotation-complexity = 4
+max-arguments = 10
+max-complexity = 6
+max-imports = 16
+max-line-length = 120
+max-line-complexity = 20
+max-local-variables = 12
+max-module-members = 14
+extend-ignore = E203
+docstring_style=google
+
+ignore =
+  ; Do not perform function calls in argument defaults
+  B008,
+  ; Missing docstring in public module
+  D100,
+  ; Missing docstring in magic method
+  D105,
+  ; Missing docstring in public nested class
+  D106,
+  ; Missing docstring in __init__
+  D107,
+  ; Found overused expression
+  WPS204,
+  ; Found `f` string
+  WPS305,
+  ; Found class without a base class
+  WPS306,
+  ; Found `__init__.py` module with logic
+  WPS326,
+  ; Found `__init__.py` module with logic
+  WPS412,
+  ; Found string literal over-use
+  WPS226,
+  ; Found a too complex `f` string
+  WPS237,
+  ; Found complex default value
+  WPS404,
+  ; Found nested class
+  WPS431,
+  ; Found magic number
+  WPS432,
+  ; Found shadowed class attribute
+  WPS601,
+
+per-file-ignores =
+  ; all tests
+  test_*.py,tests.py,tests_*.py,*/tests/*,conftest.py:
+  ; Use of assert detected
+  S101,
+  ; Found outer scope names shadowing
+  WPS442,
+  ; Found too many local variables
+  WPS210,
+  ; Found magic number
+  WPS432,
+  ; Missing parameter(s) in Docstring
+  DAR101,
+
+  ; all init files
+  __init__.py:
+  ; ignore not used imports
+  F401,
+  ; ignore import with wildcard
+  F403,
+  ; Found wrong metadata variable
+  WPS410,
+
+  ; all migrations
+  backend/alembic/*.py:
+  D103,
+  WPS102,
+  WPS202,
+  WPS211,
+  WPS213,
+  WPS420,
+
+exclude =
+  ./.git,
+  ./var,

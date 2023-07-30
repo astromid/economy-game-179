@@ -1,0 +1,47 @@
+name: egame179
+channels:
+- conda-forge
+dependencies:
+- python>=3.11
+- aiomysql
+- alembic
+- antlr4-python3-runtime
+- bs4
+- compress-pickle
+- fastapi
+- httptools
+- httpx
+- mysqlclient
+- networkx
+- numpy
+- omegaconf
+- orjson
+- pandas
+- passlib
+- prettytable
+- pyarrow
+- python-dotenv
+- python-jose
+- python-multipart
+- simplejson
+- seaborn
+- sqlalchemy
+- sqlmodel>=0.0.8
+- streamlit>=1.23
+- tqdm
+- ujson
+- uvicorn
+- yarl
+# dev packages
+- icecream
+- mypy
+- mypy_extensions
+- pandas-stubs
+- pdbpp
+- pytest
+- pytest-asyncio
+- pytest-cov
+- pytest-env
+- pytest-mypy
+- types-pyyaml
+- types-ujson
