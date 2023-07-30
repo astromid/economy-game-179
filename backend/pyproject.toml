@@ -8,7 +8,7 @@ description = "FastAPI backend for economic strategy game"
 authors = [
     {name = "Yan Budakyan", email = "astromid@gmail.com"}
 ]
-version = "0.0.1"
+version = "1.0.0"
 readme = "README.md"
 license = {text = "MIT License"}
 dependencies = [
